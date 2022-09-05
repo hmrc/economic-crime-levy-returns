@@ -1,0 +1,1 @@
+GET        /clear-all        uk.gov.hmrc.economiccrimelevyreturns.controllers.test.TestController.clearAllData

@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.economiccrimelevyreturns.config
+package uk.gov.hmrc.economiccrimelevyreturns.models
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import play.api.libs.json.{Json, OFormat}
 
-@Singleton
-class AppConfig @Inject() (configuration: Configuration) {
+import java.time.Instant
 
-  val appName: String = configuration.get[String]("appName")
+final case class EclReturn(
+  internalId: String,
+  lastUpdated: Option[Instant] = None
+)
 
-  val mongoTtl: Int = configuration.get[Int]("mongodb.timeToLiveInSeconds")
-
+object EclReturn {
+  implicit val format: OFormat[EclReturn] = Json.format[EclReturn]
 }

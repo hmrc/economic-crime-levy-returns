@@ -14,16 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.economiccrimelevyreturns.config
+package uk.gov.hmrc.economiccrimelevyreturns.models.requests
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import play.api.mvc.{Request, WrappedRequest}
 
-@Singleton
-class AppConfig @Inject() (configuration: Configuration) {
-
-  val appName: String = configuration.get[String]("appName")
-
-  val mongoTtl: Int = configuration.get[Int]("mongodb.timeToLiveInSeconds")
-
-}
+case class AuthorisedRequest[A](request: Request[A], internalId: String) extends WrappedRequest[A](request)
