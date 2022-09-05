@@ -20,7 +20,7 @@ lazy val root = (project in file("."))
       "uk.gov.hmrc.economiccrimelevyreturns.models._",
       "uk.gov.hmrc.play.bootstrap.binders.RedirectUrl"
     ),
-    PlayKeys.playDefaultPort := 14001,
+    PlayKeys.playDefaultPort := 14003,
     libraryDependencies ++= AppDependencies(),
     retrieveManaged := true,
     (update / evictionWarningOptions).withRank(KeyRanks.Invisible) :=
