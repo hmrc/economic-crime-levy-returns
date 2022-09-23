@@ -14,7 +14,7 @@ lazy val root = (project in file("."))
   .settings(ThisBuild / useSuperShell := false)
   .settings(scoverageSettings: _*)
   .settings(
-    scalaVersion := "2.12.15",
+    scalaVersion := "2.13.8",
     name := appName,
     RoutesKeys.routesImport ++= Seq(
       "uk.gov.hmrc.economiccrimelevyreturns.models._",
@@ -64,10 +64,10 @@ val scoverageSettings: Seq[Setting[_]] = Seq(
   ScoverageKeys.coverageHighlighting := true,
   scalacOptions ++= Seq(
     "-feature",
-    "-Ypartial-unification",
+    "-deprecation",
     "-rootdir",
     baseDirectory.value.getCanonicalPath,
-    "-Wconf:cat=deprecation:ws,cat=feature:ws,cat=optimizer:ws,src=target/.*:s"
+    "-Wconf:cat=feature:ws,cat=optimizer:ws,src=target/.*:s"
   )
 )
 
