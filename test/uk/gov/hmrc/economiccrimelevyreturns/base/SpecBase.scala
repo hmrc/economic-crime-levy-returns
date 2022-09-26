@@ -20,7 +20,6 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.{OptionValues, TryValues}
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.{HeaderNames, Status}
 import play.api.libs.json.JsValue
@@ -47,7 +46,6 @@ trait SpecBase
     with Status
     with HeaderNames
     with GuiceOneAppPerSuite
-    with MockitoSugar
     with EclTestData {
 
   val cc: ControllerComponents                         = stubControllerComponents()

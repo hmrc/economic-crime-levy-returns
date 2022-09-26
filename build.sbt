@@ -13,6 +13,7 @@ lazy val root = (project in file("."))
   .settings(majorVersion := 0)
   .settings(ThisBuild / useSuperShell := false)
   .settings(scoverageSettings: _*)
+  .settings(scalaCompilerOptions: _*)
   .settings(
     scalaVersion := "2.13.8",
     name := appName,
@@ -36,7 +37,7 @@ lazy val testSettings: Seq[Def.Setting[_]] = Seq(
   fork := true
 )
 
-lazy val itSettings = Defaults.itSettings ++ Seq(
+lazy val itSettings: Seq[Def.Setting[_]] = Defaults.itSettings ++ Seq(
   unmanagedSourceDirectories := Seq(
     baseDirectory.value / "it",
     baseDirectory.value / "test-common"
@@ -61,14 +62,15 @@ val scoverageSettings: Seq[Setting[_]] = Seq(
   ScoverageKeys.coverageExcludedFiles := excludedScoveragePackages.mkString(";"),
   ScoverageKeys.coverageMinimumStmtTotal := 80,
   ScoverageKeys.coverageFailOnMinimum := true,
-  ScoverageKeys.coverageHighlighting := true,
-  scalacOptions ++= Seq(
-    "-feature",
-    "-deprecation",
-    "-rootdir",
-    baseDirectory.value.getCanonicalPath,
-    "-Wconf:cat=feature:ws,cat=optimizer:ws,src=target/.*:s"
-  )
+  ScoverageKeys.coverageHighlighting := true
+)
+
+val scalaCompilerOptions: Def.Setting[Task[Seq[String]]] = scalacOptions ++= Seq(
+  "-feature",
+  "-deprecation",
+  "-rootdir",
+  baseDirectory.value.getCanonicalPath,
+  "-Wconf:cat=feature:ws,cat=optimizer:ws,src=target/.*:s"
 )
 
 addCommandAlias("runAllChecks", ";clean;compile;scalafmtCheckAll;coverage;test;it:test;scalastyle;coverageReport")
