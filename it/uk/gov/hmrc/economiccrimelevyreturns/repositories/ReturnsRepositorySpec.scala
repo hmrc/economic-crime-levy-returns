@@ -1,12 +1,12 @@
 package uk.gov.hmrc.economiccrimelevyreturns.repositories
 
 import org.mockito.Mockito.when
+import org.mockito.MockitoSugar.mock
 import org.mongodb.scala.model.Filters
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
@@ -21,8 +21,7 @@ class ReturnsRepositorySpec
     with DefaultPlayMongoRepositorySupport[EclReturn]
     with ScalaFutures
     with IntegrationPatience
-    with OptionValues
-    with MockitoSugar {
+    with OptionValues {
 
   private val now              = Instant.now.truncatedTo(ChronoUnit.MILLIS)
   private val stubClock: Clock = Clock.fixed(now, ZoneId.systemDefault)

@@ -17,7 +17,6 @@
 package uk.gov.hmrc.economiccrimelevyreturns.controllers.actions
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
 import play.api.mvc.{BodyParsers, Request, Result}
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
