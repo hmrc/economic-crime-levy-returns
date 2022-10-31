@@ -22,6 +22,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.{OptionValues, TryValues}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.http.{HeaderNames, Status}
 import play.api.libs.json.JsValue
 import play.api.mvc._
@@ -48,6 +49,7 @@ trait SpecBase
     with HeaderNames
     with GuiceOneAppPerSuite
     with MockitoSugar
+    with ScalaCheckPropertyChecks
     with EclTestData {
 
   val cc: ControllerComponents                         = stubControllerComponents()
