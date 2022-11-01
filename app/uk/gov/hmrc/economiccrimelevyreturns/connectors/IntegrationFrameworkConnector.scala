@@ -34,17 +34,16 @@ class IntegrationFrameworkConnector @Inject() (
   correlationIdGenerator: CorrelationIdGenerator
 )(implicit ec: ExecutionContext) {
 
-  def getFinancialDetails(eclRegistrationReference: String)(implicit hc: HeaderCarrier): Future[FinancialDetails] = {
-    val headers: Seq[(String, String)] = Seq(
-      (HeaderNames.AUTHORIZATION, appConfig.integrationFrameworkBearerToken),
-      (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
-      (CustomHeaderNames.CorrelationId, correlationIdGenerator.generateCorrelationId)
-    )
+  def integrationFrameworkHeaders: Seq[(String, String)] = Seq(
+    (HeaderNames.AUTHORIZATION, appConfig.integrationFrameworkBearerToken),
+    (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
+    (CustomHeaderNames.CorrelationId, correlationIdGenerator.generateCorrelationId)
+  )
 
+  def getFinancialDetails(eclRegistrationReference: String)(implicit hc: HeaderCarrier): Future[FinancialDetails] =
     httpClient.GET[FinancialDetails](
       s"${appConfig.integrationFrameworkUrl}/enterprise/02.00.00/financial-data/zecl/$eclRegistrationReference/ECL",
-      headers = headers
+      headers = integrationFrameworkHeaders
     )
-  }
 
 }

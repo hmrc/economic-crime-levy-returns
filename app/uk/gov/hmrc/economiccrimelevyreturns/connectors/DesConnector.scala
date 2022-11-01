@@ -21,8 +21,8 @@ import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationData
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -35,7 +35,7 @@ class DesConnector @Inject() (
 )(implicit ec: ExecutionContext) {
 
   def getObligationData(eclRegistrationReference: String)(implicit hc: HeaderCarrier): Future[ObligationData] = {
-    val headers: Seq[(String, String)] = Seq(
+    val desHeaders: Seq[(String, String)] = Seq(
       (HeaderNames.AUTHORIZATION, appConfig.desBearerToken),
       (CustomHeaderNames.Environment, appConfig.desEnvironment),
       (CustomHeaderNames.CorrelationId, correlationIdGenerator.generateCorrelationId)
@@ -43,7 +43,7 @@ class DesConnector @Inject() (
 
     httpClient.GET[ObligationData](
       s"${appConfig.desUrl}/enterprise/obligation-data/zecl/$eclRegistrationReference/ECL",
-      headers = headers
+      headers = desHeaders
     )
   }
 
