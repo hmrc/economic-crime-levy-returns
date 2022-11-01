@@ -19,30 +19,30 @@ package uk.gov.hmrc.economiccrimelevyreturns.connectors
 import play.api.http.HeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
-import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationData
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.FinancialDetails
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class DesConnector @Inject() (
+class IntegrationFrameworkConnector @Inject() (
   appConfig: AppConfig,
   httpClient: HttpClient,
   correlationIdGenerator: CorrelationIdGenerator
 )(implicit ec: ExecutionContext) {
 
-  def getObligationData(eclRegistrationReference: String)(implicit hc: HeaderCarrier): Future[ObligationData] = {
+  def getFinancialDetails(eclRegistrationReference: String)(implicit hc: HeaderCarrier): Future[FinancialDetails] = {
     val headers: Seq[(String, String)] = Seq(
-      (HeaderNames.AUTHORIZATION, appConfig.desBearerToken),
-      (CustomHeaderNames.Environment, appConfig.desEnvironment),
+      (HeaderNames.AUTHORIZATION, appConfig.integrationFrameworkBearerToken),
+      (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
       (CustomHeaderNames.CorrelationId, correlationIdGenerator.generateCorrelationId)
     )
 
-    httpClient.GET[ObligationData](
-      s"${appConfig.desUrl}/enterprise/obligation-data/zecl/$eclRegistrationReference/ECL",
+    httpClient.GET[FinancialDetails](
+      s"${appConfig.integrationFrameworkUrl}/enterprise/02.00.00/financial-data/zecl/$eclRegistrationReference/ECL",
       headers = headers
     )
   }

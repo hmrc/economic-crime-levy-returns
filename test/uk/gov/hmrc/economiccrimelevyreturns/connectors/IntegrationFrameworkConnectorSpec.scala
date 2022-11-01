@@ -24,40 +24,43 @@ import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationData
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.FinancialDetails
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
 import uk.gov.hmrc.http.HttpClient
 
 import scala.concurrent.Future
 
-class DesConnectorSpec extends SpecBase {
+class IntegrationFrameworkConnectorSpec extends SpecBase {
   val mockHttpClient: HttpClient                         = mock[HttpClient]
   val mockCorrelationIdGenerator: CorrelationIdGenerator = mock[CorrelationIdGenerator]
-  val connector                                          = new DesConnector(appConfig, mockHttpClient, mockCorrelationIdGenerator)
+  val connector                                          = new IntegrationFrameworkConnector(appConfig, mockHttpClient, mockCorrelationIdGenerator)
 
-  "getObligationData" should {
-    "return obligation data when the http client returns obligation data" in forAll {
-      (eclRegistrationReference: String, obligationData: ObligationData, correlationId: String) =>
-        val expectedUrl                            = s"${appConfig.desUrl}/enterprise/obligation-data/zecl/$eclRegistrationReference/ECL"
+  "getFinancialDetails" should {
+    "return financial details when the http client returns financial details" in forAll {
+      (eclRegistrationReference: String, financialDetails: FinancialDetails, correlationId: String) =>
+        val expectedUrl =
+          s"${appConfig.integrationFrameworkUrl}/enterprise/02.00.00/financial-data/zecl/$eclRegistrationReference/ECL"
+
         val expectedHeaders: Seq[(String, String)] = Seq(
-          (HeaderNames.AUTHORIZATION, appConfig.desBearerToken),
-          (CustomHeaderNames.Environment, appConfig.desEnvironment),
+          (HeaderNames.AUTHORIZATION, appConfig.integrationFrameworkBearerToken),
+          (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
           (CustomHeaderNames.CorrelationId, correlationId)
         )
 
         when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
 
         when(
-          mockHttpClient.GET[ObligationData](
+          mockHttpClient.GET[FinancialDetails](
             ArgumentMatchers.eq(expectedUrl),
             any(),
             ArgumentMatchers.eq(expectedHeaders)
           )(any(), any(), any())
         )
-          .thenReturn(Future.successful(obligationData))
+          .thenReturn(Future.successful(financialDetails))
 
-        val result = await(connector.getObligationData(eclRegistrationReference))
+        val result = await(connector.getFinancialDetails(eclRegistrationReference))
 
-        result shouldBe obligationData
+        result shouldBe financialDetails
 
         verify(mockHttpClient, times(1))
           .GET[ObligationData](
