@@ -16,14 +16,30 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.config
 
-import javax.inject.{Inject, Singleton}
 import play.api.Configuration
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+
+import javax.inject.{Inject, Singleton}
 
 @Singleton
-class AppConfig @Inject() (configuration: Configuration) {
+class AppConfig @Inject() (configuration: Configuration, servicesConfig: ServicesConfig) {
 
   val appName: String = configuration.get[String]("appName")
 
   val mongoTtl: Int = configuration.get[Int]("mongodb.timeToLiveInSeconds")
+
+  val desUrl: String = servicesConfig.baseUrl("des")
+
+  val desBearerToken: String = configuration.get[String]("microservice.services.des.bearerToken")
+
+  val desEnvironment: String = configuration.get[String]("microservice.services.des.environment")
+
+  val integrationFrameworkUrl: String = servicesConfig.baseUrl("integration-framework")
+
+  val integrationFrameworkBearerToken: String =
+    configuration.get[String]("microservice.services.integration-framework.bearerToken")
+
+  val integrationFrameworkEnvironment: String =
+    configuration.get[String]("microservice.services.integration-framework.environment")
 
 }
