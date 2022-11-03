@@ -22,11 +22,12 @@ import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitr
 
 class ObligationStatusSpec extends SpecBase {
   "writes" should {
-    "return the obligation status serialized to its JSON representation" in forAll {
-      (obligationStatus: ObligationStatus) =>
-        val result = Json.toJson(obligationStatus)
+    "return the obligation status serialized to its JSON representation" in forAll(
+      Table(("obligationStatus", "expectedResult"), (Open, "O"), (Fulfilled, "F"))
+    ) { (obligationStatus: ObligationStatus, expectedResult: String) =>
+      val result = Json.toJson(obligationStatus)
 
-        result shouldBe JsString(obligationStatus.toString)
+      result shouldBe JsString(expectedResult)
     }
   }
 

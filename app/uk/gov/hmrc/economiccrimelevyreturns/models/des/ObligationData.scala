@@ -22,9 +22,9 @@ import java.util.Date
 
 sealed trait ObligationStatus
 
-case object O extends ObligationStatus
+case object Open extends ObligationStatus
 
-case object F extends ObligationStatus
+case object Fulfilled extends ObligationStatus
 
 object ObligationStatus {
 
@@ -32,16 +32,16 @@ object ObligationStatus {
     override def reads(json: JsValue): JsResult[ObligationStatus] = json.validate[String] match {
       case JsSuccess(value, _) =>
         value match {
-          case "O" => JsSuccess(O)
-          case "F" => JsSuccess(F)
+          case "O" => JsSuccess(Open)
+          case "F" => JsSuccess(Fulfilled)
           case s   => JsError(s"$s is not a valid ObligationStatus")
         }
       case e: JsError          => e
     }
 
     override def writes(o: ObligationStatus): JsValue = o match {
-      case O => JsString(O.toString)
-      case F => JsString(F.toString)
+      case Open      => JsString("O")
+      case Fulfilled => JsString("F")
     }
   }
 }
@@ -64,7 +64,7 @@ object Obligation {
 }
 
 final case class Identification(
-  incomeSourceType: String,
+  incomeSourceType: Option[String],
   referenceNumber: String,
   referenceType: String
 )
@@ -77,7 +77,7 @@ final case class ObligationDetails(
   status: ObligationStatus,
   inboundCorrespondenceFromDate: Date,
   inboundCorrespondenceToDate: Date,
-  inboundCorrespondenceDateReceived: Date,
+  inboundCorrespondenceDateReceived: Option[Date],
   inboundCorrespondenceDueDate: Date,
   periodKey: String
 )

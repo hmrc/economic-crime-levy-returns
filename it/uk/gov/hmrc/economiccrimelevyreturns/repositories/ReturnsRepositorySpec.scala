@@ -48,7 +48,7 @@ class ReturnsRepositorySpec
     }
 
     "update an existing return with the last updated time set to `now`" in {
-      insert(eclReturn)
+      insert(eclReturn).futureValue
 
       val expectedResult = eclReturn.copy(lastUpdated = Some(now))
 
