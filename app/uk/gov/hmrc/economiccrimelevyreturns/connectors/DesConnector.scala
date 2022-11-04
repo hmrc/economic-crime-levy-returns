@@ -34,14 +34,16 @@ class DesConnector @Inject() (
   correlationIdGenerator: CorrelationIdGenerator
 )(implicit ec: ExecutionContext) {
 
-  def getObligationData(eclRegistrationReference: String)(implicit hc: HeaderCarrier): Future[ObligationData] = {
+  def getObligationData(
+    eclRegistrationReference: String
+  )(implicit hc: HeaderCarrier): Future[Option[ObligationData]] = {
     val desHeaders: Seq[(String, String)] = Seq(
       (HeaderNames.AUTHORIZATION, appConfig.desBearerToken),
       (CustomHeaderNames.Environment, appConfig.desEnvironment),
       (CustomHeaderNames.CorrelationId, correlationIdGenerator.generateCorrelationId)
     )
 
-    httpClient.GET[ObligationData](
+    httpClient.GET[Option[ObligationData]](
       s"${appConfig.desUrl}/enterprise/obligation-data/zecl/$eclRegistrationReference/ECL",
       headers = desHeaders
     )

@@ -36,7 +36,7 @@ class DesConnectorSpec extends SpecBase {
 
   "getObligationData" should {
     "return obligation data when the http client returns obligation data" in forAll {
-      (eclRegistrationReference: String, obligationData: ObligationData, correlationId: String) =>
+      (eclRegistrationReference: String, obligationData: Option[ObligationData], correlationId: String) =>
         val expectedUrl                            = s"${appConfig.desUrl}/enterprise/obligation-data/zecl/$eclRegistrationReference/ECL"
         val expectedHeaders: Seq[(String, String)] = Seq(
           (HeaderNames.AUTHORIZATION, appConfig.desBearerToken),
@@ -47,7 +47,7 @@ class DesConnectorSpec extends SpecBase {
         when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
 
         when(
-          mockHttpClient.GET[ObligationData](
+          mockHttpClient.GET[Option[ObligationData]](
             ArgumentMatchers.eq(expectedUrl),
             any(),
             ArgumentMatchers.eq(expectedHeaders)
