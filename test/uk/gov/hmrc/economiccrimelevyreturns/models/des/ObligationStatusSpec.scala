@@ -39,14 +39,13 @@ class ObligationStatusSpec extends SpecBase {
         json.as[ObligationStatus] shouldBe obligationStatus
     }
 
-    "return a '... is not a valid ObligationStatus' error when passed an invalid string value" in forAll {
-      (value: String) =>
-        val result = Json.fromJson[ObligationStatus](JsString(value))
+    "return a JsError when passed an invalid string value" in {
+        val result = Json.fromJson[ObligationStatus](JsString("Test"))
 
-        result shouldBe JsError(s"$value is not a valid ObligationStatus")
+        result shouldBe JsError("Test is not a valid ObligationStatus")
     }
 
-    "raise an error when passed a type that is not a string" in {
+    "return a JsError when passed a type that is not a string" in {
       val result = Json.fromJson[ObligationStatus](JsBoolean(true))
 
       result shouldBe a[JsError]
