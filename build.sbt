@@ -70,7 +70,8 @@ val scalaCompilerOptions: Def.Setting[Task[Seq[String]]] = scalacOptions ++= Seq
   "-deprecation",
   "-rootdir",
   baseDirectory.value.getCanonicalPath,
-  "-Wconf:cat=feature:ws,cat=optimizer:ws,src=target/.*:s"
+  "-Wconf:cat=feature:ws,cat=optimizer:ws,src=target/.*:s",
+  "-Xlint:-byname-implicit"
 )
 
 addCommandAlias("runAllChecks", ";clean;compile;scalafmtCheckAll;coverage;test;it:test;scalastyle;coverageReport")
