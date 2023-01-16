@@ -3,7 +3,7 @@
 Calculate the ECL liability for an entity based on the length of the relevant accounting period (days), 
 length of AML regulated activity (days) and UK revenue.
 
-**URL**: `/economic-crime-levy-returns/calculate/liability`
+**URL**: `/economic-crime-levy-returns/calculate-liability`
 
 **Method**: `POST`
 

@@ -4,4 +4,4 @@ GET           /returns/:id                uk.gov.hmrc.economiccrimelevyreturns.c
 PUT           /returns                    uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnsController.upsertReturn
 DELETE        /returns/:id                uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnsController.deleteReturn(id)
 
-POST          /liability/calculate        uk.gov.hmrc.economiccrimelevyreturns.controllers.CalculateLiabilityController.calculateLiability
+POST          /calculate-liability        uk.gov.hmrc.economiccrimelevyreturns.controllers.CalculateLiabilityController.calculateLiability
