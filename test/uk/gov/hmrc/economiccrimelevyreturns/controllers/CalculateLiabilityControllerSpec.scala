@@ -47,8 +47,14 @@ class CalculateLiabilityControllerSpec extends SpecBase {
 
   "calculateLiability" should {
     "return 200 OK the calculated liability JSON" in forAll {
-      (calculateLiabilityRequest: CalculateLiabilityRequest, calculatedLiability: CalculatedLiability) =>
-        when(mockCalculateLiabilityService.calculateLiability(any())).thenReturn(calculatedLiability)
+      (
+        calculateLiabilityRequest: CalculateLiabilityRequest,
+        calculatedLiability: CalculatedLiability,
+        amountDue: BigDecimal
+      ) =>
+        val updatedWithValidAmountDue = calculatedLiability.copy(amountDue = amountDue)
+
+        when(mockCalculateLiabilityService.calculateLiability(any())).thenReturn(updatedWithValidAmountDue)
 
         val result: Future[Result] =
           controller.calculateLiability()(
@@ -56,7 +62,7 @@ class CalculateLiabilityControllerSpec extends SpecBase {
           )
 
         status(result)        shouldBe OK
-        contentAsJson(result) shouldBe Json.toJson(calculatedLiability)
+        contentAsJson(result) shouldBe Json.toJson(updatedWithValidAmountDue)
     }
   }
 
