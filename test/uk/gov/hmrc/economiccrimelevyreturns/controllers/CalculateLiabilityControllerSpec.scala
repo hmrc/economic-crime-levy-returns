@@ -26,6 +26,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculateLiabilityRequest, C
 import uk.gov.hmrc.economiccrimelevyreturns.services.CalculateLiabilityService
 
 import scala.concurrent.Future
+import scala.math.BigDecimal.RoundingMode
 
 class CalculateLiabilityControllerSpec extends SpecBase {
 
@@ -40,8 +41,8 @@ class CalculateLiabilityControllerSpec extends SpecBase {
   val minAmountDue = 0
   val maxAmountDue = 250000
 
-  implicit val arbBigDecimalWithMax: Arbitrary[BigDecimal] = Arbitrary {
-    Gen.chooseNum[Double](minAmountDue, maxAmountDue).map(BigDecimal.apply)
+  implicit val arbAmountDue: Arbitrary[BigDecimal] = Arbitrary {
+    Gen.chooseNum[Double](minAmountDue, maxAmountDue).map(BigDecimal.apply(_).setScale(2, RoundingMode.DOWN))
   }
 
   "calculateLiability" should {
