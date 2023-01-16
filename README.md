@@ -9,7 +9,7 @@ The service provides APIs to be consumed by [economic-crime-levy-returns-fronten
 - Create/update return: `PUT /economic-crime-levy-returns/returns`  
 - Get return: `GET /economic-crime-levy-returns/returns/:id`  
 - Delete return: `DELETE /economic-crime-levy-returns/returns/:id`  
-- [Calculate liability](api-docs/calculate-liability.md): `POST /economic-crime-levy-returns/calculate/liability`
+- [Calculate liability](api-docs/calculate-liability.md): `POST /economic-crime-levy-returns/calculate-liability`
 
 ## Running the service
 
