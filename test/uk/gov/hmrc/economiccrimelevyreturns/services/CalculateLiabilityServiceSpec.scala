@@ -52,13 +52,13 @@ class CalculateLiabilityServiceSpec extends SpecBase {
 
   implicit val config: AppConfig = appConfig
 
-  private val sTo      = appConfig.defaultBands.small.to
-  private val mTo      = appConfig.defaultBands.medium.to
-  private val lTo      = appConfig.defaultBands.large.to
-  private val sAmount  = BigDecimal(appConfig.defaultSmallAmount)
-  private val mAmount  = BigDecimal(appConfig.defaultMediumAmount)
-  private val lAmount  = BigDecimal(appConfig.defaultLargeAmount)
-  private val vlAmount = BigDecimal(appConfig.defaultVeryLargeAmount)
+  val sTo: Long            = appConfig.defaultBands.small.to
+  val mTo: Long            = appConfig.defaultBands.medium.to
+  val lTo: Long            = appConfig.defaultBands.large.to
+  val sAmount: BigDecimal  = BigDecimal(appConfig.defaultSmallAmount)
+  val mAmount: BigDecimal  = BigDecimal(appConfig.defaultMediumAmount)
+  val lAmount: BigDecimal  = BigDecimal(appConfig.defaultLargeAmount)
+  val vlAmount: BigDecimal = BigDecimal(appConfig.defaultVeryLargeAmount)
 
   "calculateLiability" should {
     "return the correctly calculated liability based on both the length of the relevant AP and AML regulated activity" in forAll(
