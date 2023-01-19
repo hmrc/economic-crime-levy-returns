@@ -52,7 +52,7 @@ final case class BandRange(from: Long, to: Long) {
       _,
       days = relevantApLength,
       scale = 0,
-      roundingMode = RoundingMode.DOWN
+      roundingMode = RoundingMode.UP
     )
 
     BandRange(

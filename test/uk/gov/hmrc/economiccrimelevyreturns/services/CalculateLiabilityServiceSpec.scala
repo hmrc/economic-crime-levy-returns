@@ -73,18 +73,18 @@ class CalculateLiabilityServiceSpec extends SpecBase {
         (yearInDays, yearInDays, ExpectedBands(sTo, mTo, lTo, Medium), mAmount),
         (yearInDays, yearInDays, ExpectedBands(sTo, mTo, lTo, Large), lAmount),
         (yearInDays, yearInDays, ExpectedBands(sTo, mTo, lTo, VeryLarge), vlAmount),
-        (245, yearInDays, ExpectedBands(6846575L, 24164383L, 671232876L, Small), sAmount),
-        (182, yearInDays, ExpectedBands(5086027L, 17950684L, 498630136L, Medium), mAmount),
+        (245, yearInDays, ExpectedBands(6846576L, 24164384L, 671232877L, Small), sAmount),
+        (182, yearInDays, ExpectedBands(5086028L, 17950685L, 498630137L, Medium), mAmount),
         (73, yearInDays, ExpectedBands(2040000L, 7200000L, 200000000L, Large), lAmount),
-        (450, yearInDays, ExpectedBands(12575342L, 44383561L, 1232876712L, VeryLarge), vlAmount),
+        (450, yearInDays, ExpectedBands(12575343L, 44383562L, 1232876713L, VeryLarge), vlAmount),
         (yearInDays, 120, ExpectedBands(sTo, mTo, lTo, Small), sAmount),
         (yearInDays, 60, ExpectedBands(sTo, mTo, lTo, Medium), BigDecimal(1643.83)),
         (yearInDays, 204, ExpectedBands(sTo, mTo, lTo, Large), BigDecimal(20120.54)),
         (yearInDays, 330, ExpectedBands(sTo, mTo, lTo, VeryLarge), BigDecimal(226027.39)),
-        (314, 92, ExpectedBands(8774794L, 30969863L, 860273972L, Small), sAmount),
-        (113, 198, ExpectedBands(3157808L, 11145205L, 309589041L, Medium), BigDecimal(5424.65)),
-        (284, 300, ExpectedBands(7936438L, 28010958L, 778082191L, Large), BigDecimal(29589.04)),
-        (91, 256, ExpectedBands(2543013L, 8975342L, 249315068L, VeryLarge), BigDecimal(175342.46))
+        (314, 92, ExpectedBands(8774795L, 30969864L, 860273973L, Small), sAmount),
+        (113, 198, ExpectedBands(3157809L, 11145206L, 309589042L, Medium), BigDecimal(5424.65)),
+        (284, 300, ExpectedBands(7936439L, 28010959L, 778082192L, Large), BigDecimal(29589.04)),
+        (91, 256, ExpectedBands(2543014L, 8975343L, 249315069L, VeryLarge), BigDecimal(175342.46))
       )
     ) {
       (
