@@ -25,7 +25,7 @@ class ReturnsRepositorySpec
 
   private val now              = Instant.now.truncatedTo(ChronoUnit.MILLIS)
   private val stubClock: Clock = Clock.fixed(now, ZoneId.systemDefault)
-  private val eclReturn        = EclReturn("test-id", Some(Instant.ofEpochSecond(1)))
+  private val eclReturn        = EclReturn.empty("test-id").copy(lastUpdated = Some(Instant.ofEpochSecond(1)))
   private val mockAppConfig    = mock[AppConfig]
 
   when(mockAppConfig.mongoTtl) thenReturn 1

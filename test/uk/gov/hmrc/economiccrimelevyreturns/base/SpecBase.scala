@@ -54,7 +54,7 @@ trait SpecBase
 
   val cc: ControllerComponents                         = stubControllerComponents()
   val internalId: String                               = "test-id"
-  val emptyReturn: EclReturn                           = EclReturn(internalId)
+  val emptyReturn: EclReturn                           = EclReturn.empty(internalId)
   val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
   val appConfig: AppConfig                             = app.injector.instanceOf[AppConfig]
   val bodyParsers: PlayBodyParsers                     = app.injector.instanceOf[PlayBodyParsers]
