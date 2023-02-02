@@ -100,7 +100,7 @@ abstract class ISpecBase
   override protected def afterEach(): Unit = {
     resetWireMock()
     callRoute(
-      FakeRequest(uk.gov.hmrc.economiccrimelevyreturns.controllers.test.routes.TestController.clearAllData),
+      FakeRequest(uk.gov.hmrc.economiccrimelevyreturns.testonly.controllers.routes.TestOnlyController.clearAllData),
       requiresAuth = false
     ).futureValue
     super.afterEach()
