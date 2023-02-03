@@ -58,10 +58,10 @@ abstract class ISpecBase
   implicit lazy val materializer: Materializer = Materializer(system)
   implicit def ec: ExecutionContext            = global
 
-  val internalId: String              = "test-id"
-  val emptyReturn: EclReturn = EclReturn(internalId)
-  val now: Instant                    = Instant.now.truncatedTo(ChronoUnit.MILLIS)
-  private val stubClock: Clock        = Clock.fixed(now, ZoneId.systemDefault)
+  val internalId: String       = "test-id"
+  val emptyReturn: EclReturn   = EclReturn.empty(internalId)
+  val now: Instant             = Instant.now.truncatedTo(ChronoUnit.MILLIS)
+  private val stubClock: Clock = Clock.fixed(now, ZoneId.systemDefault)
 
   val additionalAppConfig: Map[String, Any] = Map(
     "metrics.enabled"    -> false,
@@ -100,7 +100,7 @@ abstract class ISpecBase
   override protected def afterEach(): Unit = {
     resetWireMock()
     callRoute(
-      FakeRequest(uk.gov.hmrc.economiccrimelevyreturns.controllers.test.routes.TestController.clearAllData),
+      FakeRequest(uk.gov.hmrc.economiccrimelevyreturns.testonly.controllers.routes.TestOnlyController.clearAllData),
       requiresAuth = false
     ).futureValue
     super.afterEach()

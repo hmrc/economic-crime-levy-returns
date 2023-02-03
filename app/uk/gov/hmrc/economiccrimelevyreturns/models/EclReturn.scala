@@ -22,9 +22,15 @@ import java.time.Instant
 
 final case class EclReturn(
   internalId: String,
+  relevantAp12Months: Option[Boolean],
   lastUpdated: Option[Instant] = None
 )
 
 object EclReturn {
+  def empty(internalId: String): EclReturn = EclReturn(
+    internalId = internalId,
+    relevantAp12Months = None
+  )
+
   implicit val format: OFormat[EclReturn] = Json.format[EclReturn]
 }

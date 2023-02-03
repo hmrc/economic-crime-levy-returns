@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.economiccrimelevyreturns.controllers.test
+package uk.gov.hmrc.economiccrimelevyreturns.testonly.controllers
 
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
 import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -24,14 +25,19 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton()
-class TestController @Inject() (
+class TestOnlyController @Inject() (
   cc: ControllerComponents,
-  returnsRepository: ReturnsRepository
+  returnsRepository: ReturnsRepository,
+  authorise: AuthorisedAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
   def clearAllData: Action[AnyContent] = Action.async { _ =>
     returnsRepository.collection.drop().toFuture().map(_ => Ok("All data cleared"))
+  }
+
+  def clearCurrentData: Action[AnyContent] = authorise.async { implicit request =>
+    returnsRepository.clear(request.internalId).map(_ => Ok("Current user data cleared"))
   }
 
 }
