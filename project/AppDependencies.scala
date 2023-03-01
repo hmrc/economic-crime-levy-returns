@@ -13,7 +13,8 @@ object AppDependencies {
     "uk.gov.hmrc.mongo"   %% "hmrc-mongo-test-play-28"  % "0.74.0",
     "org.mockito"         %% "mockito-scala"            % "1.17.12",
     "org.scalatestplus"   %% "scalatestplus-scalacheck" % "3.1.0.0-RC2",
-    "com.danielasfregola" %% "random-data-generator"    % "2.9"
+    "com.danielasfregola" %% "random-data-generator"    % "2.9",
+    "io.github.wolfendale" %% "scalacheck-gen-regexp"    % "1.1.0"
   ).map(_ % "test, it")
 
   def apply(): Seq[ModuleID] = compile ++ test
