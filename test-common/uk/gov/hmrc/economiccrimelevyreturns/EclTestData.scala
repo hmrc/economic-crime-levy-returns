@@ -16,4 +16,20 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns
 
-trait EclTestData {}
+import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitrary
+import org.scalacheck.Gen.{choose, listOfN}
+import org.scalacheck.derive.MkArbitrary
+import org.scalacheck.{Arbitrary, Gen}
+import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
+import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
+
+trait EclTestData {
+
+  implicit val arbEclReturn: Arbitrary[EclReturn] = Arbitrary {
+    for {
+      eclReturn  <- MkArbitrary[EclReturn].arbitrary.arbitrary
+      internalId <- Gen.nonEmptyListOf(Arbitrary.arbitrary[Char]).map(_.mkString)
+    } yield eclReturn.copy(internalId = internalId)
+  }
+
+}
