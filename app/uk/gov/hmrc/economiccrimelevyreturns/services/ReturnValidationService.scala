@@ -20,7 +20,7 @@ import cats.data.ValidatedNel
 import cats.implicits._
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.{DataInvalid, DataMissing}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataMissing
 
 import javax.inject.Inject
 
@@ -28,6 +28,10 @@ class ReturnValidationService @Inject() () {
 
   type ValidationResult[A] = ValidatedNel[DataValidationError, A]
 
+  // TODO: Will need to consider how to validate once the check your answers page is implemented
+  //       Because simply adding validation for the contact details will then break when called
+  //       from the ECL amount due page (as we will not have captured contact details at that point)
+  //       Do we need 2 validation functions or a flag on this function to indicate where it is being called from?
   def validateReturn(eclReturn: EclReturn): ValidationResult[EclReturn] =
     (
       validateOptExists(eclReturn.relevantAp12Months, "Relevant AP 12 months choice"),
