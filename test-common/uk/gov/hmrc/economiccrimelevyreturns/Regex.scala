@@ -18,9 +18,7 @@ package uk.gov.hmrc.economiccrimelevyreturns
 
 object Regex {
 
-  val telephoneNumber              =
+  val telephoneNumber =
     "^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\/]?){0,})(?:[\\-\\.\\ \\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\/]?(\\d+))?$"
-  val customerIdentificationNumber = "^[a-zA-Z0-9]{1,15}$"
-  val businessPartnerId            = "X[A-Z]{1}[0-9]{13}"
 
 }

@@ -34,7 +34,7 @@ class ReturnValidationServiceSpec extends SpecBase {
       result shouldBe Valid(validEclReturn.eclReturn)
     }
 
-    "return a non-empty chain of errors when unconditional mandatory ECL return data items are missing" in {
+    "return a non-empty list of errors when unconditional mandatory ECL return data items are missing" in {
       val eclReturn = EclReturn.empty("internalId")
 
       val expectedErrors = Seq(
@@ -47,7 +47,7 @@ class ReturnValidationServiceSpec extends SpecBase {
       val result = service.validateReturn(eclReturn)
 
       result.isValid shouldBe false
-      result.leftMap(nec => nec.toList should contain theSameElementsAs expectedErrors)
+      result.leftMap(nel => nel.toList should contain theSameElementsAs expectedErrors)
     }
 
     "return an error if the relevant AP is not 12 months and the relevant AP length is missing" in forAll {
@@ -58,8 +58,8 @@ class ReturnValidationServiceSpec extends SpecBase {
         val result = service.validateReturn(invalidEclReturn)
 
         result.isValid shouldBe false
-        result.leftMap(nec =>
-          nec.toList should contain only DataValidationError(
+        result.leftMap(nel =>
+          nel.toList should contain only DataValidationError(
             DataMissing,
             "Relevant AP length is missing"
           )
@@ -75,8 +75,8 @@ class ReturnValidationServiceSpec extends SpecBase {
         val result = service.validateReturn(invalidEclReturn)
 
         result.isValid shouldBe false
-        result.leftMap(nec =>
-          nec.toList should contain only DataValidationError(
+        result.leftMap(nel =>
+          nel.toList should contain only DataValidationError(
             DataMissing,
             "AML regulated activity length is missing"
           )
