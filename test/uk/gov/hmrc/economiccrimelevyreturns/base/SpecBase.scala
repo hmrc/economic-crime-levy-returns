@@ -31,6 +31,7 @@ import play.api.test.{DefaultAwaitTimeout, FakeHeaders, FakeRequest, ResultExtra
 import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.FakeAuthorisedAction
+import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -50,7 +51,8 @@ trait SpecBase
     with GuiceOneAppPerSuite
     with MockitoSugar
     with ScalaCheckPropertyChecks
-    with EclTestData {
+    with EclTestData
+    with Generators {
 
   val cc: ControllerComponents                         = stubControllerComponents()
   val internalId: String                               = "test-id"

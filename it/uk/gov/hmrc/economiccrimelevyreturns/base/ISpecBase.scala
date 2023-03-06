@@ -20,6 +20,7 @@ import play.api.test._
 import play.api.{Application, Mode}
 import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
 import uk.gov.hmrc.economiccrimelevyreturns.base.WireMockHelper._
+import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 
 import java.time.temporal.ChronoUnit
@@ -52,7 +53,8 @@ abstract class ISpecBase
     with WireMockHelper
     with WireMockStubs
     with IntegrationPatience
-    with EclTestData {
+    with EclTestData
+    with Generators {
 
   implicit lazy val system: ActorSystem        = ActorSystem()
   implicit lazy val materializer: Materializer = Materializer(system)

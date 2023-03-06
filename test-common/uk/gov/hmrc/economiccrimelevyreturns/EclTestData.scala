@@ -16,4 +16,62 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns
 
-trait EclTestData {}
+import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitrary
+import org.scalacheck.derive.MkArbitrary
+import org.scalacheck.{Arbitrary, Gen}
+import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
+import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
+import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclReturn}
+
+import java.time.Instant
+
+final case class ValidEclReturn(eclReturn: EclReturn)
+
+trait EclTestData { self: Generators =>
+
+  implicit val arbInstant: Arbitrary[Instant] = Arbitrary {
+    Instant.now()
+  }
+
+  implicit val arbEclReturn: Arbitrary[EclReturn] = Arbitrary {
+    for {
+      eclReturn  <- MkArbitrary[EclReturn].arbitrary.arbitrary
+      internalId <- Gen.nonEmptyListOf(Arbitrary.arbitrary[Char]).map(_.mkString)
+    } yield eclReturn.copy(internalId = internalId)
+  }
+
+  implicit val arbValidEclReturn: Arbitrary[ValidEclReturn] = Arbitrary {
+    for {
+      relevantAp12Months                      <- Arbitrary.arbitrary[Boolean]
+      relevantApLength                        <- Arbitrary.arbitrary[Int]
+      relevantApRevenue                       <- Arbitrary.arbitrary[Long]
+      carriedOutAmlRegulatedActivityForFullFy <- Arbitrary.arbitrary[Boolean]
+      amlRegulatedActivityLength              <- Arbitrary.arbitrary[Int]
+      calculatedLiability                     <- Arbitrary.arbitrary[CalculatedLiability]
+      contactName                             <- stringsWithMaxLength(160)
+      contactRole                             <- stringsWithMaxLength(160)
+      contactEmailAddress                     <- emailAddress(160)
+      contactTelephoneNumber                  <- telephoneNumber(24)
+      internalId                               = alphaNumericString
+    } yield ValidEclReturn(
+      EclReturn
+        .empty(internalId = internalId)
+        .copy(
+          relevantAp12Months = Some(relevantAp12Months),
+          relevantApLength = if (relevantAp12Months) None else Some(relevantApLength),
+          relevantApRevenue = Some(relevantApRevenue),
+          carriedOutAmlRegulatedActivityForFullFy = Some(carriedOutAmlRegulatedActivityForFullFy),
+          amlRegulatedActivityLength =
+            if (carriedOutAmlRegulatedActivityForFullFy) None else Some(amlRegulatedActivityLength),
+          calculatedLiability = Some(calculatedLiability),
+          contactName = Some(contactName),
+          contactRole = Some(contactRole),
+          contactEmailAddress = Some(contactEmailAddress),
+          contactTelephoneNumber = Some(contactTelephoneNumber)
+        )
+    )
+  }
+
+  def alphaNumericString: String = Gen.alphaNumStr.retryUntil(_.nonEmpty).sample.get
+
+}
