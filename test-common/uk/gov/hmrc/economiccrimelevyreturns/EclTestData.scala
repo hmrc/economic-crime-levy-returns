@@ -17,18 +17,17 @@
 package uk.gov.hmrc.economiccrimelevyreturns
 
 import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitrary
-import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.derive.MkArbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
+import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
 import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclReturn}
-import wolfendale.scalacheck.regexp.RegexpGen
 
 import java.time.Instant
 
 final case class ValidEclReturn(eclReturn: EclReturn)
 
-trait EclTestData {
+trait EclTestData { self: Generators =>
 
   implicit val arbInstant: Arbitrary[Instant] = Arbitrary {
     Instant.now()
@@ -72,31 +71,6 @@ trait EclTestData {
         )
     )
   }
-
-  def alphaNumStringsWithMaxLength(maxLength: Int): Gen[String] =
-    for {
-      length <- choose(1, maxLength)
-      chars  <- listOfN(length, Gen.alphaNumChar)
-    } yield chars.mkString
-
-  def stringsWithMaxLength(maxLength: Int): Gen[String] =
-    for {
-      length <- choose(1, maxLength)
-      chars  <- listOfN(length, Arbitrary.arbitrary[Char])
-    } yield chars.mkString
-
-  def emailAddress(maxLength: Int): Gen[String] = {
-    val emailPartsLength = maxLength / 5
-
-    for {
-      firstPart  <- alphaNumStringsWithMaxLength(emailPartsLength)
-      secondPart <- alphaNumStringsWithMaxLength(emailPartsLength)
-      thirdPart  <- alphaNumStringsWithMaxLength(emailPartsLength)
-    } yield s"$firstPart@$secondPart.$thirdPart".toLowerCase
-  }
-
-  def telephoneNumber(maxLength: Int): Gen[String] =
-    RegexpGen.from(s"${Regex.telephoneNumber}").retryUntil(s => s.length <= maxLength && s.trim.nonEmpty)
 
   def alphaNumericString: String = Gen.alphaNumStr.retryUntil(_.nonEmpty).sample.get
 

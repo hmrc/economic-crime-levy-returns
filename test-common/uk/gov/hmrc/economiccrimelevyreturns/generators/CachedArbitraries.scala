@@ -24,7 +24,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculateLiabilityRequest, C
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.{ObligationData, ObligationStatus}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.FinancialDetails
 
-object CachedArbitraries extends EclTestData {
+object CachedArbitraries extends EclTestData with Generators {
 
   private def mkArb[T](implicit mkArb: MkArbitrary[T]): Arbitrary[T] = MkArbitrary[T].arbitrary
 
