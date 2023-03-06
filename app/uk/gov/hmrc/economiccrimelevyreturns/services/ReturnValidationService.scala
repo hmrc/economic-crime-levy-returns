@@ -46,8 +46,12 @@ class ReturnValidationService @Inject() () {
         eclReturn.carriedOutAmlRegulatedActivityForFullFy.contains(false),
         "AML regulated activity length"
       ),
-      validateOptExists(eclReturn.calculatedLiability, "Calculated liability")
-    ).mapN((_, _, _, _, _, _) => eclReturn)
+      validateOptExists(eclReturn.calculatedLiability, "Calculated liability"),
+      validateOptExists(eclReturn.contactName, "Contact name"),
+      validateOptExists(eclReturn.contactRole, "Contact role"),
+      validateOptExists(eclReturn.contactEmailAddress, "Contact email address"),
+      validateOptExists(eclReturn.contactTelephoneNumber, "Contact telephone number")
+    ).mapN((_, _, _, _, _, _, _, _, _, _) => eclReturn)
 
   private def validateOptExists[T](optData: Option[T], description: String): ValidationResult[T] =
     optData match {
