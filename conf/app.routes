@@ -7,3 +7,5 @@ DELETE        /returns/:id                             uk.gov.hmrc.economiccrime
 GET           /returns/:id/validation-errors           uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnValidationController.getValidationErrors(id)
 
 POST          /calculate-liability                     uk.gov.hmrc.economiccrimelevyreturns.controllers.CalculateLiabilityController.calculateLiability
+
+POST          /submit-return/:id                       uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnSubmissionController.submitReturn(id)
