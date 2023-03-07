@@ -41,7 +41,11 @@ class ReturnValidationServiceSpec extends SpecBase {
         DataValidationError(DataMissing, "Relevant AP 12 months choice is missing"),
         DataValidationError(DataMissing, "Relevant AP revenue is missing"),
         DataValidationError(DataMissing, "Carried out AML regulated activity for full FY choice is missing"),
-        DataValidationError(DataMissing, "Calculated liability is missing")
+        DataValidationError(DataMissing, "Calculated liability is missing"),
+        DataValidationError(DataMissing, "Contact name is missing"),
+        DataValidationError(DataMissing, "Contact role is missing"),
+        DataValidationError(DataMissing, "Contact email address is missing"),
+        DataValidationError(DataMissing, "Contact telephone number is missing")
       )
 
       val result = service.validateReturn(eclReturn)
