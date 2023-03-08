@@ -21,6 +21,7 @@ import cats.implicits._
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataMissing
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.EclReturnDetails
 
 import javax.inject.Inject
 
@@ -28,7 +29,7 @@ class ReturnValidationService @Inject() () {
 
   type ValidationResult[A] = ValidatedNel[DataValidationError, A]
 
-  def validateReturn(eclReturn: EclReturn): ValidationResult[EclReturn] =
+  def validateReturn(eclReturn: EclReturn): ValidationResult[EclReturnDetails] =
     (
       validateOptExists(eclReturn.relevantAp12Months, "Relevant AP 12 months choice"),
       validateConditionalOptExists(
@@ -51,7 +52,9 @@ class ReturnValidationService @Inject() () {
       validateOptExists(eclReturn.contactRole, "Contact role"),
       validateOptExists(eclReturn.contactEmailAddress, "Contact email address"),
       validateOptExists(eclReturn.contactTelephoneNumber, "Contact telephone number")
-    ).mapN((_, _, _, _, _, _, _, _, _, _) => eclReturn)
+    ).mapN((_, _, _, _, _, calculatedLiability, _, _, _, _) =>
+      EclReturnDetails(amountDue = calculatedLiability.amountDue)
+    )
 
   private def validateOptExists[T](optData: Option[T], description: String): ValidationResult[T] =
     optData match {

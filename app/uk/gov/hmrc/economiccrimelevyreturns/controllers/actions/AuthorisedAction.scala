@@ -22,9 +22,10 @@ import play.api.libs.json.Json
 import play.api.mvc.Results.Unauthorized
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authorisedEnrolments, internalId}
+import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
-import uk.gov.hmrc.http.UnauthorizedException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendHeaderCarrierProvider
 import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 
@@ -44,10 +45,18 @@ class BaseAuthorisedAction @Inject() (
     with AuthorisedFunctions {
 
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] =
-    authorised().retrieve[Option[String]](Retrievals.internalId) {
-      _.map { internalId =>
-        block(AuthorisedRequest(request, internalId))
-      }.getOrElse(throw new UnauthorizedException("Unable to retrieve internalId"))
+    authorised(Enrolment(EclEnrolment.ServiceName)).retrieve(internalId and authorisedEnrolments) {
+      case optInternalId ~ enrolments =>
+        val internalId               = optInternalId.getOrElseFail("Unable to retrieve internalId")
+        val eclRegistrationReference =
+          enrolments
+            .getEnrolment(EclEnrolment.ServiceName)
+            .flatMap(_.getIdentifier(EclEnrolment.IdentifierKey))
+            .getOrElseFail(
+              s"Unable to retrieve enrolment with key ${EclEnrolment.ServiceName} and identifier ${EclEnrolment.IdentifierKey}"
+            )
+            .value
+        block(AuthorisedRequest(request, internalId, eclRegistrationReference))
     }(hc(request), executionContext) recover { case e: AuthorisationException =>
       Unauthorized(
         Json.toJson(
@@ -58,5 +67,9 @@ class BaseAuthorisedAction @Inject() (
         )
       )
     }
+
+  implicit class OptionOps[T](o: Option[T]) {
+    def getOrElseFail(failureMessage: String): T = o.getOrElse(throw new IllegalStateException(failureMessage))
+  }
 
 }

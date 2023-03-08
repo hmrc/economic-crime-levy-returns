@@ -56,6 +56,7 @@ trait SpecBase
 
   val cc: ControllerComponents                         = stubControllerComponents()
   val internalId: String                               = "test-id"
+  val eclRegistrationReference: String                 = "test-ecl-registration-reference"
   val emptyReturn: EclReturn                           = EclReturn.empty(internalId)
   val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
   val appConfig: AppConfig                             = app.injector.instanceOf[AppConfig]

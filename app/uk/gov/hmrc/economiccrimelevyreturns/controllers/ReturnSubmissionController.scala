@@ -42,11 +42,11 @@ class ReturnSubmissionController @Inject() (
     returnsRepository.get(id).flatMap {
       case Some(eclReturn) =>
         returnValidationService.validateReturn(eclReturn) match {
-          case Valid(_)   =>
-            returnService.submitEclReturn.map { response =>
+          case Valid(eclReturnDetails) =>
+            returnService.submitEclReturn(request.eclRegistrationReference, eclReturnDetails).map { response =>
               Ok(Json.toJson(response))
             }
-          case Invalid(e) =>
+          case Invalid(e)              =>
             Future.successful(InternalServerError(Json.toJson(DataValidationErrors(e.toList))))
         }
       case None            => Future.successful(NotFound)

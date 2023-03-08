@@ -16,17 +16,20 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
-import uk.gov.hmrc.economiccrimelevyreturns.models.SubmitEclReturnResponse
+import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.{Instant, ZoneId}
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ReturnService @Inject() (
+  integrationFrameworkConnector: IntegrationFrameworkConnector
 )(implicit ec: ExecutionContext) {
-  def submitEclReturn: Future[SubmitEclReturnResponse] =
-    Future.successful(SubmitEclReturnResponse(processingDate = Instant.now, eclReference = "XY007000075424"))
+
+  def submitEclReturn(eclRegistrationReference: String, eclReturnDetails: EclReturnDetails)(implicit
+    hc: HeaderCarrier
+  ): Future[SubmitEclReturnResponse] =
+    integrationFrameworkConnector.submitEclReturn(eclRegistrationReference, eclReturnDetails)
 
 }

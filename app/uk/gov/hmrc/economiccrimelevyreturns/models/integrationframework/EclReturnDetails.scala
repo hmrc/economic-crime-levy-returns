@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.economiccrimelevyreturns.models
+package uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.Instant
+// TODO: Add elements when ETMP has provided the API schema
+final case class EclReturnDetails(amountDue: BigDecimal)
 
-final case class SubmitEclReturnResponse(
-  processingDate: Instant,
-  eclReference: String
-)
-
-object SubmitEclReturnResponse {
-  implicit val format: OFormat[SubmitEclReturnResponse] = Json.format[SubmitEclReturnResponse]
+object EclReturnDetails {
+  implicit val format: OFormat[EclReturnDetails] = Json.format[EclReturnDetails]
 }

@@ -28,10 +28,10 @@ class ReturnValidationServiceSpec extends SpecBase {
   val service = new ReturnValidationService
 
   "validateReturn" should {
-    "return the ECL return if the return is valid" in forAll { validEclReturn: ValidEclReturn =>
+    "return the ECL return details if the ECL return is valid" in forAll { validEclReturn: ValidEclReturn =>
       val result = service.validateReturn(validEclReturn.eclReturn)
 
-      result shouldBe Valid(validEclReturn.eclReturn)
+      result shouldBe Valid(validEclReturn.expectedEclReturnDetails)
     }
 
     "return a non-empty list of errors when unconditional mandatory ECL return data items are missing" in {

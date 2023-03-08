@@ -24,7 +24,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationData
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.FinancialDetails
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, FinancialDetails, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
 import uk.gov.hmrc.http.HttpClient
 
@@ -68,6 +68,50 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
             any(),
             ArgumentMatchers.eq(expectedHeaders)
           )(any(), any(), any())
+
+        reset(mockHttpClient)
+    }
+  }
+
+  "submitEclReturn" should {
+    "return an ECL return reference when the http client returns an ECL return reference" in forAll {
+      (
+        eclReturnDetails: EclReturnDetails,
+        submitEclReturnResponse: SubmitEclReturnResponse,
+        correlationId: String
+      ) =>
+        val periodKey = "22XY"
+
+        val expectedUrl =
+          s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/returns/$eclRegistrationReference/$periodKey"
+
+        val expectedHeaders: Seq[(String, String)] = Seq(
+          (HeaderNames.AUTHORIZATION, appConfig.integrationFrameworkBearerToken),
+          (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
+          (CustomHeaderNames.CorrelationId, correlationId)
+        )
+
+        when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
+
+        when(
+          mockHttpClient.POST[EclReturnDetails, SubmitEclReturnResponse](
+            ArgumentMatchers.eq(expectedUrl),
+            ArgumentMatchers.eq(eclReturnDetails),
+            ArgumentMatchers.eq(expectedHeaders)
+          )(any(), any(), any(), any())
+        )
+          .thenReturn(Future.successful(submitEclReturnResponse))
+
+        val result = await(connector.submitEclReturn(eclRegistrationReference, eclReturnDetails))
+
+        result shouldBe submitEclReturnResponse
+
+        verify(mockHttpClient, times(1))
+          .POST[EclReturnDetails, SubmitEclReturnResponse](
+            ArgumentMatchers.eq(expectedUrl),
+            ArgumentMatchers.eq(eclReturnDetails),
+            ArgumentMatchers.eq(expectedHeaders)
+          )(any(), any(), any(), any())
 
         reset(mockHttpClient)
     }

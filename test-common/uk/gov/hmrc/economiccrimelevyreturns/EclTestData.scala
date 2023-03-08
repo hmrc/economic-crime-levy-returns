@@ -19,18 +19,57 @@ package uk.gov.hmrc.economiccrimelevyreturns
 import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitrary
 import org.scalacheck.derive.MkArbitrary
 import org.scalacheck.{Arbitrary, Gen}
+import uk.gov.hmrc.auth.core.{Enrolment, EnrolmentIdentifier, Enrolments}
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
+import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.EclReturnDetails
 import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclReturn}
 
 import java.time.Instant
 
-final case class ValidEclReturn(eclReturn: EclReturn)
+case class EnrolmentsWithEcl(enrolments: Enrolments)
+
+case class EnrolmentsWithoutEcl(enrolments: Enrolments)
+
+final case class EclLiabilityCalculationData(
+  relevantApLength: Int,
+  relevantApRevenue: Long,
+  amlRegulatedActivityLength: Int
+)
+
+final case class ValidEclReturn(
+  eclReturn: EclReturn,
+  eclLiabilityCalculationData: EclLiabilityCalculationData,
+  expectedEclReturnDetails: EclReturnDetails
+)
 
 trait EclTestData { self: Generators =>
 
   implicit val arbInstant: Arbitrary[Instant] = Arbitrary {
     Instant.now()
+  }
+
+  implicit val arbEnrolmentsWithEcl: Arbitrary[EnrolmentsWithEcl] = Arbitrary {
+    for {
+      enrolments               <- Arbitrary.arbitrary[Enrolments]
+      enrolment                <- Arbitrary.arbitrary[Enrolment]
+      eclRegistrationReference <- Arbitrary.arbitrary[String]
+      eclEnrolmentIdentifier    = EnrolmentIdentifier(EclEnrolment.IdentifierKey, eclRegistrationReference)
+      eclEnrolment              =
+        enrolment.copy(key = EclEnrolment.ServiceName, identifiers = enrolment.identifiers :+ eclEnrolmentIdentifier)
+    } yield EnrolmentsWithEcl(enrolments.copy(enrolments.enrolments + eclEnrolment))
+  }
+
+  implicit val arbEnrolmentsWithoutEcl: Arbitrary[EnrolmentsWithoutEcl] = Arbitrary {
+    Arbitrary
+      .arbitrary[Enrolments]
+      .retryUntil(
+        !_.enrolments.exists(e =>
+          e.key == EclEnrolment.ServiceName && e.identifiers.exists(_.key == EclEnrolment.IdentifierKey)
+        )
+      )
+      .map(EnrolmentsWithoutEcl)
   }
 
   implicit val arbEclReturn: Arbitrary[EclReturn] = Arbitrary {
@@ -43,10 +82,10 @@ trait EclTestData { self: Generators =>
   implicit val arbValidEclReturn: Arbitrary[ValidEclReturn] = Arbitrary {
     for {
       relevantAp12Months                      <- Arbitrary.arbitrary[Boolean]
-      relevantApLength                        <- Arbitrary.arbitrary[Int]
-      relevantApRevenue                       <- Arbitrary.arbitrary[Long]
+      relevantApLength                        <- Gen.chooseNum[Int](minApDays, maxApDays)
+      relevantApRevenue                       <- Gen.chooseNum[Long](minRevenue, maxRevenue)
       carriedOutAmlRegulatedActivityForFullFy <- Arbitrary.arbitrary[Boolean]
-      amlRegulatedActivityLength              <- Arbitrary.arbitrary[Int]
+      amlRegulatedActivityLength              <- Gen.chooseNum[Int](minAmlDays, maxAmlDays)
       calculatedLiability                     <- Arbitrary.arbitrary[CalculatedLiability]
       contactName                             <- stringsWithMaxLength(160)
       contactRole                             <- stringsWithMaxLength(160)
@@ -68,10 +107,30 @@ trait EclTestData { self: Generators =>
           contactRole = Some(contactRole),
           contactEmailAddress = Some(contactEmailAddress),
           contactTelephoneNumber = Some(contactTelephoneNumber)
-        )
+        ),
+      EclLiabilityCalculationData(
+        relevantApLength = if (relevantAp12Months) daysInYear else relevantApLength,
+        relevantApRevenue = relevantApRevenue,
+        amlRegulatedActivityLength =
+          if (carriedOutAmlRegulatedActivityForFullFy) daysInYear else amlRegulatedActivityLength
+      ),
+      EclReturnDetails(
+        amountDue = calculatedLiability.amountDue
+      )
     )
   }
 
   def alphaNumericString: String = Gen.alphaNumStr.retryUntil(_.nonEmpty).sample.get
+
+  val testInternalId: String               = alphaNumericString
+  val testEclRegistrationReference: String = alphaNumericString
+
+  val minRevenue: Long = 0L
+  val maxRevenue: Long = 99999999999L
+  val minApDays: Int   = 1
+  val maxApDays: Int   = 999
+  val minAmlDays: Int  = 1
+  val maxAmlDays: Int  = 365
+  val daysInYear: Int  = 365
 
 }

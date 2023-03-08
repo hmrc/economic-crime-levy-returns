@@ -5,34 +5,7 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.base
 
-import com.github.tomakehurst.wiremock.client.WireMock._
-import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import uk.gov.hmrc.economiccrimelevyreturns.base.WireMockHelper._
+import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
+import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
 
-trait WireMockStubs {
-
-  def stubAuthorised(): StubMapping =
-    stub(
-      post(urlEqualTo("/auth/authorise"))
-        .withRequestBody(
-          equalToJson(
-            s"""
-             |{
-             |  "authorise": [],
-             |  "retrieve": [ "internalId" ]
-             |}
-           """.stripMargin,
-            true,
-            true
-          )
-        ),
-      aResponse()
-        .withStatus(200)
-        .withBody(s"""
-                     |{
-                     |  "internalId": "id"
-                     |}
-           """.stripMargin)
-    )
-
-}
+trait WireMockStubs extends EclTestData with Generators with AuthStubs with IntegrationFrameworkStubs
