@@ -61,6 +61,7 @@ abstract class ISpecBase
   implicit def ec: ExecutionContext            = global
 
   val internalId: String       = "test-id"
+  val eclRegistrationReference: String = "test-ecl-registration-reference"
   val emptyReturn: EclReturn   = EclReturn.empty(internalId)
   val now: Instant             = Instant.now.truncatedTo(ChronoUnit.MILLIS)
   private val stubClock: Clock = Clock.fixed(now, ZoneId.systemDefault)
@@ -70,7 +71,8 @@ abstract class ISpecBase
     "auditing.enabled"   -> false,
     "application.router" -> "testOnlyDoNotUseInAppConf.Routes"
   ) ++ setWireMockPort(
-    "auth"
+    "auth",
+    "integration-framework"
   )
 
   val contextPath: String = "economic-crime-levy-returns"

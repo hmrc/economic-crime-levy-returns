@@ -19,7 +19,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.connectors
 import play.api.http.HeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.FinancialDetails
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
@@ -45,5 +45,18 @@ class IntegrationFrameworkConnector @Inject() (
       s"${appConfig.integrationFrameworkUrl}/enterprise/02.00.00/financial-data/zecl/$eclRegistrationReference/ECL",
       headers = integrationFrameworkHeaders
     )
+
+  def submitEclReturn(eclRegistrationReference: String, eclReturnDetails: EclReturnDetails)(implicit
+    hc: HeaderCarrier
+  ): Future[SubmitEclReturnResponse] = {
+    // TODO: Replace with actual period key
+    val periodKey: String = "22XY"
+
+    httpClient.POST[EclReturnDetails, SubmitEclReturnResponse](
+      s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/returns/$eclRegistrationReference/$periodKey",
+      eclReturnDetails,
+      headers = integrationFrameworkHeaders
+    )
+  }
 
 }

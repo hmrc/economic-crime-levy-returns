@@ -26,6 +26,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrors}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataInvalid
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.EclReturnDetails
 import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
 import uk.gov.hmrc.economiccrimelevyreturns.services.ReturnValidationService
 
@@ -44,15 +45,17 @@ class ReturnValidationControllerSpec extends SpecBase {
   )
 
   "getValidationErrors" should {
-    "return 204 NO_CONTENT when the ECL return data is valid" in forAll { eclReturn: EclReturn =>
-      when(mockReturnsRepository.get(ArgumentMatchers.eq(eclReturn.internalId)))
-        .thenReturn(Future.successful(Some(eclReturn)))
+    "return 204 NO_CONTENT when the ECL return data is valid" in forAll {
+      (eclReturn: EclReturn, eclReturnDetails: EclReturnDetails) =>
+        when(mockReturnsRepository.get(ArgumentMatchers.eq(eclReturn.internalId)))
+          .thenReturn(Future.successful(Some(eclReturn)))
 
-      when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(eclReturn))).thenReturn(eclReturn.validNel)
+        when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(eclReturn)))
+          .thenReturn(eclReturnDetails.validNel)
 
-      val result: Future[Result] = controller.getValidationErrors(eclReturn.internalId)(fakeRequest)
+        val result: Future[Result] = controller.getValidationErrors(eclReturn.internalId)(fakeRequest)
 
-      status(result) shouldBe NO_CONTENT
+        status(result) shouldBe NO_CONTENT
     }
 
     "return 200 OK with validation errors in the JSON response body when the ECL return data is invalid" in forAll {

@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.economiccrimelevyreturns.controllers.actions
+package uk.gov.hmrc.economiccrimelevyreturns.services
 
-import play.api.mvc._
-import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
+import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeAuthorisedAction @Inject() (bodyParsers: PlayBodyParsers) extends AuthorisedAction {
+class ReturnService @Inject() (
+  integrationFrameworkConnector: IntegrationFrameworkConnector
+)(implicit ec: ExecutionContext) {
 
-  override def parser: BodyParser[AnyContent] = bodyParsers.defaultBodyParser
-
-  override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] =
-    block(AuthorisedRequest(request, "id", "test-ecl-registration-reference"))
-
-  override protected def executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+  def submitEclReturn(eclRegistrationReference: String, eclReturnDetails: EclReturnDetails)(implicit
+    hc: HeaderCarrier
+  ): Future[SubmitEclReturnResponse] =
+    integrationFrameworkConnector.submitEclReturn(eclRegistrationReference, eclReturnDetails)
 
 }

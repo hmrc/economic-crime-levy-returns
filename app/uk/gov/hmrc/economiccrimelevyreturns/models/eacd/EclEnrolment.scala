@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.economiccrimelevyreturns.models.requests
+package uk.gov.hmrc.economiccrimelevyreturns.models.eacd
 
-import play.api.mvc.{Request, WrappedRequest}
-
-case class AuthorisedRequest[A](request: Request[A], internalId: String, eclRegistrationReference: String)
-    extends WrappedRequest[A](request)
+object EclEnrolment {
+  val ServiceName: String   = "HMRC-ECL-ORG"
+  val IdentifierKey: String = "EclRegistrationReference"
+}
