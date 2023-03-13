@@ -43,12 +43,10 @@ class ReturnSubmissionController @Inject() (
       case Some(eclReturn) =>
         returnValidationService.validateReturn(eclReturn) match {
           case Valid(eclReturnDetails) =>
-            request.eclRegistrationReference match {
-              case Some(eclRegistrationReference) =>
-                returnService.submitEclReturn(eclRegistrationReference, eclReturnDetails).map { response =>
-                  Ok(Json.toJson(response))
-                }
-              case _                              => Future.successful(InternalServerError("ECL registration reference not found in request"))
+            val eclRegistrationReference = request.eclRegistrationReference
+              .getOrElse(throw new IllegalStateException("ECL registration reference not found in request"))
+            returnService.submitEclReturn(eclRegistrationReference, eclReturnDetails).map { response =>
+              Ok(Json.toJson(response))
             }
           case Invalid(e)              =>
             Future.successful(InternalServerError(Json.toJson(DataValidationErrors(e.toList))))
