@@ -22,7 +22,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Results.Unauthorized
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authorisedEnrolments, internalId}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, internalId}
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
@@ -45,18 +45,14 @@ class BaseAuthorisedAction @Inject() (
     with AuthorisedFunctions {
 
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] =
-    authorised(Enrolment(EclEnrolment.ServiceName)).retrieve(internalId and authorisedEnrolments) {
-      case optInternalId ~ enrolments =>
-        val internalId               = optInternalId.getOrElseFail("Unable to retrieve internalId")
-        val eclRegistrationReference =
-          enrolments
-            .getEnrolment(EclEnrolment.ServiceName)
-            .flatMap(_.getIdentifier(EclEnrolment.IdentifierKey))
-            .getOrElseFail(
-              s"Unable to retrieve enrolment with key ${EclEnrolment.ServiceName} and identifier ${EclEnrolment.IdentifierKey}"
-            )
-            .value
-        block(AuthorisedRequest(request, internalId, eclRegistrationReference))
+    authorised().retrieve(internalId and allEnrolments) { case optInternalId ~ enrolments =>
+      val internalId                  = optInternalId.getOrElseFail("Unable to retrieve internalId")
+      val optEclRegistrationReference =
+        enrolments
+          .getEnrolment(EclEnrolment.ServiceName)
+          .flatMap(_.getIdentifier(EclEnrolment.IdentifierKey))
+          .map(identifier => identifier.value)
+      block(AuthorisedRequest(request, internalId, optEclRegistrationReference))
     }(hc(request), executionContext) recover { case e: AuthorisationException =>
       Unauthorized(
         Json.toJson(
