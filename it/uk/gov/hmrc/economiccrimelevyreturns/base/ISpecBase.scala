@@ -75,8 +75,6 @@ abstract class ISpecBase
     "integration-framework"
   )
 
-  val contextPath: String = "economic-crime-levy-returns"
-
   override def fakeApplication(): Application =
     GuiceApplicationBuilder()
       .disable[com.kenshoo.play.metrics.PlayModule]

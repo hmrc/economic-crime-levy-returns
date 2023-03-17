@@ -24,7 +24,7 @@ import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 
 class ReturnsISpec extends ISpecBase {
 
-  s"PUT /$contextPath/returns"        should {
+  s"PUT ${routes.ReturnsController.upsertReturn.url}"           should {
     "create or update a return and return 200 OK with the return" in {
       stubAuthorised()
 
@@ -42,7 +42,7 @@ class ReturnsISpec extends ISpecBase {
     }
   }
 
-  s"GET /$contextPath/returns/:id"    should {
+  s"GET ${routes.ReturnsController.getReturn(":id").url}"       should {
     "return 200 OK with a return that is already in the database" in {
       stubAuthorised()
 
@@ -67,7 +67,7 @@ class ReturnsISpec extends ISpecBase {
     }
   }
 
-  s"DELETE /$contextPath/returns/:id" should {
+  s"DELETE ${routes.ReturnsController.deleteReturn(":id").url}" should {
     "delete a return and return 204 NO_CONTENT" in {
       stubAuthorised()
 
