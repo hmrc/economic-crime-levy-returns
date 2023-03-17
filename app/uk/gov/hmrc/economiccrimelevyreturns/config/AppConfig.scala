@@ -17,7 +17,6 @@
 package uk.gov.hmrc.economiccrimelevyreturns.config
 
 import play.api.Configuration
-import uk.gov.hmrc.economiccrimelevyreturns.models.{BandRange, Bands}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
@@ -42,33 +41,5 @@ class AppConfig @Inject() (configuration: Configuration, servicesConfig: Service
 
   val integrationFrameworkEnvironment: String =
     configuration.get[String]("microservice.services.integration-framework.environment")
-
-  private def bandRangeFromConfig(size: String): BandRange =
-    BandRange(
-      from = configuration.get[Long](s"bands.$size.from"),
-      to = configuration.get[Long](s"bands.$size.to")
-    )
-
-  val defaultBands: Bands = {
-    val small     = bandRangeFromConfig("small")
-    val medium    = bandRangeFromConfig("medium")
-    val large     = bandRangeFromConfig("large")
-    val veryLarge = BandRange(
-      from = configuration.get[Long]("bands.veryLarge.from"),
-      to = Long.MaxValue
-    )
-
-    Bands(
-      small = small,
-      medium = medium,
-      large = large,
-      veryLarge = veryLarge
-    )
-  }
-
-  val defaultSmallAmount: Long     = configuration.get[Long]("bands.small.amount")
-  val defaultMediumAmount: Long    = configuration.get[Long]("bands.medium.amount")
-  val defaultLargeAmount: Long     = configuration.get[Long]("bands.large.amount")
-  val defaultVeryLargeAmount: Long = configuration.get[Long]("bands.veryLarge.amount")
 
 }

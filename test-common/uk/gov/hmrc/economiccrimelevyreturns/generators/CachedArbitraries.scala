@@ -20,7 +20,7 @@ import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitr
 import org.scalacheck.Arbitrary
 import org.scalacheck.derive.MkArbitrary
 import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
-import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculateLiabilityRequest, CalculatedLiability}
+import uk.gov.hmrc.economiccrimelevyreturns.models.CalculatedLiability
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.{ObligationData, ObligationStatus}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, FinancialDetails, SubmitEclReturnResponse}
 
@@ -28,12 +28,11 @@ object CachedArbitraries extends EclTestData with Generators {
 
   private def mkArb[T](implicit mkArb: MkArbitrary[T]): Arbitrary[T] = MkArbitrary[T].arbitrary
 
-  implicit lazy val arbOptObligationData: Arbitrary[Option[ObligationData]]            = mkArb
-  implicit lazy val arbFinancialDetails: Arbitrary[FinancialDetails]                   = mkArb
-  implicit lazy val arbObligationStatus: Arbitrary[ObligationStatus]                   = mkArb
-  implicit lazy val arbCalculatedLiability: Arbitrary[CalculatedLiability]             = mkArb
-  implicit lazy val arbCalculateLiabilityRequest: Arbitrary[CalculateLiabilityRequest] = mkArb
-  implicit lazy val arbSubmitEclReturnResponse: Arbitrary[SubmitEclReturnResponse]     = mkArb
-  implicit lazy val arbEclReturnDetails: Arbitrary[EclReturnDetails]                   = mkArb
+  implicit lazy val arbOptObligationData: Arbitrary[Option[ObligationData]]        = mkArb
+  implicit lazy val arbFinancialDetails: Arbitrary[FinancialDetails]               = mkArb
+  implicit lazy val arbObligationStatus: Arbitrary[ObligationStatus]               = mkArb
+  implicit lazy val arbCalculatedLiability: Arbitrary[CalculatedLiability]         = mkArb
+  implicit lazy val arbSubmitEclReturnResponse: Arbitrary[SubmitEclReturnResponse] = mkArb
+  implicit lazy val arbEclReturnDetails: Arbitrary[EclReturnDetails]               = mkArb
 
 }
