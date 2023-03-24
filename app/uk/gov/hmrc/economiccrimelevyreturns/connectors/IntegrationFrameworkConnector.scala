@@ -40,12 +40,6 @@ class IntegrationFrameworkConnector @Inject() (
     (CustomHeaderNames.CorrelationId, correlationIdGenerator.generateCorrelationId)
   )
 
-  def getFinancialDetails(eclRegistrationReference: String)(implicit hc: HeaderCarrier): Future[FinancialDetails] =
-    httpClient.GET[FinancialDetails](
-      s"${appConfig.integrationFrameworkUrl}/enterprise/02.00.00/financial-data/zecl/$eclRegistrationReference/ECL",
-      headers = integrationFrameworkHeaders
-    )
-
   def submitEclReturn(eclRegistrationReference: String, eclReturnDetails: EclReturnDetails)(implicit
     hc: HeaderCarrier
   ): Future[SubmitEclReturnResponse] = {

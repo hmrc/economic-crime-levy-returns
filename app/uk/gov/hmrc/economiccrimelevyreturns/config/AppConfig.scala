@@ -29,12 +29,6 @@ class AppConfig @Inject() (configuration: Configuration, servicesConfig: Service
 
   val mongoTtl: Int = configuration.get[Int]("mongodb.timeToLiveInSeconds")
 
-  val desUrl: String = servicesConfig.baseUrl("des")
-
-  val desBearerToken: String = configuration.get[String]("microservice.services.des.bearerToken")
-
-  val desEnvironment: String = configuration.get[String]("microservice.services.des.environment")
-
   val integrationFrameworkUrl: String = servicesConfig.baseUrl("integration-framework")
 
   val integrationFrameworkBearerToken: String =
