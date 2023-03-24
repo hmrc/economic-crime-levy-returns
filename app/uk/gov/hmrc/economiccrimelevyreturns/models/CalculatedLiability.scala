@@ -17,9 +17,6 @@
 package uk.gov.hmrc.economiccrimelevyreturns.models
 
 import play.api.libs.json._
-import uk.gov.hmrc.economiccrimelevyreturns.utils.ApportionmentUtils
-
-import scala.math.BigDecimal.RoundingMode
 
 sealed trait Band
 
@@ -46,21 +43,7 @@ object Band {
   }
 }
 
-final case class BandRange(from: Long, to: Long) {
-  def apportion(relevantApLength: Int): BandRange = {
-    val a: BigDecimal => BigDecimal = ApportionmentUtils.apportionBasedOnDays(
-      _,
-      days = relevantApLength,
-      scale = 0,
-      roundingMode = RoundingMode.UP
-    )
-
-    BandRange(
-      from = a(from).longValue,
-      to = a(to).longValue
-    )
-  }
-}
+final case class BandRange(from: Long, to: Long)
 
 object BandRange {
   implicit val format: OFormat[BandRange] = Json.format[BandRange]
