@@ -23,8 +23,7 @@ import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
-import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationData
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, FinancialDetails, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
 import uk.gov.hmrc.http.HttpClient
 
@@ -34,44 +33,6 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
   val mockHttpClient: HttpClient                         = mock[HttpClient]
   val mockCorrelationIdGenerator: CorrelationIdGenerator = mock[CorrelationIdGenerator]
   val connector                                          = new IntegrationFrameworkConnector(appConfig, mockHttpClient, mockCorrelationIdGenerator)
-
-  "getFinancialDetails" should {
-    "return financial details when the http client returns financial details" in forAll {
-      (eclRegistrationReference: String, financialDetails: FinancialDetails, correlationId: String) =>
-        val expectedUrl =
-          s"${appConfig.integrationFrameworkUrl}/enterprise/02.00.00/financial-data/zecl/$eclRegistrationReference/ECL"
-
-        val expectedHeaders: Seq[(String, String)] = Seq(
-          (HeaderNames.AUTHORIZATION, appConfig.integrationFrameworkBearerToken),
-          (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
-          (CustomHeaderNames.CorrelationId, correlationId)
-        )
-
-        when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
-
-        when(
-          mockHttpClient.GET[FinancialDetails](
-            ArgumentMatchers.eq(expectedUrl),
-            any(),
-            ArgumentMatchers.eq(expectedHeaders)
-          )(any(), any(), any())
-        )
-          .thenReturn(Future.successful(financialDetails))
-
-        val result = await(connector.getFinancialDetails(eclRegistrationReference))
-
-        result shouldBe financialDetails
-
-        verify(mockHttpClient, times(1))
-          .GET[ObligationData](
-            ArgumentMatchers.eq(expectedUrl),
-            any(),
-            ArgumentMatchers.eq(expectedHeaders)
-          )(any(), any(), any())
-
-        reset(mockHttpClient)
-    }
-  }
 
   "submitEclReturn" should {
     "return an ECL return reference when the http client returns an ECL return reference" in forAll {

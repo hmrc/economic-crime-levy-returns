@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.des
 
-import play.api.libs.json.{Format, JsError, JsResult, JsString, JsSuccess, JsValue, Json, OFormat}
-
-import java.util.Date
+import play.api.libs.json.{Format, JsError, JsResult, JsString, JsSuccess, JsValue}
 
 sealed trait ObligationStatus
 
@@ -44,44 +42,4 @@ object ObligationStatus {
       case Fulfilled => JsString("F")
     }
   }
-}
-
-final case class ObligationData(
-  obligations: Seq[Obligation]
-)
-
-object ObligationData {
-  implicit val format: OFormat[ObligationData] = Json.format[ObligationData]
-}
-
-final case class Obligation(
-  identification: Option[Identification],
-  obligationDetails: Seq[ObligationDetails]
-)
-
-object Obligation {
-  implicit val format: OFormat[Obligation] = Json.format[Obligation]
-}
-
-final case class Identification(
-  incomeSourceType: Option[String],
-  referenceNumber: String,
-  referenceType: String
-)
-
-object Identification {
-  implicit val format: OFormat[Identification] = Json.format[Identification]
-}
-
-final case class ObligationDetails(
-  status: ObligationStatus,
-  inboundCorrespondenceFromDate: Date,
-  inboundCorrespondenceToDate: Date,
-  inboundCorrespondenceDateReceived: Option[Date],
-  inboundCorrespondenceDueDate: Date,
-  periodKey: String
-)
-
-object ObligationDetails {
-  implicit val format: OFormat[ObligationDetails] = Json.format[ObligationDetails]
 }
