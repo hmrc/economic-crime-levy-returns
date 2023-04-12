@@ -32,6 +32,7 @@ final case class EclReturn(
   contactRole: Option[String],
   contactEmailAddress: Option[String],
   contactTelephoneNumber: Option[String],
+  obligationDetails: Option[ObligationDetails],
   lastUpdated: Option[Instant] = None
 )
 
@@ -47,7 +48,8 @@ object EclReturn {
     contactName = None,
     contactRole = None,
     contactEmailAddress = None,
-    contactTelephoneNumber = None
+    contactTelephoneNumber = None,
+    obligationDetails = None
   )
 
   implicit val format: OFormat[EclReturn] = Json.format[EclReturn]
