@@ -18,6 +18,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import cats.data.ValidatedNel
 import cats.implicits._
+import uk.gov.hmrc.economiccrimelevyreturns.models.Band.Small
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataMissing
@@ -38,8 +39,10 @@ class ReturnValidationService @Inject() () {
         "Relevant AP length"
       ),
       validateOptExists(eclReturn.relevantApRevenue, "Relevant AP revenue"),
-      validateOptExists(
+      validateOptExists(eclReturn.calculatedLiability, "Calculated liability"),
+      validateConditionalOptExists(
         eclReturn.carriedOutAmlRegulatedActivityForFullFy,
+        eclReturn.calculatedLiability.get.calculatedBand != Small,
         "Carried out AML regulated activity for full FY choice"
       ),
       validateConditionalOptExists(
@@ -47,12 +50,11 @@ class ReturnValidationService @Inject() () {
         eclReturn.carriedOutAmlRegulatedActivityForFullFy.contains(false),
         "AML regulated activity length"
       ),
-      validateOptExists(eclReturn.calculatedLiability, "Calculated liability"),
       validateOptExists(eclReturn.contactName, "Contact name"),
       validateOptExists(eclReturn.contactRole, "Contact role"),
       validateOptExists(eclReturn.contactEmailAddress, "Contact email address"),
       validateOptExists(eclReturn.contactTelephoneNumber, "Contact telephone number")
-    ).mapN((_, _, _, _, _, calculatedLiability, _, _, _, _) =>
+    ).mapN((_, _, _, calculatedLiability, _, _, _, _, _, _) =>
       EclReturnDetails(amountDue = calculatedLiability.amountDue)
     )
 
