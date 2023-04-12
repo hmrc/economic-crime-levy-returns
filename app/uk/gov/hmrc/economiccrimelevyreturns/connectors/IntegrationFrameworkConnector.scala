@@ -42,15 +42,11 @@ class IntegrationFrameworkConnector @Inject() (
 
   def submitEclReturn(eclRegistrationReference: String, eclReturnDetails: EclReturnDetails)(implicit
     hc: HeaderCarrier
-  ): Future[SubmitEclReturnResponse] = {
-    // TODO: Replace with actual period key
-    val periodKey: String = "22XY"
-
+  ): Future[SubmitEclReturnResponse] =
     httpClient.POST[EclReturnDetails, SubmitEclReturnResponse](
-      s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/returns/$eclRegistrationReference/$periodKey",
+      s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/returns/$eclRegistrationReference/${eclReturnDetails.periodKey}",
       eclReturnDetails,
       headers = integrationFrameworkHeaders
     )
-  }
 
 }
