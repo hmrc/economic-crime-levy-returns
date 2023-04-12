@@ -17,9 +17,11 @@
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import cats.data.Validated.Valid
+import org.scalacheck.Gen
 import uk.gov.hmrc.economiccrimelevyreturns.ValidEclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
-import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
+import uk.gov.hmrc.economiccrimelevyreturns.models.Band._
+import uk.gov.hmrc.economiccrimelevyreturns.models.{Band, EclReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataMissing
 
@@ -40,7 +42,6 @@ class ReturnValidationServiceSpec extends SpecBase {
       val expectedErrors = Seq(
         DataValidationError(DataMissing, "Relevant AP 12 months choice is missing"),
         DataValidationError(DataMissing, "Relevant AP revenue is missing"),
-        DataValidationError(DataMissing, "Carried out AML regulated activity for full FY choice is missing"),
         DataValidationError(DataMissing, "Calculated liability is missing"),
         DataValidationError(DataMissing, "Contact name is missing"),
         DataValidationError(DataMissing, "Contact role is missing"),
@@ -68,6 +69,26 @@ class ReturnValidationServiceSpec extends SpecBase {
             "Relevant AP length is missing"
           )
         )
+    }
+
+    "return an error if the calculated band size is not Small and the AML regulated activity carried out for the full financial year is missing" in forAll(
+      arbValidEclReturn.arbitrary,
+      Gen.oneOf[Band](Medium, Large, VeryLarge)
+    ) { (validEclReturn: ValidEclReturn, calculatedBand: Band) =>
+      val calculatedLiability = validEclReturn.eclReturn.calculatedLiability.get.copy(calculatedBand = calculatedBand)
+      val invalidEclReturn    =
+        validEclReturn.eclReturn
+          .copy(calculatedLiability = Some(calculatedLiability), carriedOutAmlRegulatedActivityForFullFy = None)
+
+      val result = service.validateReturn(invalidEclReturn)
+
+      result.isValid shouldBe false
+      result.leftMap(nel =>
+        nel.toList should contain only DataValidationError(
+          DataMissing,
+          "Carried out AML regulated activity for full FY choice is missing"
+        )
+      )
     }
 
     "return an error if AML regulated activity was not carried out for the full financial year and the AML regulated activity length is missing" in forAll {

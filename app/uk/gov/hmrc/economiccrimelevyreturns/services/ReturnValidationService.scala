@@ -42,7 +42,7 @@ class ReturnValidationService @Inject() () {
       validateOptExists(eclReturn.calculatedLiability, "Calculated liability"),
       validateConditionalOptExists(
         eclReturn.carriedOutAmlRegulatedActivityForFullFy,
-        eclReturn.calculatedLiability.get.calculatedBand != Small,
+        eclReturn.calculatedLiability.isDefined && eclReturn.calculatedLiability.get.calculatedBand != Small,
         "Carried out AML regulated activity for full FY choice"
       ),
       validateConditionalOptExists(
