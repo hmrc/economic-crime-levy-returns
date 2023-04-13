@@ -15,14 +15,13 @@ class ReturnSubmissionISpec extends ISpecBase {
     "return 200 OK with an ECL return reference number in the JSON response body when the ECL return data is valid" in {
       stubAuthorised()
 
-      val periodKey         = "22XY"
       val validEclReturn    = random[ValidEclReturn]
       val eclReturnResponse =
         random[SubmitEclReturnResponse].copy(processingDate = Instant.parse("2007-12-25T10:15:30.00Z"))
 
       stubSubmitEclReturn(
         testEclRegistrationReference,
-        periodKey,
+        validEclReturn.expectedEclReturnDetails.periodKey,
         validEclReturn.expectedEclReturnDetails,
         eclReturnResponse
       )

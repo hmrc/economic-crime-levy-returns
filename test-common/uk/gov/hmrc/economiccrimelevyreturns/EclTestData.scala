@@ -24,9 +24,11 @@ import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
 import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.EclReturnDetails
-import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclReturn}
+import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclReturn, ObligationDetails}
 
-import java.time.Instant
+import java.time.{Instant, LocalDate}
+
+case class ValidPeriodKey(periodKey: String)
 
 case class EnrolmentsWithEcl(enrolments: Enrolments)
 
@@ -46,8 +48,20 @@ final case class ValidEclReturn(
 
 trait EclTestData { self: Generators =>
 
+  val MinRevenue: Long = 0L
+  val MaxRevenue: Long = 99999999999L
+  val MinApDays: Int   = 1
+  val MaxApDays: Int   = 999
+  val MinAmlDays: Int  = 0
+  val MaxAmlDays: Int  = 365
+  val FullYear: Int    = 365
+
   implicit val arbInstant: Arbitrary[Instant] = Arbitrary {
     Instant.now()
+  }
+
+  implicit val arbLocalDate: Arbitrary[LocalDate] = Arbitrary {
+    LocalDate.now()
   }
 
   implicit val arbEnrolmentsWithEcl: Arbitrary[EnrolmentsWithEcl] = Arbitrary {
@@ -79,18 +93,24 @@ trait EclTestData { self: Generators =>
     } yield eclReturn.copy(internalId = internalId)
   }
 
+  implicit val arbPeriodKey: Arbitrary[ValidPeriodKey] = Arbitrary {
+    Gen.listOfN(4, Gen.alphaNumChar).map(_.mkString).map(ValidPeriodKey)
+  }
+
   implicit val arbValidEclReturn: Arbitrary[ValidEclReturn] = Arbitrary {
     for {
       relevantAp12Months                      <- Arbitrary.arbitrary[Boolean]
-      relevantApLength                        <- Gen.chooseNum[Int](minApDays, maxApDays)
-      relevantApRevenue                       <- Gen.chooseNum[Long](minRevenue, maxRevenue)
+      relevantApLength                        <- Gen.chooseNum[Int](MinApDays, MaxApDays)
+      relevantApRevenue                       <- Gen.chooseNum[Long](MinRevenue, MaxRevenue)
       carriedOutAmlRegulatedActivityForFullFy <- Arbitrary.arbitrary[Boolean]
-      amlRegulatedActivityLength              <- Gen.chooseNum[Int](minAmlDays, maxAmlDays)
+      amlRegulatedActivityLength              <- Gen.chooseNum[Int](MinAmlDays, MaxAmlDays)
       calculatedLiability                     <- Arbitrary.arbitrary[CalculatedLiability]
       contactName                             <- stringsWithMaxLength(160)
       contactRole                             <- stringsWithMaxLength(160)
       contactEmailAddress                     <- emailAddress(160)
       contactTelephoneNumber                  <- telephoneNumber(24)
+      validPeriodKey                          <- Arbitrary.arbitrary[ValidPeriodKey]
+      obligationDetails                       <- Arbitrary.arbitrary[ObligationDetails].map(_.copy(periodKey = validPeriodKey.periodKey))
       internalId                               = alphaNumericString
     } yield ValidEclReturn(
       EclReturn
@@ -106,16 +126,18 @@ trait EclTestData { self: Generators =>
           contactName = Some(contactName),
           contactRole = Some(contactRole),
           contactEmailAddress = Some(contactEmailAddress),
-          contactTelephoneNumber = Some(contactTelephoneNumber)
+          contactTelephoneNumber = Some(contactTelephoneNumber),
+          obligationDetails = Some(obligationDetails)
         ),
       EclLiabilityCalculationData(
-        relevantApLength = if (relevantAp12Months) daysInYear else relevantApLength,
+        relevantApLength = if (relevantAp12Months) FullYear else relevantApLength,
         relevantApRevenue = relevantApRevenue,
         amlRegulatedActivityLength =
-          if (carriedOutAmlRegulatedActivityForFullFy) daysInYear else amlRegulatedActivityLength
+          if (carriedOutAmlRegulatedActivityForFullFy) FullYear else amlRegulatedActivityLength
       ),
       EclReturnDetails(
-        amountDue = calculatedLiability.amountDue
+        amountDue = calculatedLiability.amountDue,
+        periodKey = obligationDetails.periodKey
       )
     )
   }
@@ -124,13 +146,5 @@ trait EclTestData { self: Generators =>
 
   val testInternalId: String               = alphaNumericString
   val testEclRegistrationReference: String = alphaNumericString
-
-  val minRevenue: Long = 0L
-  val maxRevenue: Long = 99999999999L
-  val minApDays: Int   = 1
-  val maxApDays: Int   = 999
-  val minAmlDays: Int  = 1
-  val maxAmlDays: Int  = 365
-  val daysInYear: Int  = 365
 
 }
