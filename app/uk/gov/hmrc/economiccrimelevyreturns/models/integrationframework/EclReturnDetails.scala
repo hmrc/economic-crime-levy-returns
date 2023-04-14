@@ -18,8 +18,8 @@ package uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework
 
 import play.api.libs.json.{Json, OFormat}
 
-// TODO: Add elements when ETMP has provided the API schema
-final case class EclReturnDetails(amountDue: BigDecimal)
+// TODO: Update to align with the IF return submission schema once we have it (ECL-367)
+final case class EclReturnDetails(periodKey: String, amountDue: BigDecimal)
 
 object EclReturnDetails {
   implicit val format: OFormat[EclReturnDetails] = Json.format[EclReturnDetails]

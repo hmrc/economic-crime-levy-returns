@@ -41,10 +41,8 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
         submitEclReturnResponse: SubmitEclReturnResponse,
         correlationId: String
       ) =>
-        val periodKey = "22XY"
-
         val expectedUrl =
-          s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/returns/$eclRegistrationReference/$periodKey"
+          s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/returns/$eclRegistrationReference/${eclReturnDetails.periodKey}"
 
         val expectedHeaders: Seq[(String, String)] = Seq(
           (HeaderNames.AUTHORIZATION, appConfig.integrationFrameworkBearerToken),
