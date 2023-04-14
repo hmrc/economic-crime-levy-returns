@@ -55,7 +55,7 @@ class ReturnValidationService @Inject() () {
       validateOptExists(eclReturn.contactEmailAddress, "Contact email address"),
       validateOptExists(eclReturn.contactTelephoneNumber, "Contact telephone number")
     ).mapN((_, _, _, calculatedLiability, _, _, _, _, _, _) =>
-      EclReturnDetails(amountDue = calculatedLiability.amountDue)
+      EclReturnDetails(amountDue = calculatedLiability.amountDue.amount)
     )
 
   private def validateOptExists[T](optData: Option[T], description: String): ValidationResult[T] =

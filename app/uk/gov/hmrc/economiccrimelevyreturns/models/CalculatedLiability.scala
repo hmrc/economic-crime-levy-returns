@@ -43,7 +43,13 @@ object Band {
   }
 }
 
-final case class BandRange(from: Long, to: Long)
+final case class EclAmount(amount: BigDecimal, apportioned: Boolean = false)
+
+object EclAmount {
+  implicit val format: OFormat[EclAmount] = Json.format[EclAmount]
+}
+
+final case class BandRange(from: Long, to: Long, amount: EclAmount, apportioned: Boolean)
 
 object BandRange {
   implicit val format: OFormat[BandRange] = Json.format[BandRange]
@@ -55,7 +61,7 @@ object Bands {
   implicit val format: OFormat[Bands] = Json.format[Bands]
 }
 
-final case class CalculatedLiability(amountDue: BigDecimal, bands: Bands, calculatedBand: Band)
+final case class CalculatedLiability(amountDue: EclAmount, bands: Bands, calculatedBand: Band)
 
 object CalculatedLiability {
   implicit val format: OFormat[CalculatedLiability] = Json.format[CalculatedLiability]
