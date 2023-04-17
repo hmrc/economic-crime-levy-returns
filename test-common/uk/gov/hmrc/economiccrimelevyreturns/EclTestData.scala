@@ -19,12 +19,14 @@ package uk.gov.hmrc.economiccrimelevyreturns
 import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitrary
 import org.scalacheck.derive.MkArbitrary
 import org.scalacheck.{Arbitrary, Gen}
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.auth.core.{Enrolment, EnrolmentIdentifier, Enrolments}
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
 import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.EclReturnDetails
 import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclReturn, ObligationDetails}
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import java.time.{Instant, LocalDate}
 
@@ -62,6 +64,10 @@ trait EclTestData { self: Generators =>
 
   implicit val arbLocalDate: Arbitrary[LocalDate] = Arbitrary {
     LocalDate.now()
+  }
+
+  implicit val arbUpstreamErrorResponse: Arbitrary[UpstreamErrorResponse] = Arbitrary {
+    UpstreamErrorResponse("Internal server error", INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)
   }
 
   implicit val arbEnrolmentsWithEcl: Arbitrary[EnrolmentsWithEcl] = Arbitrary {

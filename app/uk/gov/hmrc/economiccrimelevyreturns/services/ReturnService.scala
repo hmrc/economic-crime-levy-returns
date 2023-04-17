@@ -17,19 +17,39 @@
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
+import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
+import uk.gov.hmrc.economiccrimelevyreturns.models.audit.RequestStatus.{Failed, Success}
+import uk.gov.hmrc.economiccrimelevyreturns.models.audit.{ReturnResult, ReturnSubmittedAuditEvent}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ReturnService @Inject() (
-  integrationFrameworkConnector: IntegrationFrameworkConnector
+  integrationFrameworkConnector: IntegrationFrameworkConnector,
+  auditConnector: AuditConnector
 )(implicit ec: ExecutionContext) {
 
-  def submitEclReturn(eclRegistrationReference: String, eclReturnDetails: EclReturnDetails)(implicit
-    hc: HeaderCarrier
+  def submitEclReturn(eclRegistrationReference: String, eclReturnDetails: EclReturnDetails, eclReturn: EclReturn)(
+    implicit hc: HeaderCarrier
   ): Future[SubmitEclReturnResponse] =
-    integrationFrameworkConnector.submitEclReturn(eclRegistrationReference, eclReturnDetails)
+    integrationFrameworkConnector.submitEclReturn(eclRegistrationReference, eclReturnDetails).map {
+      case Right(submitEclReturnResponse) =>
+        auditConnector.sendExtendedEvent(
+          ReturnSubmittedAuditEvent(
+            eclReturn,
+            ReturnResult(Success, submitEclReturnResponse.chargeReference, None)
+          ).extendedDataEvent
+        )
+
+        submitEclReturnResponse
+      case Left(e)                        =>
+        auditConnector.sendExtendedEvent(
+          ReturnSubmittedAuditEvent(eclReturn, ReturnResult(Failed, None, Some(e.getMessage()))).extendedDataEvent
+        )
+        throw e
+    }
 
 }

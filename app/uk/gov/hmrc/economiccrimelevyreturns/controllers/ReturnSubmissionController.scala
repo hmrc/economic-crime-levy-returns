@@ -43,8 +43,9 @@ class ReturnSubmissionController @Inject() (
       case Some(eclReturn) =>
         returnValidationService.validateReturn(eclReturn) match {
           case Valid(eclReturnDetails) =>
-            returnService.submitEclReturn(request.eclRegistrationReference, eclReturnDetails).map { response =>
-              Ok(Json.toJson(response))
+            returnService.submitEclReturn(request.eclRegistrationReference, eclReturnDetails, eclReturn).map {
+              response =>
+                Ok(Json.toJson(response))
             }
           case Invalid(e)              =>
             Future.successful(InternalServerError(Json.toJson(DataValidationErrors(e.toList))))

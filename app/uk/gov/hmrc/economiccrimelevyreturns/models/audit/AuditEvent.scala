@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework
+package uk.gov.hmrc.economiccrimelevyreturns.models.audit
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.JsValue
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
-import java.time.Instant
+trait AuditEvent {
+  private val AuditSource: String = "economic-crime-levy-returns"
+  val auditType: String
+  val detailJson: JsValue
 
-final case class SubmitEclReturnResponse(
-  processingDate: Instant,
-  chargeReference: Option[String]
-)
-
-object SubmitEclReturnResponse {
-  implicit val format: OFormat[SubmitEclReturnResponse] = Json.format[SubmitEclReturnResponse]
+  def extendedDataEvent: ExtendedDataEvent =
+    ExtendedDataEvent(auditSource = AuditSource, auditType = auditType, detail = detailJson)
 }
