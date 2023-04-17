@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework
+package uk.gov.hmrc.economiccrimelevyreturns.models.audit
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.JsValue
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
-// TODO: Update to align with the IF return submission schema once we have it (ECL-367)
-final case class EclReturnDetails(periodKey: String, amountDue: BigDecimal)
+trait AuditEvent {
+  private val AuditSource: String = "economic-crime-levy-returns"
+  val auditType: String
+  val detailJson: JsValue
 
-object EclReturnDetails {
-  implicit val format: OFormat[EclReturnDetails] = Json.format[EclReturnDetails]
+  def extendedDataEvent: ExtendedDataEvent =
+    ExtendedDataEvent(auditSource = AuditSource, auditType = auditType, detail = detailJson)
 }

@@ -25,7 +25,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.{HttpClient, UpstreamErrorResponse}
 
 import scala.concurrent.Future
 
@@ -35,16 +35,14 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
   val connector                                          = new IntegrationFrameworkConnector(appConfig, mockHttpClient, mockCorrelationIdGenerator)
 
   "submitEclReturn" should {
-    "return an ECL return reference when the http client returns an ECL return reference" in forAll {
+    "return either an error or the submit return response when the http client returns one" in forAll {
       (
         eclReturnDetails: EclReturnDetails,
-        submitEclReturnResponse: SubmitEclReturnResponse,
+        eitherResult: Either[UpstreamErrorResponse, SubmitEclReturnResponse],
         correlationId: String
       ) =>
-        val periodKey = "22XY"
-
         val expectedUrl =
-          s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/returns/$eclRegistrationReference/$periodKey"
+          s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/returns/$eclRegistrationReference/${eclReturnDetails.periodKey}"
 
         val expectedHeaders: Seq[(String, String)] = Seq(
           (HeaderNames.AUTHORIZATION, appConfig.integrationFrameworkBearerToken),
@@ -55,20 +53,20 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
         when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
 
         when(
-          mockHttpClient.POST[EclReturnDetails, SubmitEclReturnResponse](
+          mockHttpClient.POST[EclReturnDetails, Either[UpstreamErrorResponse, SubmitEclReturnResponse]](
             ArgumentMatchers.eq(expectedUrl),
             ArgumentMatchers.eq(eclReturnDetails),
             ArgumentMatchers.eq(expectedHeaders)
           )(any(), any(), any(), any())
         )
-          .thenReturn(Future.successful(submitEclReturnResponse))
+          .thenReturn(Future.successful(eitherResult))
 
         val result = await(connector.submitEclReturn(eclRegistrationReference, eclReturnDetails))
 
-        result shouldBe submitEclReturnResponse
+        result shouldBe eitherResult
 
         verify(mockHttpClient, times(1))
-          .POST[EclReturnDetails, SubmitEclReturnResponse](
+          .POST[EclReturnDetails, Either[UpstreamErrorResponse, SubmitEclReturnResponse]](
             ArgumentMatchers.eq(expectedUrl),
             ArgumentMatchers.eq(eclReturnDetails),
             ArgumentMatchers.eq(expectedHeaders)

@@ -22,7 +22,7 @@ import java.time.Instant
 
 final case class SubmitEclReturnResponse(
   processingDate: Instant,
-  chargeReference: String
+  chargeReference: Option[String]
 )
 
 object SubmitEclReturnResponse {

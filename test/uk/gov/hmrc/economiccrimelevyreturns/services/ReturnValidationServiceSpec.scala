@@ -46,7 +46,8 @@ class ReturnValidationServiceSpec extends SpecBase {
         DataValidationError(DataMissing, "Contact name is missing"),
         DataValidationError(DataMissing, "Contact role is missing"),
         DataValidationError(DataMissing, "Contact email address is missing"),
-        DataValidationError(DataMissing, "Contact telephone number is missing")
+        DataValidationError(DataMissing, "Contact telephone number is missing"),
+        DataValidationError(DataMissing, "Obligation details is missing")
       )
 
       val result = service.validateReturn(eclReturn)
