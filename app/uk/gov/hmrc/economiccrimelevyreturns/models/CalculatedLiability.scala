@@ -55,7 +55,13 @@ object BandRange {
   implicit val format: OFormat[BandRange] = Json.format[BandRange]
 }
 
-final case class Bands(small: BandRange, medium: BandRange, large: BandRange, veryLarge: BandRange)
+final case class Bands(
+  small: BandRange,
+  medium: BandRange,
+  large: BandRange,
+  veryLarge: BandRange,
+  apportioned: Boolean
+)
 
 object Bands {
   implicit val format: OFormat[Bands] = Json.format[Bands]
