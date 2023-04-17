@@ -23,9 +23,9 @@ import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrors}
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataInvalid
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataInvalid
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrors}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
 import uk.gov.hmrc.economiccrimelevyreturns.services.{ReturnService, ReturnValidationService}
@@ -59,7 +59,11 @@ class ReturnSubmissionControllerSpec extends SpecBase {
 
         when(
           mockReturnService
-            .submitEclReturn(ArgumentMatchers.eq(eclRegistrationReference), ArgumentMatchers.eq(eclReturnDetails))(
+            .submitEclReturn(
+              ArgumentMatchers.eq(eclRegistrationReference),
+              ArgumentMatchers.eq(eclReturnDetails),
+              ArgumentMatchers.eq(eclReturn)
+            )(
               any()
             )
         )

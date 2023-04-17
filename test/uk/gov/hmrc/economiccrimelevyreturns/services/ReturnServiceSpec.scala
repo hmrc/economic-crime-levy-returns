@@ -20,20 +20,25 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
-import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
+import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
+import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
+import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import scala.concurrent.Future
 
 class ReturnServiceSpec extends SpecBase {
   val mockIntegrationFrameworkConnector: IntegrationFrameworkConnector = mock[IntegrationFrameworkConnector]
+  val mockAuditConnector: AuditConnector                               = mock[AuditConnector]
 
-  val service = new ReturnService(mockIntegrationFrameworkConnector)
+  val service = new ReturnService(mockIntegrationFrameworkConnector, mockAuditConnector)
 
   "submitEclReturn" should {
-    "return the ECL return reference number" in forAll {
+    "trigger an audit event and return the successful submit return response" in forAll {
       (
+        eclReturn: EclReturn,
         eclReturnDetails: EclReturnDetails,
         returnResponse: SubmitEclReturnResponse
       ) =>
@@ -43,11 +48,39 @@ class ReturnServiceSpec extends SpecBase {
               any()
             )
         )
-          .thenReturn(Future.successful(returnResponse))
+          .thenReturn(Future.successful(Right(returnResponse)))
 
-        val result = await(service.submitEclReturn(eclRegistrationReference, eclReturnDetails))
+        val result = await(service.submitEclReturn(eclRegistrationReference, eclReturnDetails, eclReturn))
 
         result shouldBe returnResponse
+
+        verify(mockAuditConnector, times(1)).sendExtendedEvent(any())(any(), any())
+
+        reset(mockAuditConnector)
+    }
+
+    "trigger an audit event and throw an exception when submitting the return fails" in forAll {
+      (
+        eclReturn: EclReturn,
+        eclReturnDetails: EclReturnDetails
+      ) =>
+        when(
+          mockIntegrationFrameworkConnector
+            .submitEclReturn(ArgumentMatchers.eq(eclRegistrationReference), ArgumentMatchers.eq(eclReturnDetails))(
+              any()
+            )
+        )
+          .thenReturn(Future.successful(Left(UpstreamErrorResponse("Internal server error", INTERNAL_SERVER_ERROR))))
+
+        val result = intercept[UpstreamErrorResponse] {
+          await(service.submitEclReturn(eclRegistrationReference, eclReturnDetails, eclReturn))
+        }
+
+        result.getMessage() shouldBe "Internal server error"
+
+        verify(mockAuditConnector, times(1)).sendExtendedEvent(any())(any(), any())
+
+        reset(mockAuditConnector)
     }
   }
 }

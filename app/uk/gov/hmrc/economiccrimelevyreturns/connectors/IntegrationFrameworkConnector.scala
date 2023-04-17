@@ -22,7 +22,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, UpstreamErrorResponse}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,8 +42,8 @@ class IntegrationFrameworkConnector @Inject() (
 
   def submitEclReturn(eclRegistrationReference: String, eclReturnDetails: EclReturnDetails)(implicit
     hc: HeaderCarrier
-  ): Future[SubmitEclReturnResponse] =
-    httpClient.POST[EclReturnDetails, SubmitEclReturnResponse](
+  ): Future[Either[UpstreamErrorResponse, SubmitEclReturnResponse]] =
+    httpClient.POST[EclReturnDetails, Either[UpstreamErrorResponse, SubmitEclReturnResponse]](
       s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/returns/$eclRegistrationReference/${eclReturnDetails.periodKey}",
       eclReturnDetails,
       headers = integrationFrameworkHeaders
