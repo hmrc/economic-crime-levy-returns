@@ -40,6 +40,7 @@ class ReturnService @Inject() (
         auditConnector.sendExtendedEvent(
           ReturnSubmittedAuditEvent(
             eclReturn,
+            eclRegistrationReference,
             ReturnResult(Success, submitEclReturnResponse.chargeReference, None)
           ).extendedDataEvent
         )
