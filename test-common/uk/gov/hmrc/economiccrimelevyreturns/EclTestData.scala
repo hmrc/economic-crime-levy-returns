@@ -142,7 +142,7 @@ trait EclTestData { self: Generators =>
           if (carriedOutAmlRegulatedActivityForFullFy) FullYear else amlRegulatedActivityLength
       ),
       EclReturnDetails(
-        amountDue = calculatedLiability.amountDue,
+        amountDue = calculatedLiability.amountDue.amount,
         periodKey = obligationDetails.periodKey
       )
     )
