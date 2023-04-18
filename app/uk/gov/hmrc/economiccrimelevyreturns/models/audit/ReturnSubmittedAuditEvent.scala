@@ -36,6 +36,7 @@ object ReturnResult {
 
 case class ReturnSubmittedAuditEvent(
   returnData: EclReturn,
+  eclReference: String,
   submissionResult: ReturnResult
 ) extends AuditEvent {
   override val auditType: String   = "ReturnSubmitted"

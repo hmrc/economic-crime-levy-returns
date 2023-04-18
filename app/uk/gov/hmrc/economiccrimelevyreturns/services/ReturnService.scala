@@ -40,6 +40,7 @@ class ReturnService @Inject() (
         auditConnector.sendExtendedEvent(
           ReturnSubmittedAuditEvent(
             eclReturn,
+            eclRegistrationReference,
             ReturnResult(Success, submitEclReturnResponse.chargeReference, None)
           ).extendedDataEvent
         )
@@ -47,7 +48,11 @@ class ReturnService @Inject() (
         submitEclReturnResponse
       case Left(e)                        =>
         auditConnector.sendExtendedEvent(
-          ReturnSubmittedAuditEvent(eclReturn, ReturnResult(Failed, None, Some(e.getMessage()))).extendedDataEvent
+          ReturnSubmittedAuditEvent(
+            eclReturn,
+            eclRegistrationReference,
+            ReturnResult(Failed, None, Some(e.getMessage()))
+          ).extendedDataEvent
         )
         throw e
     }
