@@ -19,8 +19,8 @@ package uk.gov.hmrc.economiccrimelevyreturns
 import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitrary
 import org.scalacheck.derive.MkArbitrary
 import org.scalacheck.{Arbitrary, Gen}
-import play.api.http.{HeaderNames, MimeTypes}
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.http.{HeaderNames, MimeTypes}
 import play.api.libs.json.{JsObject, JsString}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
@@ -28,14 +28,13 @@ import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.auth.core.syntax.retrieved.authSyntaxForRetrieved
-import uk.gov.hmrc.auth.core.{Enrolment, EnrolmentIdentifier, Enrolments}
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
 import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.EclReturnDetails
-import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclReturn, ObligationDetails}
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
+import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclReturn, ObligationDetails}
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import java.time.{Clock, Instant, LocalDate}
@@ -177,14 +176,17 @@ trait EclTestData { self: Generators =>
     )
   }
 
-  type AuthRetrievals = Option[String] ~ Option[String] ~ ConfidenceLevel ~ Option[String] ~ Option[String] ~
-    Option[MdtpInformation] ~ Option[String] ~ LoginTimes ~
-    Option[Credentials] ~ Option[Name] ~ Option[LocalDate] ~ Option[String] ~
-    Option[AffinityGroup] ~ Option[String] ~ AgentInformation ~ Option[CredentialRole] ~ Option[String] ~
-    Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress]
+  type AuthRetrievals =
+    Option[String] ~ Enrolments ~ Option[String] ~ ConfidenceLevel ~ Option[String] ~ Option[String] ~
+      Option[MdtpInformation] ~ Option[String] ~ LoginTimes ~
+      Option[Credentials] ~ Option[Name] ~ Option[LocalDate] ~ Option[String] ~
+      Option[AffinityGroup] ~ Option[String] ~ AgentInformation ~ Option[CredentialRole] ~ Option[String] ~
+      Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress]
 
-  def arbAuthRetrievals(internalId: Option[String]): Arbitrary[AuthRetrievals] = Arbitrary {
+  def arbAuthRetrievals(internalId: Option[String], enrolmentsWithEcl: Boolean): Arbitrary[AuthRetrievals] = Arbitrary {
     for {
+      enrolments         <-
+        Arbitrary.arbitrary[EnrolmentsWithEcl].map(e => if (enrolmentsWithEcl) e.enrolments else Enrolments(Set.empty))
       confidenceLevel    <- Arbitrary.arbitrary[ConfidenceLevel]
       externalId         <- Arbitrary.arbitrary[Option[String]]
       nino               <- Arbitrary.arbitrary[Option[String]]
@@ -202,7 +204,7 @@ trait EclTestData { self: Generators =>
       groupIdentifier    <- Arbitrary.arbitrary[Option[String]]
       itmpName           <- Arbitrary.arbitrary[Option[ItmpName]]
       itmpAddress        <- Arbitrary.arbitrary[Option[ItmpAddress]]
-    } yield internalId and externalId and confidenceLevel and nino and saUtr and
+    } yield internalId and enrolments and externalId and confidenceLevel and nino and saUtr and
       mdtpInformation and credentialStrength and loginTimes and
       credentials and name and dateOfBirth and email and
       affinityGroup and agentInformation.agentCode and agentInformation and credentialRole and
