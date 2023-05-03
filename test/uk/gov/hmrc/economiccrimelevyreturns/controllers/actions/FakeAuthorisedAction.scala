@@ -16,7 +16,10 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.controllers.actions
 
+import com.danielasfregola.randomdatagenerator.RandomDataGenerator.random
 import play.api.mvc._
+import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
+import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsIdentityData
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 
 import javax.inject.Inject
@@ -27,7 +30,7 @@ class FakeAuthorisedAction @Inject() (bodyParsers: PlayBodyParsers) extends Auth
   override def parser: BodyParser[AnyContent] = bodyParsers.defaultBodyParser
 
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] =
-    block(AuthorisedRequest(request, "id", "test-ecl-registration-reference"))
+    block(AuthorisedRequest(request, "id", "test-ecl-registration-reference", random[NrsIdentityData]))
 
   override protected def executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 

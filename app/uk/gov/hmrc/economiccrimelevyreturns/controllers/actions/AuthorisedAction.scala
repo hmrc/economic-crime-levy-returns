@@ -22,9 +22,10 @@ import play.api.libs.json.Json
 import play.api.mvc.Results.Unauthorized
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authorisedEnrolments, internalId}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
+import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsIdentityData
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendHeaderCarrierProvider
 import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
@@ -45,9 +46,19 @@ class BaseAuthorisedAction @Inject() (
     with AuthorisedFunctions {
 
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] =
-    authorised(Enrolment(EclEnrolment.ServiceName)).retrieve(internalId and authorisedEnrolments) {
-      case optInternalId ~ enrolments =>
-        val internalId               = optInternalId.getOrElseFail("Unable to retrieve internalId")
+    authorised(Enrolment(EclEnrolment.ServiceName)).retrieve(
+      Retrievals.internalId and Retrievals.authorisedEnrolments and Retrievals.externalId and Retrievals.confidenceLevel and
+        Retrievals.nino and Retrievals.saUtr and Retrievals.mdtpInformation and Retrievals.credentialStrength and
+        Retrievals.loginTimes and Retrievals.credentials and Retrievals.name and Retrievals.dateOfBirth and Retrievals.email and
+        Retrievals.affinityGroup and Retrievals.agentCode and Retrievals.agentInformation and Retrievals.credentialRole and
+        Retrievals.groupIdentifier and Retrievals.itmpName and Retrievals.itmpDateOfBirth and Retrievals.itmpAddress
+    ) {
+      case optInternalId ~ enrolments ~ optExternalId ~ confidenceLevel ~ optNino ~ optSaUtr ~
+          optMdtpInformation ~ optCredentialStrength ~ loginTimes ~ optCredentials ~ optName ~ optDateOfBirth ~
+          optEmail ~ optAffinityGroup ~ optAgentCode ~ agentInformation ~ optCredentialRole ~ optGroupIdentifier ~
+          optItmpName ~ optItmpDateOfBirth ~ optItmpAddress =>
+        val internalId = optInternalId.getOrElseFail("Unable to retrieve internalId")
+
         val eclRegistrationReference =
           enrolments
             .getEnrolment(EclEnrolment.ServiceName)
@@ -56,7 +67,31 @@ class BaseAuthorisedAction @Inject() (
               s"Unable to retrieve enrolment with key ${EclEnrolment.ServiceName} and identifier ${EclEnrolment.IdentifierKey}"
             )
             .value
-        block(AuthorisedRequest(request, internalId, eclRegistrationReference))
+
+        val nrsIdentityData = NrsIdentityData(
+          internalId = internalId,
+          externalId = optExternalId,
+          agentCode = optAgentCode,
+          credentials = optCredentials,
+          confidenceLevel = confidenceLevel.level,
+          nino = optNino,
+          saUtr = optSaUtr,
+          name = optName,
+          dateOfBirth = optDateOfBirth,
+          email = optEmail,
+          agentInformation = agentInformation,
+          groupIdentifier = optGroupIdentifier,
+          credentialRole = optCredentialRole,
+          mdtpInformation = optMdtpInformation,
+          itmpName = optItmpName,
+          itmpDateOfBirth = optItmpDateOfBirth,
+          itmpAddress = optItmpAddress,
+          affinityGroup = optAffinityGroup,
+          credentialStrength = optCredentialStrength,
+          loginTimes = loginTimes
+        )
+
+        block(AuthorisedRequest(request, internalId, eclRegistrationReference, nrsIdentityData))
     }(hc(request), executionContext) recover { case e: AuthorisationException =>
       Unauthorized(
         Json.toJson(

@@ -17,6 +17,11 @@
 package uk.gov.hmrc.economiccrimelevyreturns.models.requests
 
 import play.api.mvc.{Request, WrappedRequest}
+import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsIdentityData
 
-case class AuthorisedRequest[A](request: Request[A], internalId: String, eclRegistrationReference: String)
-    extends WrappedRequest[A](request)
+case class AuthorisedRequest[A](
+  request: Request[A],
+  internalId: String,
+  eclRegistrationReference: String,
+  nrsIdentityData: NrsIdentityData
+) extends WrappedRequest[A](request)

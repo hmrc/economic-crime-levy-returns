@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.economiccrimelevyreturns.models
+package uk.gov.hmrc.economiccrimelevyreturns.models.nrs
 
-object CustomHeaderNames {
-  val Environment   = "Environment"
-  val CorrelationId = "CorrelationId"
-  val ApiKey        = "X-API-Key"
+import play.api.libs.json.{Json, OFormat}
+
+final case class NrsSubmissionResponse(nrSubmissionId: String)
+
+object NrsSubmissionResponse {
+  implicit val format: OFormat[NrsSubmissionResponse] = Json.format[NrsSubmissionResponse]
 }

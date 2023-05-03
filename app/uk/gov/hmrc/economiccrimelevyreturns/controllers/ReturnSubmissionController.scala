@@ -22,7 +22,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationErrors
 import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
-import uk.gov.hmrc.economiccrimelevyreturns.services.{ReturnService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.services.{NrsService, ReturnService, ReturnValidationService}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
@@ -34,7 +34,8 @@ class ReturnSubmissionController @Inject() (
   returnsRepository: ReturnsRepository,
   authorise: AuthorisedAction,
   returnValidationService: ReturnValidationService,
-  returnService: ReturnService
+  returnService: ReturnService,
+  nrsService: NrsService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
@@ -45,6 +46,11 @@ class ReturnSubmissionController @Inject() (
           case Valid(eclReturnDetails) =>
             returnService.submitEclReturn(request.eclRegistrationReference, eclReturnDetails, eclReturn).map {
               response =>
+                nrsService.submitToNrs(
+                  eclReturn.base64EncodedNrsSubmissionHtml,
+                  request.eclRegistrationReference
+                )
+
                 Ok(Json.toJson(response))
             }
           case Invalid(e)              =>

@@ -36,4 +36,7 @@ class AppConfig @Inject() (configuration: Configuration, servicesConfig: Service
   val integrationFrameworkEnvironment: String =
     configuration.get[String]("microservice.services.integration-framework.environment")
 
+  val nrsBaseUrl: String = servicesConfig.baseUrl("nrs")
+
+  val nrsApiKey: String = configuration.get[String]("microservice.services.nrs.apiKey")
 }
