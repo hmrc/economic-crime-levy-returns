@@ -22,6 +22,7 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
+import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.{NrsSubmission, NrsSubmissionResponse}
 import uk.gov.hmrc.http.HttpClient
 

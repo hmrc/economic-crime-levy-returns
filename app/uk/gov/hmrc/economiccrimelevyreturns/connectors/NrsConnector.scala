@@ -23,6 +23,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.{NrsSubmission, NrsSubmissionResponse}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, Retries, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
