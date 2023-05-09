@@ -60,19 +60,21 @@ abstract class ISpecBase
   implicit lazy val materializer: Materializer = Materializer(system)
   implicit def ec: ExecutionContext            = global
 
-  val internalId: String       = "test-id"
+  val internalId: String               = "test-id"
   val eclRegistrationReference: String = "test-ecl-registration-reference"
-  val emptyReturn: EclReturn   = EclReturn.empty(internalId)
-  val now: Instant             = Instant.now.truncatedTo(ChronoUnit.MILLIS)
-  private val stubClock: Clock = Clock.fixed(now, ZoneId.systemDefault)
+  val emptyReturn: EclReturn           = EclReturn.empty(internalId)
+  val now: Instant                     = Instant.now.truncatedTo(ChronoUnit.MILLIS)
+  private val stubClock: Clock         = Clock.fixed(now, ZoneId.systemDefault)
 
   val additionalAppConfig: Map[String, Any] = Map(
-    "metrics.enabled"    -> false,
-    "auditing.enabled"   -> false,
-    "application.router" -> "testOnlyDoNotUseInAppConf.Routes"
+    "metrics.enabled"              -> false,
+    "auditing.enabled"             -> false,
+    "http-verbs.retries.intervals" -> List("1ms", "1ms", "1ms"),
+    "application.router"           -> "testOnlyDoNotUseInAppConf.Routes"
   ) ++ setWireMockPort(
     "auth",
-    "integration-framework"
+    "integration-framework",
+    "nrs"
   )
 
   override def fakeApplication(): Application =

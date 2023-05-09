@@ -22,9 +22,6 @@ import play.api.mvc.{BodyParsers, Request, Result}
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
-import uk.gov.hmrc.auth.core.syntax.retrieved.authSyntaxForRetrieved
-import uk.gov.hmrc.economiccrimelevyreturns.{EnrolmentsWithEcl, EnrolmentsWithoutEcl}
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
 
@@ -42,19 +39,24 @@ class AuthorisedActionSpec extends SpecBase {
     Future(Ok("Test"))
   }
 
-  val expectedRetrievals: Retrieval[Option[String] ~ Enrolments] =
-    Retrievals.internalId and Retrievals.authorisedEnrolments
+  private val expectedRetrievals =
+    Retrievals.internalId and Retrievals.authorisedEnrolments and Retrievals.externalId and Retrievals.confidenceLevel and
+      Retrievals.nino and Retrievals.saUtr and Retrievals.mdtpInformation and Retrievals.credentialStrength and
+      Retrievals.loginTimes and Retrievals.credentials and Retrievals.name and Retrievals.dateOfBirth and Retrievals.email and
+      Retrievals.affinityGroup and Retrievals.agentCode and Retrievals.agentInformation and Retrievals.credentialRole and
+      Retrievals.groupIdentifier and Retrievals.itmpName and Retrievals.itmpDateOfBirth and Retrievals.itmpAddress
 
   "invokeBlock" should {
-    "execute the block and return the result if authorised" in forAll {
-      (internalId: String, enrolmentsWithEcl: EnrolmentsWithEcl) =>
-        when(mockAuthConnector.authorise(any(), ArgumentMatchers.eq(expectedRetrievals))(any(), any()))
-          .thenReturn(Future(Some(internalId) and enrolmentsWithEcl.enrolments))
+    "execute the block and return the result if authorised" in forAll(
+      arbAuthRetrievals(Some(alphaNumericString), enrolmentsWithEcl = true).arbitrary
+    ) { (authRetrievals: AuthRetrievals) =>
+      when(mockAuthConnector.authorise(any(), ArgumentMatchers.eq(expectedRetrievals))(any(), any()))
+        .thenReturn(Future(authRetrievals))
 
-        val result: Future[Result] = authorisedAction.invokeBlock(fakeRequest, testAction)
+      val result: Future[Result] = authorisedAction.invokeBlock(fakeRequest, testAction)
 
-        status(result)          shouldBe OK
-        contentAsString(result) shouldBe "Test"
+      status(result)          shouldBe OK
+      contentAsString(result) shouldBe "Test"
     }
 
     "return 401 unauthorized if there is an authorisation exception" in {
@@ -79,9 +81,11 @@ class AuthorisedActionSpec extends SpecBase {
       }
     }
 
-    "throw an IllegalStateException if there is no internal id" in {
+    "throw an IllegalStateException if there is no internal id" in forAll(
+      arbAuthRetrievals(None, enrolmentsWithEcl = false).arbitrary
+    ) { (authRetrievals: AuthRetrievals) =>
       when(mockAuthConnector.authorise(any(), ArgumentMatchers.eq(expectedRetrievals))(any(), any()))
-        .thenReturn(Future(None and Enrolments(Set.empty)))
+        .thenReturn(Future(authRetrievals))
 
       val result = intercept[IllegalStateException] {
         await(authorisedAction.invokeBlock(fakeRequest, testAction))
@@ -90,16 +94,17 @@ class AuthorisedActionSpec extends SpecBase {
       result.getMessage shouldBe "Unable to retrieve internalId"
     }
 
-    "throw an IllegalStateException if there is no ECL enrolment in the set of authorised enrolments" in forAll {
-      (internalId: String, enrolmentsWithoutEcl: EnrolmentsWithoutEcl) =>
-        when(mockAuthConnector.authorise(any(), ArgumentMatchers.eq(expectedRetrievals))(any(), any()))
-          .thenReturn(Future(Some(internalId) and enrolmentsWithoutEcl.enrolments))
+    "throw an IllegalStateException if there is no ECL enrolment in the set of authorised enrolments" in forAll(
+      arbAuthRetrievals(Some(alphaNumericString), enrolmentsWithEcl = false).arbitrary
+    ) { (authRetrievals: AuthRetrievals) =>
+      when(mockAuthConnector.authorise(any(), ArgumentMatchers.eq(expectedRetrievals))(any(), any()))
+        .thenReturn(Future(authRetrievals))
 
-        val result = intercept[IllegalStateException] {
-          await(authorisedAction.invokeBlock(fakeRequest, testAction))
-        }
+      val result = intercept[IllegalStateException] {
+        await(authorisedAction.invokeBlock(fakeRequest, testAction))
+      }
 
-        result.getMessage shouldBe s"Unable to retrieve enrolment with key ${EclEnrolment.ServiceName} and identifier ${EclEnrolment.IdentifierKey}"
+      result.getMessage shouldBe s"Unable to retrieve enrolment with key ${EclEnrolment.ServiceName} and identifier ${EclEnrolment.IdentifierKey}"
     }
   }
 

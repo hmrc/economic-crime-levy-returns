@@ -28,7 +28,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.Da
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrors}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
-import uk.gov.hmrc.economiccrimelevyreturns.services.{ReturnService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.services.{NrsService, ReturnService, ReturnValidationService}
 
 import scala.concurrent.Future
 
@@ -37,13 +37,15 @@ class ReturnSubmissionControllerSpec extends SpecBase {
   val mockReturnValidationService: ReturnValidationService = mock[ReturnValidationService]
   val mockReturnService: ReturnService                     = mock[ReturnService]
   val mockReturnsRepository: ReturnsRepository             = mock[ReturnsRepository]
+  val mockNrsService: NrsService                           = mock[NrsService]
 
   val controller = new ReturnSubmissionController(
     cc,
     mockReturnsRepository,
     fakeAuthorisedAction,
     mockReturnValidationService,
-    mockReturnService
+    mockReturnService,
+    mockNrsService
   )
 
   "submitReturn" should {
@@ -74,6 +76,10 @@ class ReturnSubmissionControllerSpec extends SpecBase {
 
         status(result)        shouldBe OK
         contentAsJson(result) shouldBe Json.toJson(returnResponse)
+
+        verify(mockNrsService, times(1)).submitToNrs(any(), any())(any(), any())
+
+        reset(mockNrsService)
     }
 
     "return 500 INTERNAL_SERVER_ERROR with validation errors in the JSON response body when the ECL return data is invalid" in forAll {
