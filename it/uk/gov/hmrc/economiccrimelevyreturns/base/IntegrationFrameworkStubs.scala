@@ -10,12 +10,11 @@ trait IntegrationFrameworkStubs { self: WireMockStubs =>
 
   def stubSubmitEclReturn(
                            eclRegistrationReference: String,
-                           periodKey: String,
                            eclReturnSubmission: EclReturnSubmission,
                            eclReturnResponse: SubmitEclReturnResponse
   ): StubMapping =
     stub(
-      post(urlEqualTo(s"/economic-crime-levy/returns/$eclRegistrationReference/$periodKey"))
+      post(urlEqualTo(s"/economic-crime-levy/return/$eclRegistrationReference"))
         .withRequestBody(equalToJson(Json.toJson(eclReturnSubmission).toString())),
       aResponse()
         .withStatus(200)

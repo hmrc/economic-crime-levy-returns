@@ -28,7 +28,6 @@ class ReturnSubmissionISpec extends ISpecBase {
 
       stubSubmitEclReturn(
         testEclRegistrationReference,
-        validEclReturn.expectedEclReturnSubmission.periodKey,
         validEclReturn.expectedEclReturnSubmission
           .copy(returnDetails = validEclReturn.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)),
         eclReturnResponse
@@ -69,7 +68,6 @@ class ReturnSubmissionISpec extends ISpecBase {
 
       stubSubmitEclReturn(
         testEclRegistrationReference,
-        validEclReturn.expectedEclReturnSubmission.periodKey,
         validEclReturn.expectedEclReturnSubmission
           .copy(returnDetails = validEclReturn.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)),
         eclReturnResponse

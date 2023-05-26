@@ -44,7 +44,7 @@ class IntegrationFrameworkConnector @Inject() (
     hc: HeaderCarrier
   ): Future[Either[UpstreamErrorResponse, SubmitEclReturnResponse]] =
     httpClient.POST[EclReturnSubmission, Either[UpstreamErrorResponse, SubmitEclReturnResponse]](
-      s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/returns/$eclRegistrationReference/${eclReturnSubmission.periodKey}",
+      s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference",
       eclReturnSubmission,
       headers = integrationFrameworkHeaders
     )
