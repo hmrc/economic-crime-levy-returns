@@ -17,23 +17,39 @@
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import cats.data.Validated.Valid
+import cats.implicits.catsSyntaxValidatedId
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.any
 import org.scalacheck.Gen
 import uk.gov.hmrc.economiccrimelevyreturns.ValidEclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band._
-import uk.gov.hmrc.economiccrimelevyreturns.models.{Band, EclReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataMissing
+import uk.gov.hmrc.economiccrimelevyreturns.models.{Band, EclReturn}
+import uk.gov.hmrc.economiccrimelevyreturns.utils.SchemaValidator
+
+import java.time.{Clock, Instant, ZoneId}
 
 class ReturnValidationServiceSpec extends SpecBase {
 
-  val service = new ReturnValidationService
+  private val fixedPointInTime             = Instant.parse("2007-12-25T10:15:30.00Z")
+  private val stubClock: Clock             = Clock.fixed(fixedPointInTime, ZoneId.systemDefault)
+  val mockSchemaValidator: SchemaValidator = mock[SchemaValidator]
+  val service                              = new ReturnValidationService(stubClock, mockSchemaValidator)
 
   "validateReturn" should {
     "return the ECL return details if the ECL return is valid" in forAll { validEclReturn: ValidEclReturn =>
+      when(
+        mockSchemaValidator.validateAgainstJsonSchema(
+          ArgumentMatchers.eq(validEclReturn.expectedEclReturnSubmission),
+          any()
+        )(any())
+      ).thenReturn(validEclReturn.expectedEclReturnSubmission.validNel)
+
       val result = service.validateReturn(validEclReturn.eclReturn)
 
-      result shouldBe Valid(validEclReturn.expectedEclReturnDetails)
+      result shouldBe Valid(validEclReturn.expectedEclReturnSubmission)
     }
 
     "return a non-empty list of errors when unconditional mandatory ECL return data items are missing" in {

@@ -20,7 +20,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConne
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.audit.RequestStatus.{Failed, Success}
 import uk.gov.hmrc.economiccrimelevyreturns.models.audit.{ReturnResult, ReturnSubmittedAuditEvent}
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
@@ -32,10 +32,10 @@ class ReturnService @Inject() (
   auditConnector: AuditConnector
 )(implicit ec: ExecutionContext) {
 
-  def submitEclReturn(eclRegistrationReference: String, eclReturnDetails: EclReturnDetails, eclReturn: EclReturn)(
+  def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission, eclReturn: EclReturn)(
     implicit hc: HeaderCarrier
   ): Future[SubmitEclReturnResponse] =
-    integrationFrameworkConnector.submitEclReturn(eclRegistrationReference, eclReturnDetails).map {
+    integrationFrameworkConnector.submitEclReturn(eclRegistrationReference, eclReturnSubmission).map {
       case Right(submitEclReturnResponse) =>
         auditConnector.sendExtendedEvent(
           ReturnSubmittedAuditEvent(
