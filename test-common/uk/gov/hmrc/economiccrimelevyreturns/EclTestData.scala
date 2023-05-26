@@ -146,10 +146,10 @@ trait EclTestData { self: Generators =>
       carriedOutAmlRegulatedActivityForFullFy <- Arbitrary.arbitrary[Boolean]
       amlRegulatedActivityLength              <- Gen.chooseNum[Int](MinAmlDays, MaxAmlDays)
       calculatedLiability                     <- Arbitrary.arbitrary[CalculatedLiability].map(_.copy(calculatedBand = Medium))
-      contactName                             <- stringFromRegex(160, Regex.name)
-      contactRole                             <- stringFromRegex(160, Regex.positionInCompany)
+      contactName                             <- stringFromRegex(160, Regex.NameRegex)
+      contactRole                             <- stringFromRegex(160, Regex.PositionInCompanyRegex)
       contactEmailAddress                     <- emailAddress(160)
-      contactTelephoneNumber                  <- stringFromRegex(24, Regex.telephoneNumber)
+      contactTelephoneNumber                  <- stringFromRegex(24, Regex.TelephoneNumberRegex)
       validPeriodKey                          <- Arbitrary.arbitrary[ValidPeriodKey]
       obligationDetails                       <- Arbitrary.arbitrary[ObligationDetails].map(_.copy(periodKey = validPeriodKey.periodKey))
       internalId                               = alphaNumericString
