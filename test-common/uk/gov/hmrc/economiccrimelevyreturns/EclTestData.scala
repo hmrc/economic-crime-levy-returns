@@ -39,6 +39,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclRetu
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import java.time.{Clock, Instant, LocalDate}
+import scala.math.BigDecimal.RoundingMode
 
 case class ValidPeriodKey(periodKey: String)
 
@@ -70,13 +71,15 @@ trait EclTestData { self: Generators =>
   private val base64EncodedNrsSubmissionHtml  = "PGh0bWw+PHRpdGxlPkhlbGxvIFdvcmxkITwvdGl0bGU+PC9odG1sPg=="
   private val nrsSubmissionHtmlSha256Checksum = "38a8012d1af5587a9b37aef812810e31b2ddf7d405d20b5f1230a209d95c9d2b"
 
-  val MinRevenue: Long = 0L
-  val MaxRevenue: Long = 99999999999L
-  val MinApDays: Int   = 1
-  val MaxApDays: Int   = 999
-  val MinAmlDays: Int  = 0
-  val MaxAmlDays: Int  = 365
-  val YearInDays: Int  = 365
+  private val MinRevenue: Long = 0L
+  private val MaxRevenue: Long = 99999999999L
+  private val MinApDays: Int   = 1
+  private val MaxApDays: Int   = 999
+  private val MinAmlDays: Int  = 0
+  private val MaxAmlDays: Int  = 365
+  private val YearInDays: Int  = 365
+  private val MinAmountDue     = 0
+  private val MaxAmountDue     = 250000
 
   implicit val arbInstant: Arbitrary[Instant] = Arbitrary {
     Instant.now()
@@ -128,7 +131,11 @@ trait EclTestData { self: Generators =>
   }
 
   implicit val arbPeriodKey: Arbitrary[ValidPeriodKey] = Arbitrary {
-    Gen.listOfN(4, Gen.alphaNumChar).map(_.mkString).map(ValidPeriodKey)
+    Gen.listOfN(4, Gen.alphaNumChar).map(_.mkString).map(p => ValidPeriodKey(p.toUpperCase))
+  }
+
+  implicit val arbValidAmountDue: Arbitrary[BigDecimal] = Arbitrary {
+    Gen.chooseNum[Double](MinAmountDue, MaxAmountDue).map(BigDecimal.apply(_).setScale(2, RoundingMode.DOWN))
   }
 
   implicit val arbValidEclReturn: Arbitrary[ValidEclReturn] = Arbitrary {
@@ -139,10 +146,10 @@ trait EclTestData { self: Generators =>
       carriedOutAmlRegulatedActivityForFullFy <- Arbitrary.arbitrary[Boolean]
       amlRegulatedActivityLength              <- Gen.chooseNum[Int](MinAmlDays, MaxAmlDays)
       calculatedLiability                     <- Arbitrary.arbitrary[CalculatedLiability].map(_.copy(calculatedBand = Medium))
-      contactName                             <- stringsWithMaxLength(160)
-      contactRole                             <- stringsWithMaxLength(160)
+      contactName                             <- stringFromRegex(160, Regex.name)
+      contactRole                             <- stringFromRegex(160, Regex.positionInCompany)
       contactEmailAddress                     <- emailAddress(160)
-      contactTelephoneNumber                  <- telephoneNumber(24)
+      contactTelephoneNumber                  <- stringFromRegex(24, Regex.telephoneNumber)
       validPeriodKey                          <- Arbitrary.arbitrary[ValidPeriodKey]
       obligationDetails                       <- Arbitrary.arbitrary[ObligationDetails].map(_.copy(periodKey = validPeriodKey.periodKey))
       internalId                               = alphaNumericString

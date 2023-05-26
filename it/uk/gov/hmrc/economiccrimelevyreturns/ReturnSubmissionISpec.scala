@@ -11,9 +11,13 @@ import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.SubmitEclReturnResponse
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
 
-import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, LocalDate}
 
 class ReturnSubmissionISpec extends ISpecBase {
+
+  private val returnDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+
   s"POST ${routes.ReturnSubmissionController.submitReturn(":id").url}" should {
     "return 200 OK with an ECL return reference number in the JSON response body when the ECL return data is valid" in {
       stubAuthorised()
@@ -25,7 +29,8 @@ class ReturnSubmissionISpec extends ISpecBase {
       stubSubmitEclReturn(
         testEclRegistrationReference,
         validEclReturn.expectedEclReturnSubmission.periodKey,
-        validEclReturn.expectedEclReturnSubmission,
+        validEclReturn.expectedEclReturnSubmission
+          .copy(returnDetails = validEclReturn.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)),
         eclReturnResponse
       )
 
@@ -65,7 +70,8 @@ class ReturnSubmissionISpec extends ISpecBase {
       stubSubmitEclReturn(
         testEclRegistrationReference,
         validEclReturn.expectedEclReturnSubmission.periodKey,
-        validEclReturn.expectedEclReturnSubmission,
+        validEclReturn.expectedEclReturnSubmission
+          .copy(returnDetails = validEclReturn.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)),
         eclReturnResponse
       )
 

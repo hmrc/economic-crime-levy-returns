@@ -19,8 +19,6 @@ package uk.gov.hmrc.economiccrimelevyreturns.generators
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen._
 import org.scalacheck.{Gen, Shrink}
-import org.scalacheck.Gen.{choose, listOfN}
-import uk.gov.hmrc.economiccrimelevyreturns.Regex
 import wolfendale.scalacheck.regexp.RegexpGen
 
 import java.time.{Instant, LocalDate, ZoneOffset}
@@ -131,6 +129,6 @@ trait Generators {
     } yield s"$firstPart@$secondPart.$thirdPart".toLowerCase
   }
 
-  def telephoneNumber(maxLength: Int): Gen[String] =
-    RegexpGen.from(s"${Regex.telephoneNumber}").retryUntil(s => s.length <= maxLength && s.trim.nonEmpty)
+  def stringFromRegex(maxLength: Int, regex: String): Gen[String] =
+    RegexpGen.from(s"$regex").retryUntil(s => s.length <= maxLength && s.trim.nonEmpty)
 }
