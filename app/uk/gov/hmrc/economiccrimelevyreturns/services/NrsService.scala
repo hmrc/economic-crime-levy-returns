@@ -52,7 +52,7 @@ class NrsService @Inject() (nrsConnector: NrsConnector, clock: Clock)(implicit
 
     val nrsMetadata = NrsMetadata(
       businessId = "ecl",
-      notableEvent = "ecl-registration",
+      notableEvent = "ecl-return",
       payloadContentType = MimeTypes.HTML,
       payloadSha256Checksum = payloadSha256Checksum(base64EncodedNrsSubmissionHtml),
       userSubmissionTimestamp = Instant.now(clock),
