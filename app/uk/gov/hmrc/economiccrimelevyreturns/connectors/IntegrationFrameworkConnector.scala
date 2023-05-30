@@ -40,12 +40,12 @@ class IntegrationFrameworkConnector @Inject() (
     (CustomHeaderNames.CorrelationId, correlationIdGenerator.generateCorrelationId)
   )
 
-  def submitEclReturn(eclRegistrationReference: String, eclReturnDetails: EclReturnDetails)(implicit
+  def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit
     hc: HeaderCarrier
   ): Future[Either[UpstreamErrorResponse, SubmitEclReturnResponse]] =
-    httpClient.POST[EclReturnDetails, Either[UpstreamErrorResponse, SubmitEclReturnResponse]](
-      s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/returns/$eclRegistrationReference/${eclReturnDetails.periodKey}",
-      eclReturnDetails,
+    httpClient.POST[EclReturnSubmission, Either[UpstreamErrorResponse, SubmitEclReturnResponse]](
+      s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference",
+      eclReturnSubmission,
       headers = integrationFrameworkHeaders
     )
 

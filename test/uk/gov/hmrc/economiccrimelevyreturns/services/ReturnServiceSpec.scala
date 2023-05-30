@@ -23,7 +23,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
@@ -39,18 +39,18 @@ class ReturnServiceSpec extends SpecBase {
     "trigger an audit event and return the successful submit return response" in forAll {
       (
         eclReturn: EclReturn,
-        eclReturnDetails: EclReturnDetails,
+        eclReturnSubmission: EclReturnSubmission,
         returnResponse: SubmitEclReturnResponse
       ) =>
         when(
           mockIntegrationFrameworkConnector
-            .submitEclReturn(ArgumentMatchers.eq(eclRegistrationReference), ArgumentMatchers.eq(eclReturnDetails))(
+            .submitEclReturn(ArgumentMatchers.eq(eclRegistrationReference), ArgumentMatchers.eq(eclReturnSubmission))(
               any()
             )
         )
           .thenReturn(Future.successful(Right(returnResponse)))
 
-        val result = await(service.submitEclReturn(eclRegistrationReference, eclReturnDetails, eclReturn))
+        val result = await(service.submitEclReturn(eclRegistrationReference, eclReturnSubmission, eclReturn))
 
         result shouldBe returnResponse
 
@@ -62,18 +62,18 @@ class ReturnServiceSpec extends SpecBase {
     "trigger an audit event and throw an exception when submitting the return fails" in forAll {
       (
         eclReturn: EclReturn,
-        eclReturnDetails: EclReturnDetails
+        eclReturnSubmission: EclReturnSubmission
       ) =>
         when(
           mockIntegrationFrameworkConnector
-            .submitEclReturn(ArgumentMatchers.eq(eclRegistrationReference), ArgumentMatchers.eq(eclReturnDetails))(
+            .submitEclReturn(ArgumentMatchers.eq(eclRegistrationReference), ArgumentMatchers.eq(eclReturnSubmission))(
               any()
             )
         )
           .thenReturn(Future.successful(Left(UpstreamErrorResponse("Internal server error", INTERNAL_SERVER_ERROR))))
 
         val result = intercept[UpstreamErrorResponse] {
-          await(service.submitEclReturn(eclRegistrationReference, eclReturnDetails, eclReturn))
+          await(service.submitEclReturn(eclRegistrationReference, eclReturnSubmission, eclReturn))
         }
 
         result.getMessage() shouldBe "Internal server error"

@@ -15,6 +15,9 @@ lazy val root = (project in file("."))
   .settings(scoverageSettings: _*)
   .settings(scalaCompilerOptions: _*)
   .settings(
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
+  )
+  .settings(
     scalaVersion := "2.13.8",
     name := appName,
     RoutesKeys.routesImport ++= Seq(

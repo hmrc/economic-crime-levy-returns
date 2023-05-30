@@ -16,21 +16,39 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
+import cats.data.Validated.Valid
 import cats.data.ValidatedNel
 import cats.implicits._
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band.Small
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataMissing
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.EclReturnDetails
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
+import uk.gov.hmrc.economiccrimelevyreturns.utils.{SchemaLoader, SchemaValidator}
 
+import java.time.format.DateTimeFormatter
+import java.time.{Clock, Instant, ZoneOffset}
 import javax.inject.Inject
 
-class ReturnValidationService @Inject() () {
+class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaValidator) {
 
   type ValidationResult[A] = ValidatedNel[DataValidationError, A]
 
-  def validateReturn(eclReturn: EclReturn): ValidationResult[EclReturnDetails] =
+  private val YearInDays: Int = 365
+
+  def validateReturn(eclReturn: EclReturn): ValidationResult[EclReturnSubmission] =
+    transformToEclReturnSubmission(eclReturn) match {
+      case Valid(eclReturnSubmission) =>
+        schemaValidator
+          .validateAgainstJsonSchema(
+            eclReturnSubmission,
+            SchemaLoader.loadSchema("create-ecl-return-request.json")
+          )
+          .map(_ => eclReturnSubmission)
+      case invalid                    => invalid
+    }
+
+  private def transformToEclReturnSubmission(eclReturn: EclReturn): ValidationResult[EclReturnSubmission] =
     (
       validateOptExists(eclReturn.relevantAp12Months, "Relevant AP 12 months choice"),
       validateConditionalOptExists(
@@ -55,8 +73,39 @@ class ReturnValidationService @Inject() () {
       validateOptExists(eclReturn.contactEmailAddress, "Contact email address"),
       validateOptExists(eclReturn.contactTelephoneNumber, "Contact telephone number"),
       validateOptExists(eclReturn.obligationDetails, "Obligation details")
-    ).mapN((_, _, _, calculatedLiability, _, _, _, _, _, _, obligationDetails) =>
-      EclReturnDetails(periodKey = obligationDetails.periodKey, amountDue = calculatedLiability.amountDue.amount)
+    ).mapN(
+      (
+        _,
+        relevantApLength,
+        relevantApRevenue,
+        calculatedLiability,
+        carriedOutAmlRegulatedActivityForFullFy,
+        amlRegulatedActivityLength,
+        name,
+        role,
+        email,
+        telephoneNumber,
+        obligationDetails
+      ) =>
+        EclReturnSubmission(
+          periodKey = obligationDetails.periodKey,
+          returnDetails = EclReturnDetails(
+            revenueBand = calculatedLiability.calculatedBand,
+            amountOfEclDutyLiable = calculatedLiability.amountDue.amount,
+            accountingPeriodRevenue = relevantApRevenue,
+            accountingPeriodLength = relevantApLength.getOrElse(YearInDays),
+            numberOfDaysRegulatedActivityTookPlace =
+              if (carriedOutAmlRegulatedActivityForFullFy.contains(true)) Some(YearInDays)
+              else amlRegulatedActivityLength,
+            returnDate = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneOffset.UTC).format(Instant.now(clock))
+          ),
+          declarationDetails = DeclarationDetails(
+            name = name,
+            positionInCompany = role,
+            emailAddress = email,
+            telephoneNumber = telephoneNumber
+          )
+        )
     )
 
   private def validateOptExists[T](optData: Option[T], description: String): ValidationResult[T] =

@@ -22,7 +22,7 @@ import org.scalacheck.derive.MkArbitrary
 import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
 import uk.gov.hmrc.economiccrimelevyreturns.models.CalculatedLiability
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationStatus
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
 
 object CachedArbitraries extends EclTestData with Generators {
@@ -32,7 +32,7 @@ object CachedArbitraries extends EclTestData with Generators {
   implicit lazy val arbObligationStatus: Arbitrary[ObligationStatus]               = mkArb
   implicit lazy val arbCalculatedLiability: Arbitrary[CalculatedLiability]         = mkArb
   implicit lazy val arbSubmitEclReturnResponse: Arbitrary[SubmitEclReturnResponse] = mkArb
-  implicit lazy val arbEclReturnDetails: Arbitrary[EclReturnDetails]               = mkArb
+  implicit lazy val arbEclReturnSubmission: Arbitrary[EclReturnSubmission]         = mkArb
   implicit lazy val arbNrsIdentityData: Arbitrary[NrsIdentityData]                 = mkArb
   implicit lazy val arbNrsSubmission: Arbitrary[NrsSubmission]                     = mkArb
   implicit lazy val arbNrsSubmissionResponse: Arbitrary[NrsSubmissionResponse]     = mkArb

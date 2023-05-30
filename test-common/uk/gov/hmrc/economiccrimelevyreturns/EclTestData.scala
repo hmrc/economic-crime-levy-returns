@@ -30,14 +30,16 @@ import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.auth.core.syntax.retrieved.authSyntaxForRetrieved
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
+import uk.gov.hmrc.economiccrimelevyreturns.models.Band.Medium
 import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.EclReturnDetails
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclReturn, ObligationDetails}
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import java.time.{Clock, Instant, LocalDate}
+import scala.math.BigDecimal.RoundingMode
 
 case class ValidPeriodKey(periodKey: String)
 
@@ -54,7 +56,7 @@ final case class EclLiabilityCalculationData(
 final case class ValidEclReturn(
   eclReturn: EclReturn,
   eclLiabilityCalculationData: EclLiabilityCalculationData,
-  expectedEclReturnDetails: EclReturnDetails
+  expectedEclReturnSubmission: EclReturnSubmission
 )
 
 final case class ValidNrsSubmission(
@@ -69,13 +71,15 @@ trait EclTestData { self: Generators =>
   private val base64EncodedNrsSubmissionHtml  = "PGh0bWw+PHRpdGxlPkhlbGxvIFdvcmxkITwvdGl0bGU+PC9odG1sPg=="
   private val nrsSubmissionHtmlSha256Checksum = "38a8012d1af5587a9b37aef812810e31b2ddf7d405d20b5f1230a209d95c9d2b"
 
-  val MinRevenue: Long = 0L
-  val MaxRevenue: Long = 99999999999L
-  val MinApDays: Int   = 1
-  val MaxApDays: Int   = 999
-  val MinAmlDays: Int  = 0
-  val MaxAmlDays: Int  = 365
-  val FullYear: Int    = 365
+  private val MinRevenue: Long = 0L
+  private val MaxRevenue: Long = 99999999999L
+  private val MinApDays: Int   = 1
+  private val MaxApDays: Int   = 999
+  private val MinAmlDays: Int  = 0
+  private val MaxAmlDays: Int  = 365
+  private val YearInDays: Int  = 365
+  private val MinAmountDue     = 0
+  private val MaxAmountDue     = 250000
 
   implicit val arbInstant: Arbitrary[Instant] = Arbitrary {
     Instant.now()
@@ -127,7 +131,11 @@ trait EclTestData { self: Generators =>
   }
 
   implicit val arbPeriodKey: Arbitrary[ValidPeriodKey] = Arbitrary {
-    Gen.listOfN(4, Gen.alphaNumChar).map(_.mkString).map(ValidPeriodKey)
+    Gen.listOfN(4, Gen.alphaNumChar).map(_.mkString).map(p => ValidPeriodKey(p.toUpperCase))
+  }
+
+  implicit val arbValidAmountDue: Arbitrary[BigDecimal] = Arbitrary {
+    Gen.chooseNum[Double](MinAmountDue, MaxAmountDue).map(BigDecimal.apply(_).setScale(2, RoundingMode.DOWN))
   }
 
   implicit val arbValidEclReturn: Arbitrary[ValidEclReturn] = Arbitrary {
@@ -137,11 +145,11 @@ trait EclTestData { self: Generators =>
       relevantApRevenue                       <- Gen.chooseNum[Long](MinRevenue, MaxRevenue)
       carriedOutAmlRegulatedActivityForFullFy <- Arbitrary.arbitrary[Boolean]
       amlRegulatedActivityLength              <- Gen.chooseNum[Int](MinAmlDays, MaxAmlDays)
-      calculatedLiability                     <- Arbitrary.arbitrary[CalculatedLiability]
-      contactName                             <- stringsWithMaxLength(160)
-      contactRole                             <- stringsWithMaxLength(160)
+      calculatedLiability                     <- Arbitrary.arbitrary[CalculatedLiability].map(_.copy(calculatedBand = Medium))
+      contactName                             <- stringFromRegex(160, Regex.NameRegex)
+      contactRole                             <- stringFromRegex(160, Regex.PositionInCompanyRegex)
       contactEmailAddress                     <- emailAddress(160)
-      contactTelephoneNumber                  <- telephoneNumber(24)
+      contactTelephoneNumber                  <- stringFromRegex(24, Regex.TelephoneNumberRegex)
       validPeriodKey                          <- Arbitrary.arbitrary[ValidPeriodKey]
       obligationDetails                       <- Arbitrary.arbitrary[ObligationDetails].map(_.copy(periodKey = validPeriodKey.periodKey))
       internalId                               = alphaNumericString
@@ -164,14 +172,28 @@ trait EclTestData { self: Generators =>
           base64EncodedNrsSubmissionHtml = Some(base64EncodedNrsSubmissionHtml)
         ),
       EclLiabilityCalculationData(
-        relevantApLength = if (relevantAp12Months) FullYear else relevantApLength,
+        relevantApLength = if (relevantAp12Months) YearInDays else relevantApLength,
         relevantApRevenue = relevantApRevenue,
         amlRegulatedActivityLength =
-          if (carriedOutAmlRegulatedActivityForFullFy) FullYear else amlRegulatedActivityLength
+          if (carriedOutAmlRegulatedActivityForFullFy) YearInDays else amlRegulatedActivityLength
       ),
-      EclReturnDetails(
-        amountDue = calculatedLiability.amountDue.amount,
-        periodKey = obligationDetails.periodKey
+      EclReturnSubmission(
+        periodKey = obligationDetails.periodKey,
+        returnDetails = EclReturnDetails(
+          revenueBand = calculatedLiability.calculatedBand,
+          amountOfEclDutyLiable = calculatedLiability.amountDue.amount,
+          accountingPeriodRevenue = relevantApRevenue,
+          accountingPeriodLength = if (relevantAp12Months) YearInDays else relevantApLength,
+          numberOfDaysRegulatedActivityTookPlace =
+            if (carriedOutAmlRegulatedActivityForFullFy) Some(YearInDays) else Some(amlRegulatedActivityLength),
+          returnDate = "2007-12-25"
+        ),
+        declarationDetails = DeclarationDetails(
+          name = contactName,
+          positionInCompany = contactRole,
+          emailAddress = contactEmailAddress,
+          telephoneNumber = contactTelephoneNumber
+        )
       )
     )
   }
@@ -227,7 +249,7 @@ trait EclTestData { self: Generators =>
           payload = base64EncodedNrsSubmissionHtml,
           metadata = NrsMetadata(
             businessId = "ecl",
-            notableEvent = "ecl-registration",
+            notableEvent = "ecl-return",
             payloadContentType = MimeTypes.HTML,
             payloadSha256Checksum = nrsSubmissionHtmlSha256Checksum,
             userSubmissionTimestamp = Instant.now(clock),

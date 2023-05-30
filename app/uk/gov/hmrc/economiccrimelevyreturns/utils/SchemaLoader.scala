@@ -14,13 +14,26 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework
+package uk.gov.hmrc.economiccrimelevyreturns.utils
 
-import play.api.libs.json.{Json, OFormat}
+import io.circe.schema.Schema
 
-// TODO: Update to align with the IF return submission schema once we have it (ECL-367)
-final case class EclReturnDetails(periodKey: String, amountDue: BigDecimal)
+import scala.io.Source
 
-object EclReturnDetails {
-  implicit val format: OFormat[EclReturnDetails] = Json.format[EclReturnDetails]
+object SchemaLoader {
+
+  def loadSchema(schemaFileName: String): Schema = {
+    val schemaFilePath = s"/schemas/$schemaFileName"
+    val resource       = getClass.getResourceAsStream(schemaFilePath)
+    val source         = Source.fromInputStream(resource)
+
+    val jsonSchema =
+      try source.getLines().mkString
+      finally source.close()
+
+    Schema
+      .loadFromString(jsonSchema)
+      .get
+  }
+
 }

@@ -26,7 +26,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataInvalid
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrors}
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnDetails, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
 import uk.gov.hmrc.economiccrimelevyreturns.services.{NrsService, ReturnService, ReturnValidationService}
 
@@ -52,18 +52,18 @@ class ReturnSubmissionControllerSpec extends SpecBase {
     "return 200 OK with a subscription reference number in the JSON response body when the ECL return data is valid" in forAll {
       (
         eclReturn: EclReturn,
-        eclReturnDetails: EclReturnDetails,
+        eclReturnSubmission: EclReturnSubmission,
         returnResponse: SubmitEclReturnResponse
       ) =>
         when(mockReturnsRepository.get(any())).thenReturn(Future.successful(Some(eclReturn)))
 
-        when(mockReturnValidationService.validateReturn(any())).thenReturn(eclReturnDetails.validNel)
+        when(mockReturnValidationService.validateReturn(any())).thenReturn(eclReturnSubmission.validNel)
 
         when(
           mockReturnService
             .submitEclReturn(
               ArgumentMatchers.eq(eclRegistrationReference),
-              ArgumentMatchers.eq(eclReturnDetails),
+              ArgumentMatchers.eq(eclReturnSubmission),
               ArgumentMatchers.eq(eclReturn)
             )(
               any()
