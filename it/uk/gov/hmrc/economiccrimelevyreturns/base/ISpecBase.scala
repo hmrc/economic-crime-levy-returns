@@ -7,6 +7,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.base
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -55,6 +56,9 @@ abstract class ISpecBase
     with IntegrationPatience
     with EclTestData
     with Generators {
+
+
+  implicit lazy val arbString: Arbitrary[String]    = Arbitrary(Gen.alphaNumStr.retryUntil(_.nonEmpty))
 
   implicit lazy val system: ActorSystem        = ActorSystem()
   implicit lazy val materializer: Materializer = Materializer(system)
