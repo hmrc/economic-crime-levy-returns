@@ -16,9 +16,33 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, JsError, JsResult, JsString, JsSuccess, JsValue, Json, OFormat}
 
 import java.time.Instant
+
+sealed trait ReturnType
+
+case object FirstTimeReturn extends ReturnType
+
+case object AmendReturn extends ReturnType
+object ReturnType {
+
+  implicit val format: Format[ReturnType] = new Format[ReturnType] {
+    override def reads(json: JsValue): JsResult[ReturnType] = json.validate[String] match {
+      case JsSuccess(value, _) =>
+        value match {
+          case "FirstTimeReturn" => JsSuccess(FirstTimeReturn)
+          case "AmendReturn"     => JsSuccess(AmendReturn)
+        }
+      case e: JsError          => e
+    }
+
+    override def writes(o: ReturnType): JsValue = o match {
+      case FirstTimeReturn => JsString("FirstTimeReturn")
+      case AmendReturn     => JsString("AmendReturn")
+    }
+  }
+}
 
 final case class EclReturn(
   internalId: String,
@@ -34,7 +58,8 @@ final case class EclReturn(
   contactTelephoneNumber: Option[String],
   obligationDetails: Option[ObligationDetails],
   base64EncodedNrsSubmissionHtml: Option[String],
-  lastUpdated: Option[Instant] = None
+  lastUpdated: Option[Instant] = None,
+  returnType: Option[ReturnType]
 )
 
 object EclReturn {
@@ -51,7 +76,8 @@ object EclReturn {
     contactEmailAddress = None,
     contactTelephoneNumber = None,
     obligationDetails = None,
-    base64EncodedNrsSubmissionHtml = None
+    base64EncodedNrsSubmissionHtml = None,
+    returnType = None
   )
 
   implicit val format: OFormat[EclReturn] = Json.format[EclReturn]
