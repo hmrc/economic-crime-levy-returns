@@ -41,7 +41,8 @@ class ReturnService @Inject() (
           ReturnSubmittedAuditEvent(
             eclReturn,
             eclRegistrationReference,
-            ReturnResult(Success, submitEclReturnResponse.chargeReference, None)
+            ReturnResult(Success, submitEclReturnResponse.chargeReference, None),
+            eclReturn.returnType
           ).extendedDataEvent
         )
 
@@ -51,7 +52,8 @@ class ReturnService @Inject() (
           ReturnSubmittedAuditEvent(
             eclReturn,
             eclRegistrationReference,
-            ReturnResult(Failed, None, Some(e.getMessage()))
+            ReturnResult(Failed, None, Some(e.getMessage())),
+            eclReturn.returnType
           ).extendedDataEvent
         )
         throw e

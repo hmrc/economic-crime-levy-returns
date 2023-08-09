@@ -17,7 +17,7 @@
 package uk.gov.hmrc.economiccrimelevyreturns.models.audit
 
 import play.api.libs.json._
-import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
+import uk.gov.hmrc.economiccrimelevyreturns.models.{EclReturn, ReturnType}
 
 sealed trait RequestStatus
 
@@ -37,7 +37,8 @@ object ReturnResult {
 case class ReturnSubmittedAuditEvent(
   returnData: EclReturn,
   eclReference: String,
-  submissionResult: ReturnResult
+  submissionResult: ReturnResult,
+  returnType: Option[ReturnType]
 ) extends AuditEvent {
   override val auditType: String   = "ReturnSubmitted"
   override val detailJson: JsValue = Json.toJson(this)
