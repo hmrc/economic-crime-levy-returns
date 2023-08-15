@@ -38,7 +38,6 @@ case class ReturnSubmittedAuditEvent(
   returnData: EclReturn,
   eclReference: String,
   submissionResult: ReturnResult,
-  returnType: Option[ReturnType]
 ) extends AuditEvent {
   override val auditType: String   = "ReturnSubmitted"
   override val detailJson: JsValue = Json.toJson(this)
