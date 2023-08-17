@@ -10,10 +10,13 @@ object AppDependencies {
   val compile: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"       %% "bootstrap-backend-play-28" % hmrcBootstrapVersion,
     "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-28"        % hmrcMongoVersion,
-    "com.openhtmltopdf"  % "openhtmltopdf-pdfbox"              % openHtmlToPdfVersion,
+    "com.openhtmltopdf"  % "openhtmltopdf-pdfbox"      % openHtmlToPdfVersion,
     "org.typelevel"     %% "cats-core"                 % "2.9.0",
     "io.circe"          %% "circe-json-schema"         % "0.2.0",
-    "io.circe"          %% "circe-parser"              % "0.14.5"
+    "uk.gov.hmrc"       %% "internal-auth-client-play-28"      % "1.6.0",
+    "io.circe"          %% "circe-parser"              % "0.14.5",
+    "uk.gov.hmrc"       %% "internal-auth-client-play-28" % "1.6.0",
+    "com.beachape"      %% "enumeratum-play-json"     % "1.7.0"
   )
 
   val test: Seq[ModuleID]    = Seq(

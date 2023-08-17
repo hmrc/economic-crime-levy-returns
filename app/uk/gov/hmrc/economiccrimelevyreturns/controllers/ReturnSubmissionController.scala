@@ -60,20 +60,18 @@ class ReturnSubmissionController @Inject() (
 
                     Ok(Json.toJson(response))
                 }
-              case AmendReturn => {
+              case AmendReturn     =>
                 val now = Instant.now
-                dmsService.submitToDms(eclReturn.base64EncodedNrsSubmissionHtml, now).map{
-                  case Right(response) => {
+                dmsService.submitToDms(eclReturn.base64EncodedDmsSubmissionHtml, now).map {
+                  case Right(response) =>
                     returnService.sendReturnSubmittedEvent(eclReturn, request.eclRegistrationReference, None, Success)
 
                     Ok(Json.toJson(response))
-                  }
-                  case Left(_) => InternalServerError("Could not send PDF to DMS queue")
+                  case Left(_)         => InternalServerError("Could not send PDF to DMS queue")
                 }
-              }
             }
 
-          case Invalid(e)              =>
+          case Invalid(e) =>
             Future.successful(InternalServerError(Json.toJson(DataValidationErrors(e.toList))))
         }
       case None            => Future.successful(NotFound)

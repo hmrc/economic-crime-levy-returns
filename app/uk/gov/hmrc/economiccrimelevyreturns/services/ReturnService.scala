@@ -37,19 +37,20 @@ class ReturnService @Inject() (
   ): Future[SubmitEclReturnResponse] =
     integrationFrameworkConnector.submitEclReturn(eclRegistrationReference, eclReturnSubmission).map {
       case Right(submitEclReturnResponse) =>
-        sendReturnSubmittedEvent(eclReturn,eclRegistrationReference, submitEclReturnResponse.chargeReference, Failed)
+        sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, submitEclReturnResponse.chargeReference, Failed)
 
         submitEclReturnResponse
       case Left(e)                        =>
-        sendReturnSubmittedEvent(eclReturn,eclRegistrationReference, None, Failed)
+        sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, None, Failed)
         throw e
     }
 
-
-  def sendReturnSubmittedEvent(eclReturn: EclReturn,
-                               eclRegistrationReference: String,
-                               chargeReference: Option[String],
-                               stauts: RequestStatus): Future[AuditResult] =
+  def sendReturnSubmittedEvent(
+    eclReturn: EclReturn,
+    eclRegistrationReference: String,
+    chargeReference: Option[String],
+    stauts: RequestStatus
+  ): Future[AuditResult] =
     auditConnector.sendExtendedEvent(
       ReturnSubmittedAuditEvent(
         eclReturn,

@@ -22,6 +22,7 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.mvc.MultipartFormData.{DataPart, FilePart}
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.DmsConnector
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.SubmitEclReturnResponse
 import uk.gov.hmrc.economiccrimelevyreturns.utils.PdfGenerator.buildPdf
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
@@ -42,7 +43,7 @@ class DmsService @Inject() (
 
   def submitToDms(optBase64EncodedDmsSubmissionHtml: Option[String], now: Instant)(implicit
     hc: HeaderCarrier
-  ): Future[Either[UpstreamErrorResponse, ???]] =
+  ): Future[Either[UpstreamErrorResponse, SubmitEclReturnResponse]] =
     optBase64EncodedDmsSubmissionHtml match {
       case Some(base64EncodedDmsSubmissionHtml) =>
         val html = new String(Base64.getDecoder.decode(base64EncodedDmsSubmissionHtml))
@@ -71,14 +72,14 @@ class DmsService @Inject() (
         )
 
         dmsConnector.sendPdf(body).map {
-          case Right(_)                    => Right(???)
+          case Right(_)                    => Right(SubmitEclReturnResponse(now, None))
           case Left(upstreamErrorResponse) => Left(upstreamErrorResponse)
         }
       case None                                 =>
         Future.successful(
           Left(
             UpstreamErrorResponse
-              .apply("Base64 encoded DMS submission HTML not found in registration data", INTERNAL_SERVER_ERROR)
+              .apply("Base64 encoded DMS submission HTML not found in returns data", INTERNAL_SERVER_ERROR)
           )
         )
     }

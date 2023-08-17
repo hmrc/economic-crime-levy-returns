@@ -28,7 +28,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.Da
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrors}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
-import uk.gov.hmrc.economiccrimelevyreturns.services.{NrsService, ReturnService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.services.{DmsService, NrsService, ReturnService, ReturnValidationService}
 
 import scala.concurrent.Future
 
@@ -38,6 +38,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
   val mockReturnService: ReturnService                     = mock[ReturnService]
   val mockReturnsRepository: ReturnsRepository             = mock[ReturnsRepository]
   val mockNrsService: NrsService                           = mock[NrsService]
+  val mockDmsService: DmsService                           = mock[DmsService]
 
   val controller = new ReturnSubmissionController(
     cc,
@@ -45,7 +46,8 @@ class ReturnSubmissionControllerSpec extends SpecBase {
     fakeAuthorisedAction,
     mockReturnValidationService,
     mockReturnService,
-    mockNrsService
+    mockNrsService,
+    mockDmsService
   )
 
   "submitReturn" should {

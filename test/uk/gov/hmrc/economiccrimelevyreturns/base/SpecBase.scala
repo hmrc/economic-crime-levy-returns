@@ -23,7 +23,9 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.{OptionValues, TryValues}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.Application
 import play.api.http.{HeaderNames, Status}
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.JsValue
 import play.api.mvc._
 import play.api.test.Helpers._
@@ -53,6 +55,19 @@ trait SpecBase
     with ScalaCheckPropertyChecks
     with EclTestData
     with Generators {
+
+  def configOverrides: Map[String, Any] = Map()
+
+  val additionalAppConfig: Map[String, Any] = Map(
+    "create-internal-auth-token-on-start" -> false,
+    "metrics.enabled"                     -> false,
+    "auditing.enabled"                    -> false
+  ) ++ configOverrides
+
+  override def fakeApplication(): Application =
+    GuiceApplicationBuilder()
+      .configure(additionalAppConfig)
+      .build()
 
   val cc: ControllerComponents                         = stubControllerComponents()
   val internalId: String                               = "test-id"
