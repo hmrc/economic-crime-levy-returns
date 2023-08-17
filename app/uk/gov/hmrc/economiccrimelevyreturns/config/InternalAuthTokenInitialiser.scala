@@ -140,6 +140,10 @@ class InternalAuthTokenInitialiserImpl @Inject() (
              |      {
              |        "granteeType": "user",
              |        "identifier": "economic-crime-levy-returns"
+             |      },
+             |      {
+             |        "granteeType": "user",
+             |        "identifier": "economic-crime-levy-registration"
              |      }
              |    ],
              |    "permissions": [
@@ -163,6 +167,13 @@ class InternalAuthTokenInitialiserImpl @Inject() (
              |      {
              |        "resourceType": "economic-crime-levy-returns",
              |        "resourceLocation": "dms-returns-callback",
+             |        "actions": [
+             |          "WRITE"
+             |        ]
+             |      },
+             |      {
+             |        "resourceType": "economic-crime-levy-registration",
+             |        "resourceLocation": "dms-registration-callback",
              |        "actions": [
              |          "WRITE"
              |        ]
@@ -202,6 +213,12 @@ class InternalAuthTokenInitialiserImpl @Inject() (
              |  },
              |  {
              |    "resourceType": "economic-crime-levy-returns",
+             |    "actions": [
+             |      "WRITE"
+             |    ]
+             |  },
+             |  {
+             |    "resourceType": "economic-crime-levy-registration",
              |    "actions": [
              |      "WRITE"
              |    ]
