@@ -27,7 +27,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class DmsNotificationController @Inject()(
+class DmsNotificationController @Inject() (
   cc: ControllerComponents,
   auth: BackendAuthComponents,
   appConfig: AppConfig

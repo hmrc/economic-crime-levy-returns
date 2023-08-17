@@ -23,7 +23,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
-import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
+import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn, FirstTimeReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataInvalid
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrors}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
@@ -57,16 +57,20 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         eclReturnSubmission: EclReturnSubmission,
         returnResponse: SubmitEclReturnResponse
       ) =>
-        when(mockReturnsRepository.get(any())).thenReturn(Future.successful(Some(eclReturn)))
+        val validEclReturn = eclReturn.copy(returnType = Some(FirstTimeReturn))
+
+        when(mockReturnsRepository.get(any())).thenReturn(Future.successful(Some(validEclReturn)))
 
         when(mockReturnValidationService.validateReturn(any())).thenReturn(eclReturnSubmission.validNel)
+
+        when(mockDmsService.submitToDms(any(), any())(any())).thenReturn(Future.successful(Right(returnResponse)))
 
         when(
           mockReturnService
             .submitEclReturn(
               ArgumentMatchers.eq(eclRegistrationReference),
               ArgumentMatchers.eq(eclReturnSubmission),
-              ArgumentMatchers.eq(eclReturn)
+              ArgumentMatchers.eq(validEclReturn)
             )(
               any()
             )
@@ -74,7 +78,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
           .thenReturn(Future.successful(returnResponse))
 
         val result: Future[Result] =
-          controller.submitReturn(eclReturn.internalId)(fakeRequest)
+          controller.submitReturn(validEclReturn.internalId)(fakeRequest)
 
         status(result)        shouldBe OK
         contentAsJson(result) shouldBe Json.toJson(returnResponse)
