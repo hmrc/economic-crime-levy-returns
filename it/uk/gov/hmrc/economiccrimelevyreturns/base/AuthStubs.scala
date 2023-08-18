@@ -30,12 +30,4 @@ trait AuthStubs { self: WireMockStubs =>
              |}
          """.stripMargin)
     )
-
-  def stubInternalAuthorised(): StubMapping =
-    stub(
-      post(urlEqualTo("/internal-auth/auth")),
-      aResponse()
-        .withStatus(OK)
-        .withBody("""{"retrievals": {}}""".stripMargin)
-    )
 }
