@@ -30,5 +30,4 @@ trait AuthStubs { self: WireMockStubs =>
              |}
          """.stripMargin)
     )
-
 }

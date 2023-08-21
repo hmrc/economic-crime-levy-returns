@@ -19,10 +19,10 @@ package uk.gov.hmrc.economiccrimelevyreturns.services
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.audit.RequestStatus.{Failed, Success}
-import uk.gov.hmrc.economiccrimelevyreturns.models.audit.{ReturnResult, ReturnSubmittedAuditEvent}
+import uk.gov.hmrc.economiccrimelevyreturns.models.audit.{RequestStatus, ReturnResult, ReturnSubmittedAuditEvent}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,26 +37,26 @@ class ReturnService @Inject() (
   ): Future[SubmitEclReturnResponse] =
     integrationFrameworkConnector.submitEclReturn(eclRegistrationReference, eclReturnSubmission).map {
       case Right(submitEclReturnResponse) =>
-        auditConnector.sendExtendedEvent(
-          ReturnSubmittedAuditEvent(
-            eclReturn,
-            eclRegistrationReference,
-            ReturnResult(Success, submitEclReturnResponse.chargeReference, None),
-            eclReturn.returnType
-          ).extendedDataEvent
-        )
+        sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, submitEclReturnResponse.chargeReference, Failed)
 
         submitEclReturnResponse
       case Left(e)                        =>
-        auditConnector.sendExtendedEvent(
-          ReturnSubmittedAuditEvent(
-            eclReturn,
-            eclRegistrationReference,
-            ReturnResult(Failed, None, Some(e.getMessage())),
-            eclReturn.returnType
-          ).extendedDataEvent
-        )
+        sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, None, Failed)
         throw e
     }
+
+  def sendReturnSubmittedEvent(
+    eclReturn: EclReturn,
+    eclRegistrationReference: String,
+    chargeReference: Option[String],
+    stauts: RequestStatus
+  ): Future[AuditResult] =
+    auditConnector.sendExtendedEvent(
+      ReturnSubmittedAuditEvent(
+        eclReturn,
+        eclRegistrationReference,
+        ReturnResult(Success, chargeReference, None)
+      ).extendedDataEvent
+    )
 
 }

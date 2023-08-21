@@ -8,6 +8,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.economiccrimelevyreturns.base.ISpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.routes
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
+import uk.gov.hmrc.economiccrimelevyreturns.models.FirstTimeReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.SubmitEclReturnResponse
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
 
@@ -23,13 +24,16 @@ class ReturnSubmissionISpec extends ISpecBase {
       stubAuthorised()
 
       val validEclReturn    = random[ValidEclReturn]
+      val eclReturn = validEclReturn.eclReturn.copy(returnType = Some(FirstTimeReturn))
+      val validEclReturnWithReturnType = validEclReturn.copy(eclReturn = eclReturn)
+
       val eclReturnResponse =
         random[SubmitEclReturnResponse].copy(processingDate = Instant.parse("2007-12-25T10:15:30.00Z"))
 
       stubSubmitEclReturn(
         testEclRegistrationReference,
-        validEclReturn.expectedEclReturnSubmission
-          .copy(returnDetails = validEclReturn.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)),
+        validEclReturnWithReturnType.expectedEclReturnSubmission
+          .copy(returnDetails = validEclReturnWithReturnType.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)),
         eclReturnResponse
       )
 
@@ -39,7 +43,7 @@ class ReturnSubmissionISpec extends ISpecBase {
 
       callRoute(
         FakeRequest(routes.ReturnsController.upsertReturn).withJsonBody(
-          Json.toJson(validEclReturn.eclReturn)
+          Json.toJson(validEclReturnWithReturnType.eclReturn)
         )
       ).futureValue
 
@@ -63,13 +67,16 @@ class ReturnSubmissionISpec extends ISpecBase {
       stubAuthorised()
 
       val validEclReturn    = random[ValidEclReturn]
+      val eclReturn = validEclReturn.eclReturn.copy(returnType = Some(FirstTimeReturn))
+      val validEclReturnWithReturnType = validEclReturn.copy(eclReturn = eclReturn)
+
       val eclReturnResponse =
         random[SubmitEclReturnResponse].copy(processingDate = Instant.parse("2007-12-25T10:15:30.00Z"))
 
       stubSubmitEclReturn(
         testEclRegistrationReference,
-        validEclReturn.expectedEclReturnSubmission
-          .copy(returnDetails = validEclReturn.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)),
+        validEclReturnWithReturnType.expectedEclReturnSubmission
+          .copy(returnDetails = validEclReturnWithReturnType.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)),
         eclReturnResponse
       )
 
@@ -77,15 +84,15 @@ class ReturnSubmissionISpec extends ISpecBase {
 
       callRoute(
         FakeRequest(routes.ReturnsController.upsertReturn).withJsonBody(
-          Json.toJson(validEclReturn.eclReturn)
+          Json.toJson(validEclReturnWithReturnType.eclReturn)
         )
       ).futureValue
 
       val result = callRoute(
         FakeRequest(
-          routes.ReturnSubmissionController.submitReturn(validEclReturn.eclReturn.internalId)
+          routes.ReturnSubmissionController.submitReturn(validEclReturnWithReturnType.eclReturn.internalId)
         ).withJsonBody(
-          Json.toJson(validEclReturn.eclReturn)
+          Json.toJson(validEclReturnWithReturnType.eclReturn)
         )
       )
 

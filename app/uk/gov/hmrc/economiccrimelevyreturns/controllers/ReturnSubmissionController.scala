@@ -19,10 +19,14 @@ package uk.gov.hmrc.economiccrimelevyreturns.controllers
 import cats.data.Validated.{Invalid, Valid}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+
+import java.time.Instant
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
+import uk.gov.hmrc.economiccrimelevyreturns.models.audit.RequestStatus.Success
+import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, FirstTimeReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationErrors
 import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
-import uk.gov.hmrc.economiccrimelevyreturns.services.{NrsService, ReturnService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.services.{DmsService, NrsService, ReturnService, ReturnValidationService}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
@@ -35,7 +39,8 @@ class ReturnSubmissionController @Inject() (
   authorise: AuthorisedAction,
   returnValidationService: ReturnValidationService,
   returnService: ReturnService,
-  nrsService: NrsService
+  nrsService: NrsService,
+  dmsService: DmsService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
@@ -44,16 +49,28 @@ class ReturnSubmissionController @Inject() (
       case Some(eclReturn) =>
         returnValidationService.validateReturn(eclReturn) match {
           case Valid(eclReturnDetails) =>
-            returnService.submitEclReturn(request.eclRegistrationReference, eclReturnDetails, eclReturn).map {
-              response =>
-                nrsService.submitToNrs(
-                  eclReturn.base64EncodedNrsSubmissionHtml,
-                  request.eclRegistrationReference
-                )
+            eclReturn.returnType.getOrElse(InternalServerError("Return type is missing")) match {
+              case FirstTimeReturn =>
+                returnService.submitEclReturn(request.eclRegistrationReference, eclReturnDetails, eclReturn).map {
+                  response =>
+                    nrsService.submitToNrs(
+                      eclReturn.base64EncodedNrsSubmissionHtml,
+                      request.eclRegistrationReference
+                    )
 
-                Ok(Json.toJson(response))
+                    Ok(Json.toJson(response))
+                }
+              case AmendReturn     =>
+                dmsService.submitToDms(eclReturn.base64EncodedDmsSubmissionHtml, Instant.now).map {
+                  case Right(response) =>
+                    returnService.sendReturnSubmittedEvent(eclReturn, request.eclRegistrationReference, None, Success)
+
+                    Ok(Json.toJson(response))
+                  case Left(_)         => InternalServerError("Could not send PDF to DMS queue")
+                }
             }
-          case Invalid(e)              =>
+
+          case Invalid(e) =>
             Future.successful(InternalServerError(Json.toJson(DataValidationErrors(e.toList))))
         }
       case None            => Future.successful(NotFound)

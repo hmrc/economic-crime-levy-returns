@@ -24,7 +24,8 @@ import javax.inject.{Inject, Singleton}
 @Singleton
 class AppConfig @Inject() (configuration: Configuration, servicesConfig: ServicesConfig) {
 
-  val appName: String = configuration.get[String]("appName")
+  val appName: String    = configuration.get[String]("appName")
+  val appBaseUrl: String = servicesConfig.baseUrl("self")
 
   val mongoTtl: Int = configuration.get[Int]("mongodb.timeToLiveInSeconds")
 
@@ -39,4 +40,30 @@ class AppConfig @Inject() (configuration: Configuration, servicesConfig: Service
   val nrsBaseUrl: String = servicesConfig.baseUrl("nrs")
 
   val nrsApiKey: String = configuration.get[String]("microservice.services.nrs.apiKey")
+
+  val internalAuthToken: String = configuration.get[String]("internal-auth.token")
+
+  val internalAuthBaseUrl: String = servicesConfig.baseUrl("internal-auth")
+
+  val dmsBaseUrl: String = servicesConfig.baseUrl("dms-submission")
+
+  val dmsSubmissionBusinessArea: String =
+    configuration.get[String]("microservice.services.dms-submission.amend-returns-submission.businessArea")
+
+  val dmsSubmissionCallbackEndpoint: String =
+    configuration.get[String](
+      "microservice.services.dms-submission.amend-returns-submission.callbackEndpoint"
+    )
+
+  val dmsSubmissionCallbackUrl: String        = s"$appBaseUrl/$appName/$dmsSubmissionCallbackEndpoint"
+  val dmsSubmissionClassificationType: String =
+    configuration.get[String]("microservice.services.dms-submission.amend-returns-submission.classificationType")
+  val dmsSubmissionCustomerId: String         =
+    configuration.get[String]("microservice.services.dms-submission.amend-returns-submission.customerId")
+  val dmsSubmissionFormId: String             =
+    configuration.get[String]("microservice.services.dms-submission.amend-returns-submission.formId")
+  val dmsSubmissionSource: String             =
+    configuration.get[String]("microservice.services.dms-submission.amend-returns-submission.source")
+  val dmsSubmissionUrl: String                = dmsBaseUrl + "/dms-submission/submit"
+
 }

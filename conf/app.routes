@@ -1,9 +1,11 @@
 # microservice specific routes
 
-GET           /returns/:id                             uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnsController.getReturn(id)
-PUT           /returns                                 uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnsController.upsertReturn
-DELETE        /returns/:id                             uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnsController.deleteReturn(id)
+GET           /returns/:id                          uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnsController.getReturn(id)
+PUT           /returns                              uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnsController.upsertReturn
+DELETE        /returns/:id                          uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnsController.deleteReturn(id)
 
-GET           /returns/:id/validation-errors           uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnValidationController.getValidationErrors(id)
+GET           /returns/:id/validation-errors        uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnValidationController.getValidationErrors(id)
 
-POST          /submit-return/:id                       uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnSubmissionController.submitReturn(id)
+POST          /submit-return/:id                    uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnSubmissionController.submitReturn(id)
+
+POST          /dms-returns-callback            uk.gov.hmrc.economiccrimelevyreturns.controllers.DmsNotificationController.dmsCallback()
