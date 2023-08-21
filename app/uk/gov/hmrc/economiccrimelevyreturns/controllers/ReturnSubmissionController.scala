@@ -61,8 +61,7 @@ class ReturnSubmissionController @Inject() (
                     Ok(Json.toJson(response))
                 }
               case AmendReturn     =>
-                val now = Instant.now
-                dmsService.submitToDms(eclReturn.base64EncodedDmsSubmissionHtml, now).map {
+                dmsService.submitToDms(eclReturn.base64EncodedDmsSubmissionHtml, Instant.now).map {
                   case Right(response) =>
                     returnService.sendReturnSubmittedEvent(eclReturn, request.eclRegistrationReference, None, Success)
 

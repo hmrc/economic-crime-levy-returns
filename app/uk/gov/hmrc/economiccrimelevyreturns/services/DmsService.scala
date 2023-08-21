@@ -46,7 +46,7 @@ class DmsService @Inject() (
   ): Future[Either[UpstreamErrorResponse, SubmitEclReturnResponse]] =
     optBase64EncodedDmsSubmissionHtml match {
       case Some(base64EncodedDmsSubmissionHtml) =>
-        val html = new String(Base64.getDecoder.decode(base64EncodedDmsSubmissionHtml))
+        val html = Base64.getDecoder.decode(base64EncodedDmsSubmissionHtml).map(_.toChar).mkString
         val pdf  = buildPdf(html)
 
         val dateOfReceipt = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(

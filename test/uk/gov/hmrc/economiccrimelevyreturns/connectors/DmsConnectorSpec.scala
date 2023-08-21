@@ -79,7 +79,7 @@ class DmsConnectorSpec extends SpecBase {
 
       result shouldBe Left(upstream5xxResponse)
 
-      verify(mockRequestBuilder, times(2))
+      verify(mockRequestBuilder, times(1))
         .execute(any(), any())
 
       reset(mockRequestBuilder)

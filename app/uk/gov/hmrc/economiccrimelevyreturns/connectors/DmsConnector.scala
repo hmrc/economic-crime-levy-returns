@@ -58,9 +58,7 @@ class DmsConnector @Inject() (
         .execute[Either[UpstreamErrorResponse, HttpResponse]]
         .map {
           case Right(httpResponse: HttpResponse)          => Right(httpResponse)
-          case Left(errorResponse: UpstreamErrorResponse) => throw errorResponse
+          case Left(errorResponse: UpstreamErrorResponse) => Left(errorResponse)
         }
-    }.recoverWith { case errorResponse: UpstreamErrorResponse =>
-      Future.successful(Left(errorResponse))
     }
 }

@@ -59,13 +59,11 @@ class InternalAuthTokenInitialiserImpl @Inject() (
   Await.result(initialised, 30.seconds)
 
   private def ensureAuthToken(): Future[Done] =
-    authTokenIsValid.flatMap { isValid =>
-      if (isValid) {
+    authTokenIsValid.flatMap {
+      case true  =>
         logger.info("Auth token is already valid")
         Future.successful(Done)
-      } else {
-        createClientAuthToken()
-      }
+      case false => createClientAuthToken()
     }
 
   private def createClientAuthToken(): Future[Done] = {
