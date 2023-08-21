@@ -46,19 +46,18 @@ class DmsNotificationController @Inject() (
 
   def dmsCallback: Action[JsValue] = authorised(parse.json) { implicit request =>
     request.body.validate[DmsNotification] match {
-      case JsSuccess(notification, _) =>
-        if (notification.status == SubmissionItemStatus.Failed) {
-          logger.error(
-            s"DMS notification received for ${notification.id} failed with error: ${notification.failureReason
-              .getOrElse("")}"
-          )
-        } else {
-          logger.info(
-            s"DMS notification received for ${notification.id} with status ${notification.status}"
-          )
-        }
+      case JsSuccess(notification, _) if notification.status == SubmissionItemStatus.Failed =>
+        logger.error(
+          s"DMS notification received for ${notification.id} failed with error: ${notification.failureReason
+            .getOrElse("")}"
+        )
         Ok
-      case JsError(_)                 =>
+      case JsSuccess(notification, _)                                                       =>
+        logger.info(
+          s"DMS notification received for ${notification.id} with status ${notification.status}"
+        )
+        Ok
+      case JsError(_)                                                                       =>
         BadRequest
     }
   }
