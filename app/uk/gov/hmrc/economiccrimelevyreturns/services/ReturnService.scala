@@ -50,6 +50,8 @@ class ReturnService @Inject() (
     eclRegistrationReference: String,
     chargeReference: Option[String],
     stauts: RequestStatus
+  )(implicit
+    hc: HeaderCarrier
   ): Future[AuditResult] =
     auditConnector.sendExtendedEvent(
       ReturnSubmittedAuditEvent(
@@ -57,6 +59,6 @@ class ReturnService @Inject() (
         eclRegistrationReference,
         ReturnResult(Success, chargeReference, None)
       ).extendedDataEvent
-    )
+    )(hc, ec)
 
 }
