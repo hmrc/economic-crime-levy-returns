@@ -29,7 +29,7 @@ object PdfGenerator {
       .useFont(() => getClass.getResourceAsStream("/pdf/arial.ttf"), "Arial")
       .usePdfUaAccessbility(true)
       .usePdfAConformance(PdfRendererBuilder.PdfAConformance.PDFA_3_U)
-      .withHtmlContent(html.replaceAll("ￂﾣ", "£ "), null)
+      .withHtmlContent(html, null)
       .withProducer("HMRC")
       .useFastMode
       .toStream(os)
