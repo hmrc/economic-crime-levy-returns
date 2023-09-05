@@ -27,7 +27,7 @@ object PdfGenerator {
       .useFont(() => getClass.getResourceAsStream("/pdf/arial.ttf"), "Arial")
       .usePdfUaAccessbility(true)
       .usePdfAConformance(PdfRendererBuilder.PdfAConformance.PDFA_3_U)
-      .withHtmlContent(html, null)
+      .withHtmlContent(swap(html, '£', '#'), null)
       .withProducer("HMRC")
       .useFastMode
       .toStream(os)
@@ -36,5 +36,19 @@ object PdfGenerator {
     renderer.close()
 
     os
+  }
+
+  def swap(text: String, a: Char, b: Char): String = {
+    def swapOne(chars: List[Char], a: Char, b: Char): List[Char] =
+      if (chars.isEmpty) {
+        List()
+      } else {
+        val c = chars.head
+        val n = if (c == a) b else if (c == b) a else c
+        List(n) ++ swapOne(chars.tail, a, b)
+      }
+
+    val chars = text.toList
+    swapOne(chars, a, b).mkString
   }
 }
