@@ -19,6 +19,8 @@ package uk.gov.hmrc.economiccrimelevyreturns.utils
 import java.io.ByteArrayOutputStream
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 
+import java.nio.file.{Files, Paths}
+
 object PdfGenerator {
   def buildPdf(html: String): ByteArrayOutputStream = {
     val os       = new ByteArrayOutputStream()
@@ -27,28 +29,13 @@ object PdfGenerator {
       .useFont(() => getClass.getResourceAsStream("/pdf/arial.ttf"), "Arial")
       .usePdfUaAccessbility(true)
       .usePdfAConformance(PdfRendererBuilder.PdfAConformance.PDFA_3_U)
-      .withHtmlContent(swap(html, '£', '#'), null)
+      .withHtmlContent(html.replaceAll("ￂﾣ", "£ "), null)
       .withProducer("HMRC")
       .useFastMode
       .toStream(os)
       .buildPdfRenderer()
     renderer.createPDF()
     renderer.close()
-
     os
-  }
-
-  def swap(text: String, a: Char, b: Char): String = {
-    def swapOne(chars: List[Char], a: Char, b: Char): List[Char] =
-      if (chars.isEmpty) {
-        List()
-      } else {
-        val c = chars.head
-        val n = if (c == a) b else if (c == b) a else c
-        List(n) ++ swapOne(chars.tail, a, b)
-      }
-
-    val chars = text.toList
-    swapOne(chars, a, b).mkString
   }
 }
