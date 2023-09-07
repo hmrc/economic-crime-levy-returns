@@ -17,6 +17,7 @@
 package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
 import cats.data.Validated.{Invalid, Valid}
+import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 
@@ -42,38 +43,53 @@ class ReturnSubmissionController @Inject() (
   nrsService: NrsService,
   dmsService: DmsService
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+    extends BackendController(cc)
+    with Logging {
+
+  private val loggerContext = "ReturnSubmissionController"
 
   def submitReturn(id: String): Action[AnyContent] = authorise.async { implicit request =>
     returnsRepository.get(id).flatMap {
       case Some(eclReturn) =>
+        logger.info(s"$loggerContext - Found return for id: $id")
         returnValidationService.validateReturn(eclReturn) match {
           case Valid(eclReturnDetails) =>
-            eclReturn.returnType.getOrElse(InternalServerError("Return type is missing")) match {
-              case FirstTimeReturn =>
+            logger.info(s"$loggerContext - Successfully validated eclReturnDetails")
+            eclReturn.returnType match {
+              case Some(FirstTimeReturn) =>
                 returnService.submitEclReturn(request.eclRegistrationReference, eclReturnDetails, eclReturn).map {
                   response =>
                     nrsService.submitToNrs(
                       eclReturn.base64EncodedNrsSubmissionHtml,
                       request.eclRegistrationReference
                     )
-
                     Ok(Json.toJson(response))
                 }
-              case AmendReturn     =>
+              case Some(AmendReturn)     =>
                 dmsService.submitToDms(eclReturn.base64EncodedDmsSubmissionHtml, Instant.now).map {
                   case Right(response) =>
-                    returnService.sendReturnSubmittedEvent(eclReturn, request.eclRegistrationReference, None, Success)
-
+                    {
+                      logger.info(s"$loggerContext - Successfully submitted PDF to DMS queue")
+                      returnService.sendReturnSubmittedEvent(eclReturn, request.eclRegistrationReference, None, Success)
+                    }
                     Ok(Json.toJson(response))
-                  case Left(_)         => InternalServerError("Could not send PDF to DMS queue")
-                }
-            }
+                  case Left(error)     =>
+                    logger.error(s"$loggerContext - Submission to DMS failed with error ${error.message}")
 
-          case Invalid(e) =>
+                    InternalServerError("Could not send PDF to DMS queue")
+                }
+              case None                  =>
+                logger.error(s"$loggerContext - Return type is missing")
+                Future.successful(InternalServerError("Return type is missing"))
+            }
+          case Invalid(e)              =>
+            logger
+              .error(s"$loggerContext - Validation for EclReturnDetails failed with errors: ${e.toList.mkString(";")}")
             Future.successful(InternalServerError(Json.toJson(DataValidationErrors(e.toList))))
         }
-      case None            => Future.successful(NotFound)
+      case None            =>
+        logger.error(s"$loggerContext - Return not found for id: $id")
+        Future.successful(NotFound)
     }
   }
 

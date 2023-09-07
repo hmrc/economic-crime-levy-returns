@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
+import play.api.Logging
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.audit.RequestStatus.{Failed, Success}
@@ -30,17 +31,22 @@ import scala.concurrent.{ExecutionContext, Future}
 class ReturnService @Inject() (
   integrationFrameworkConnector: IntegrationFrameworkConnector,
   auditConnector: AuditConnector
-)(implicit ec: ExecutionContext) {
+)(implicit ec: ExecutionContext)
+    extends Logging {
+
+  private val loggerContext = "ReturnService"
 
   def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission, eclReturn: EclReturn)(
     implicit hc: HeaderCarrier
   ): Future[SubmitEclReturnResponse] =
     integrationFrameworkConnector.submitEclReturn(eclRegistrationReference, eclReturnSubmission).map {
       case Right(submitEclReturnResponse) =>
+        logger.info(s"$loggerContext - ECL Return successfully submitted")
         sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, submitEclReturnResponse.chargeReference, Failed)
 
         submitEclReturnResponse
       case Left(e)                        =>
+        logger.error(s"$loggerContext - ECL Return submission failed with error ${e.message}")
         sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, None, Failed)
         throw e
     }
