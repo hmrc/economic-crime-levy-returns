@@ -17,12 +17,14 @@
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
 import play.api.http.HeaderNames
+import play.api.libs.json.Json
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, UpstreamErrorResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps, UpstreamErrorResponse}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,9 +32,10 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class IntegrationFrameworkConnector @Inject() (
   appConfig: AppConfig,
-  httpClient: HttpClient,
+  httpClient: HttpClientV2,
   correlationIdGenerator: CorrelationIdGenerator
-)(implicit ec: ExecutionContext) {
+)(implicit ec: ExecutionContext)
+    extends BaseConnector {
 
   def integrationFrameworkHeaders: Seq[(String, String)] = Seq(
     (HeaderNames.AUTHORIZATION, s"Bearer ${appConfig.integrationFrameworkBearerToken}"),
@@ -42,11 +45,10 @@ class IntegrationFrameworkConnector @Inject() (
 
   def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit
     hc: HeaderCarrier
-  ): Future[Either[UpstreamErrorResponse, SubmitEclReturnResponse]] =
-    httpClient.POST[EclReturnSubmission, Either[UpstreamErrorResponse, SubmitEclReturnResponse]](
-      s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference",
-      eclReturnSubmission,
-      headers = integrationFrameworkHeaders
-    )
-
+  ): Future[SubmitEclReturnResponse] =
+    httpClient
+      .post(url"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference")
+      .setHeader(integrationFrameworkHeaders: _*)
+      .withBody(Json.toJson(eclReturnSubmission))
+      .executeAndDeserialise[SubmitEclReturnResponse]
 }

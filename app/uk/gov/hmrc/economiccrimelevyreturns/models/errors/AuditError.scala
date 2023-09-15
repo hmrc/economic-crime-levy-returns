@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
-import play.api.libs.json.{Json, OFormat}
+sealed trait AuditError
 
-sealed trait DataValidationError
+object AuditError {
+  case class InternalUnexpectedError(message: String, cause: Option[Throwable]) extends AuditError
 
-object DataValidationError {
-  case class SchemaValidationError(message: String) extends DataValidationError
-  case class DataMissing(errorMessage: String) extends DataValidationError
+  case class BadGateway(reason: String, code: Int) extends AuditError
 }

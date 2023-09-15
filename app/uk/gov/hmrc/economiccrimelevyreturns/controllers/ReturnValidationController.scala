@@ -20,9 +20,7 @@ import cats.data.Validated.{Invalid, Valid}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationErrors
-import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
-import uk.gov.hmrc.economiccrimelevyreturns.services.ReturnValidationService
+import uk.gov.hmrc.economiccrimelevyreturns.services.{DataRetrievalService, ReturnValidationService}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
@@ -38,13 +36,10 @@ class ReturnValidationController @Inject() (
     extends BackendController(cc) {
 
   def getValidationErrors(id: String): Action[AnyContent] = authorise.async { _ =>
-    returnsRepository.get(id).map {
-      case Some(eclReturn) =>
-        returnValidationService.validateReturn(eclReturn) match {
-          case Valid(_)   => NoContent
-          case Invalid(e) => Ok(Json.toJson(DataValidationErrors(e.toList)))
-        }
-      case None            => NotFound
+      (for {
+        eclReturn <- dataRetrievalService.get(id).asResponseError
+        eclReturnSubmission <- returnValidationService.validateReturn(eclReturn).map(_ => ()).asResponseError
+      } yield eclReturnSubmission).convertToResult
     }
   }
 

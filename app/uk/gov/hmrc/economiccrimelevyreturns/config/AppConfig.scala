@@ -27,6 +27,11 @@ class AppConfig @Inject() (configuration: Configuration, servicesConfig: Service
   val appName: String    = configuration.get[String]("appName")
   val appBaseUrl: String = servicesConfig.baseUrl("self")
 
+  val firstTimeReturnNotableEvent: String =
+    configuration.get[String]("microservice.services.nrs.notable-events.first-time-return")
+  val amendReturnNotableEvent: String     =
+    configuration.get[String]("microservice.services.nrs.notable-events.amend-return")
+
   val mongoTtl: Int = configuration.get[Int]("mongodb.timeToLiveInSeconds")
 
   val integrationFrameworkUrl: String = servicesConfig.baseUrl("integration-framework")

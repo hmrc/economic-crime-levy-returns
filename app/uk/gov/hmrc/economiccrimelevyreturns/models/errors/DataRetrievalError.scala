@@ -16,11 +16,9 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
-import play.api.libs.json.{Json, OFormat}
+trait DataRetrievalError
 
-sealed trait DataValidationError
-
-object DataValidationError {
-  case class SchemaValidationError(message: String) extends DataValidationError
-  case class DataMissing(errorMessage: String) extends DataValidationError
+object DataRetrievalError {
+  case class NotFound(id: String) extends DataRetrievalError
+  case class InternalUnexpectedError(message: String, cause: Option[Throwable]) extends DataRetrievalError
 }

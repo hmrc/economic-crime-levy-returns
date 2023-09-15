@@ -23,11 +23,11 @@ import akka.util.ByteString
 import com.typesafe.config.Config
 import play.api.Logging
 import play.api.http.HeaderNames.AUTHORIZATION
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import play.api.http.Status.ACCEPTED
 import play.api.mvc.MultipartFormData
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, Retries, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, Retries, UpstreamErrorResponse}
 
 import java.net.URL
 import javax.inject.{Inject, Singleton}
@@ -41,7 +41,8 @@ class DmsConnector @Inject() (
   override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
     extends Retries
-    with Logging {
+    with Logging
+    with BaseConnector {
 
   private def retryCondition: PartialFunction[Exception, Boolean] = {
     case e: UpstreamErrorResponse if UpstreamErrorResponse.Upstream5xxResponse.unapply(e).isDefined => true
@@ -49,16 +50,12 @@ class DmsConnector @Inject() (
 
   def sendPdf(
     body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]] with Product with Serializable, NotUsed]
-  )(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] =
-    retryFor[Either[UpstreamErrorResponse, HttpResponse]]("DMS submission")(retryCondition) {
+  )(implicit hc: HeaderCarrier): Future[Unit] =
+    retryFor[Unit]("DMS submission")(retryCondition) {
       httpClient
         .post(new URL(appConfig.dmsSubmissionUrl))
         .setHeader(AUTHORIZATION -> appConfig.internalAuthToken)
         .withBody(body)
-        .execute[Either[UpstreamErrorResponse, HttpResponse]]
-        .map {
-          case Right(httpResponse: HttpResponse)          => Right(httpResponse)
-          case Left(errorResponse: UpstreamErrorResponse) => Left(errorResponse)
-        }
+        .executeAndExpect(ACCEPTED)
     }
 }

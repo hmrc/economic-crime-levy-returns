@@ -16,81 +16,97 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
-import cats.data.Validated.{Invalid, Valid}
-import play.api.Logging
-import play.api.libs.json.Json
+import cats.data.EitherT
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-
-import java.time.Instant
+import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
-import uk.gov.hmrc.economiccrimelevyreturns.models.audit.RequestStatus.Success
-import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, FirstTimeReturn}
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationErrors
-import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
-import uk.gov.hmrc.economiccrimelevyreturns.services.{DmsService, NrsService, ReturnService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ResponseError
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
+import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn, FirstTimeReturn}
+import uk.gov.hmrc.economiccrimelevyreturns.services._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ReturnSubmissionController @Inject() (
   cc: ControllerComponents,
-  returnsRepository: ReturnsRepository,
   authorise: AuthorisedAction,
   returnValidationService: ReturnValidationService,
   returnService: ReturnService,
   nrsService: NrsService,
-  dmsService: DmsService
+  dmsService: DmsService,
+  auditService: AuditService,
+  appConfig: AppConfig,
+  dataRetrievalService: DataRetrievalService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
-    with Logging {
-
-  private val loggerContext = "ReturnSubmissionController"
+    with BaseController
+    with ErrorHandler {
 
   def submitReturn(id: String): Action[AnyContent] = authorise.async { implicit request =>
-    returnsRepository.get(id).flatMap {
-      case Some(eclReturn) =>
-        logger.info(s"$loggerContext - Found return for id: $id")
-        returnValidationService.validateReturn(eclReturn) match {
-          case Valid(eclReturnDetails) =>
-            logger.info(s"$loggerContext - Successfully validated eclReturnDetails")
-            eclReturn.returnType match {
-              case Some(FirstTimeReturn) =>
-                returnService.submitEclReturn(request.eclRegistrationReference, eclReturnDetails, eclReturn).map {
-                  response =>
-                    nrsService.submitToNrs(
-                      eclReturn.base64EncodedNrsSubmissionHtml,
-                      request.eclRegistrationReference
-                    )
-                    Ok(Json.toJson(response))
-                }
-              case Some(AmendReturn)     =>
-                dmsService.submitToDms(eclReturn.base64EncodedDmsSubmissionHtml, Instant.now).map {
-                  case Right(response) =>
-                    {
-                      logger.info(s"$loggerContext - Successfully submitted PDF to DMS queue")
-                      returnService.sendReturnSubmittedEvent(eclReturn, request.eclRegistrationReference, None, Success)
-                    }
-                    Ok(Json.toJson(response))
-                  case Left(error)     =>
-                    logger.error(s"$loggerContext - Submission to DMS failed with error ${error.message}")
-
-                    InternalServerError("Could not send PDF to DMS queue")
-                }
-              case None                  =>
-                logger.error(s"$loggerContext - Return type is missing")
-                Future.successful(InternalServerError("Return type is missing"))
-            }
-          case Invalid(e)              =>
-            logger
-              .error(s"$loggerContext - Validation for EclReturnDetails failed with errors: ${e.toList.mkString(";")}")
-            Future.successful(InternalServerError(Json.toJson(DataValidationErrors(e.toList))))
-        }
-      case None            =>
-        logger.error(s"$loggerContext - Return not found for id: $id")
-        Future.successful(NotFound)
-    }
+    (for {
+      eclReturn           <- dataRetrievalService.get(id).asResponseError
+      eclReturnSubmission <- returnValidationService.validateReturn(eclReturn).asResponseError
+      eclReturnResponse   <- routeReturnSubmission(eclReturn, eclReturnSubmission)
+    } yield eclReturnResponse).convertToResult
   }
+
+  private def routeReturnSubmission(eclReturn: EclReturn, eclReturnSubmission: EclReturnSubmission)(implicit
+    request: AuthorisedRequest[_]
+  ): EitherT[Future, ResponseError, SubmitEclReturnResponse] =
+    eclReturn.returnType match {
+      case Some(FirstTimeReturn) =>
+        firstTimeSubmission(
+          request.eclRegistrationReference,
+          eclReturnSubmission,
+          eclReturn,
+          appConfig.firstTimeReturnNotableEvent
+        )
+      case Some(AmendReturn)     =>
+        amendSubmission(eclReturn, request.eclRegistrationReference)
+     case None                  =>
+       EitherT.left[SubmitEclReturnResponse](Future.successful(ResponseError.internalServiceError(message = "Return type is missing")))
+    }
+
+  private def firstTimeSubmission(
+    eclReference: String,
+    eclReturnSubmission: EclReturnSubmission,
+    eclReturn: EclReturn,
+    eventName: String
+  )(implicit hc: HeaderCarrier, request: AuthorisedRequest[_]) =
+    for {
+      base64EncodedNrsSubmissionHtml <- checkOptionalValueExists(eclReturn.base64EncodedNrsSubmissionHtml)
+      submitEclReturnResponse        <-
+        returnService.submitEclReturn(eclReference, eclReturnSubmission).asResponseError
+      _                              <- nrsService.submitToNrs(base64EncodedNrsSubmissionHtml, eclReference, eventName).asResponseError
+    } yield submitEclReturnResponse
+
+  private def amendSubmission(eclReturn: EclReturn, eclRegistrationReference: String)(implicit
+    hc: HeaderCarrier,
+    request: AuthorisedRequest[_]
+  ) =
+    for {
+      base64EncodedDmsSubmissionHtml <- checkOptionalValueExists(eclReturn.base64EncodedDmsSubmissionHtml)
+      base64EncodedNrsSubmissionHtml <- checkOptionalValueExists(eclReturn.base64EncodedNrsSubmissionHtml)
+      _                              <- nrsService
+                                          .submitToNrs(base64EncodedNrsSubmissionHtml, eclRegistrationReference, appConfig.amendReturnNotableEvent)
+                                          .asResponseError
+      eclReturnResponse              <- dmsService.submitToDms(base64EncodedDmsSubmissionHtml, Instant.now).asResponseError
+      _                               = auditService.sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, None)
+    } yield eclReturnResponse
+
+  private def checkOptionalValueExists(value: Option[String]): EitherT[Future, ResponseError, String] = EitherT(
+    Future.successful(
+      value match {
+        case Some(value) => Right(value)
+        case None        => Left(ResponseError.internalServiceError())
+      }
+    )
+  )
 
 }

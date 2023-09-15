@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
-import play.api.libs.json.{Json, OFormat}
+sealed trait NrsSubmissionError
 
-sealed trait DataValidationError
+object NrsSubmissionError {
+  case class InternalUnexpectedError(message: String, cause: Option[Throwable]) extends NrsSubmissionError
 
-object DataValidationError {
-  case class SchemaValidationError(message: String) extends DataValidationError
-  case class DataMissing(errorMessage: String) extends DataValidationError
+  case class BadGateway(reason: String, code: Int) extends NrsSubmissionError
 }

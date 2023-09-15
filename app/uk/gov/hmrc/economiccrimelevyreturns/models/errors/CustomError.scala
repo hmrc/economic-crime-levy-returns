@@ -16,11 +16,9 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.http.Status
 
-sealed trait DataValidationError
+object CustomError extends Status {
 
-object DataValidationError {
-  case class SchemaValidationError(message: String) extends DataValidationError
-  case class DataMissing(errorMessage: String) extends DataValidationError
+  val CHECKSUM_FAILED = 419
 }

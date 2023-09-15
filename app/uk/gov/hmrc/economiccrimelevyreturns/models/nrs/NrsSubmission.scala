@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.nrs
 
+import play.api.http.MimeTypes
 import play.api.libs.json._
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.auth.core.{AffinityGroup, CredentialRole}
+import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -79,6 +81,26 @@ final case class NrsMetadata(
 )
 
 object NrsMetadata {
+  def apply(
+    userAuthToken: String,
+    headerData: JsObject,
+    payloadSha256Checksum: String,
+    searchKeys: NrsSearchKeys,
+    userSubmissionTimestamp: Instant,
+    nrsIdentityData: NrsIdentityData,
+    eventName: String
+  ): NrsMetadata = NrsMetadata(
+    businessId = "ecl",
+    notableEvent = eventName,
+    payloadContentType = MimeTypes.HTML,
+    payloadSha256Checksum = payloadSha256Checksum,
+    userSubmissionTimestamp = userSubmissionTimestamp,
+    identityData = nrsIdentityData,
+    userAuthToken = userAuthToken,
+    headerData = headerData,
+    searchKeys = searchKeys
+  )
+
   implicit val userSubmissionTimestampWrites: Writes[Instant] = (instant: Instant) =>
     JsString(DateTimeFormatter.ISO_INSTANT.format(instant.truncatedTo(ChronoUnit.MILLIS)))
   implicit val writes: OWrites[NrsMetadata]                   = Json.writes[NrsMetadata]

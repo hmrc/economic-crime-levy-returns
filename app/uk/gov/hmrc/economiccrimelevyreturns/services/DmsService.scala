@@ -18,11 +18,12 @@ package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import play.api.http.Status.INTERNAL_SERVER_ERROR
+import cats.data.EitherT
 import play.api.mvc.MultipartFormData.{DataPart, FilePart}
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.DmsConnector
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.SubmitEclReturnResponse
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DmsSubmissionError
 import uk.gov.hmrc.economiccrimelevyreturns.utils.PdfGenerator.buildPdf
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
@@ -32,6 +33,7 @@ import java.time.{Instant, LocalDateTime, ZoneOffset}
 import java.util.Base64
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 @Singleton
 class DmsService @Inject() (
@@ -41,46 +43,43 @@ class DmsService @Inject() (
   ec: ExecutionContext
 ) {
 
-  def submitToDms(optBase64EncodedDmsSubmissionHtml: Option[String], now: Instant)(implicit
+  def submitToDms(base64EncodedDmsSubmissionHtml: String, now: Instant)(implicit
     hc: HeaderCarrier
-  ): Future[Either[UpstreamErrorResponse, SubmitEclReturnResponse]] =
-    optBase64EncodedDmsSubmissionHtml match {
-      case Some(base64EncodedDmsSubmissionHtml) =>
-        val html = new String(Base64.getDecoder.decode(base64EncodedDmsSubmissionHtml))
-        val pdf  = buildPdf(html)
+  ): EitherT[Future, DmsSubmissionError, SubmitEclReturnResponse] =
+    EitherT {
+      val html = new String(Base64.getDecoder.decode(base64EncodedDmsSubmissionHtml))
+      val pdf  = buildPdf(html)
 
-        val dateOfReceipt = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(
-          LocalDateTime.ofInstant(now.truncatedTo(ChronoUnit.SECONDS), ZoneOffset.UTC)
-        )
+      val dateOfReceipt = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(
+        LocalDateTime.ofInstant(now.truncatedTo(ChronoUnit.SECONDS), ZoneOffset.UTC)
+      )
 
-        val body = Source(
-          Seq(
-            DataPart("callbackUrl", appConfig.dmsSubmissionCallbackUrl),
-            DataPart("metadata.source", appConfig.dmsSubmissionSource),
-            DataPart("metadata.timeOfReceipt", dateOfReceipt),
-            DataPart("metadata.formId", appConfig.dmsSubmissionFormId),
-            DataPart("metadata.customerId", appConfig.dmsSubmissionCustomerId),
-            DataPart("metadata.classificationType", appConfig.dmsSubmissionClassificationType),
-            DataPart("metadata.businessArea", appConfig.dmsSubmissionBusinessArea),
-            FilePart(
-              key = "form",
-              filename = "form.pdf",
-              contentType = Some("application/pdf"),
-              ref = Source.single(ByteString(pdf.toByteArray))
-            )
+      val body = Source(
+        Seq(
+          DataPart("callbackUrl", appConfig.dmsSubmissionCallbackUrl),
+          DataPart("metadata.source", appConfig.dmsSubmissionSource),
+          DataPart("metadata.timeOfReceipt", dateOfReceipt),
+          DataPart("metadata.formId", appConfig.dmsSubmissionFormId),
+          DataPart("metadata.customerId", appConfig.dmsSubmissionCustomerId),
+          DataPart("metadata.classificationType", appConfig.dmsSubmissionClassificationType),
+          DataPart("metadata.businessArea", appConfig.dmsSubmissionBusinessArea),
+          FilePart(
+            key = "form",
+            filename = "form.pdf",
+            contentType = Some("application/pdf"),
+            ref = Source.single(ByteString(pdf.toByteArray))
           )
         )
+      )
 
-        dmsConnector.sendPdf(body).map {
-          case Right(_)                    => Right(SubmitEclReturnResponse(now, None))
-          case Left(upstreamErrorResponse) => Left(upstreamErrorResponse)
-        }
-      case None                                 =>
-        Future.successful(
-          Left(
-            UpstreamErrorResponse
-              .apply("Base64 encoded DMS submission HTML not found in returns data", INTERNAL_SERVER_ERROR)
-          )
-        )
+      dmsConnector.sendPdf(body).map(_ => Right(SubmitEclReturnResponse(now, None))).recover {
+        case error @ UpstreamErrorResponse(message, code, _, _)
+            if UpstreamErrorResponse.Upstream5xxResponse
+              .unapply(error)
+              .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
+          Left(DmsSubmissionError.BadGateway(reason = message, code = code))
+        case NonFatal(thr) => Left(DmsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr)))
+      }
+
     }
 }
