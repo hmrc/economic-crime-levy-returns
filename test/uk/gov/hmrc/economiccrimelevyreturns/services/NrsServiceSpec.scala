@@ -23,6 +23,7 @@ import play.api.http.HeaderNames
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.ValidNrsSubmission
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
+import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.NrsConnector
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
@@ -39,6 +40,9 @@ class NrsServiceSpec extends SpecBase {
   private val fakeRequestWithAuthorisation = fakeRequest.withHeaders((HeaderNames.AUTHORIZATION, "test"))
 
   val service = new NrsService(mockNrsConnector, stubClock)
+
+  val returnNotableEvent = "ecl-return"
+  val amendReturnNotableEvent = "ecl-amend-return"
 
   "submitToNrs" should {
     "return the NRS submission ID when the submission is successful" in forAll(
@@ -58,15 +62,16 @@ class NrsServiceSpec extends SpecBase {
       val result =
         await(
           service.submitToNrs(
-            Some(validNrsSubmission.base64EncodedNrsSubmissionHtml),
-            validNrsSubmission.eclRegistrationReference
-          )(hc, request)
+            validNrsSubmission.base64EncodedNrsSubmissionHtml,
+            validNrsSubmission.eclRegistrationReference,
+            returnNotableEvent
+          )(hc, request).value
         )
 
       result shouldBe nrsSubmissionResponse
     }
 
-    "throw an IllegalStateException when there is no base64 encoded NRS submission HTML" in forAll(
+    "return NrsSubmissionError.BadGateway when call to NRS fails" in forAll(
       arbValidNrsSubmission(fakeRequestWithAuthorisation, stubClock).arbitrary
     ) { validNrsSubmission: ValidNrsSubmission =>
       val request = AuthorisedRequest(
@@ -79,9 +84,10 @@ class NrsServiceSpec extends SpecBase {
       val result = intercept[IllegalStateException] {
         await(
           service.submitToNrs(
-            None,
-            validNrsSubmission.eclRegistrationReference
-          )(hc, request)
+            "",
+            validNrsSubmission.eclRegistrationReference,
+            returnNotableEvent
+          )(hc, request).value
         )
       }
 

@@ -19,6 +19,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.generators
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen._
 import org.scalacheck.{Gen, Shrink}
+import play.api.http.Status._
 import wolfendale.scalacheck.regexp.RegexpGen
 
 import java.time.{Instant, LocalDate, ZoneOffset}
@@ -129,6 +130,20 @@ trait Generators {
     } yield s"$firstPart@$secondPart.$thirdPart".toLowerCase
   }
 
+  //TODO - update to vals as they are generators
   def stringFromRegex(maxLength: Int, regex: String): Gen[String] =
     RegexpGen.from(s"$regex").retryUntil(s => s.length <= maxLength && s.trim.nonEmpty)
+
+  val errorCode4xxList: Gen[Int] =
+    Gen.oneOf(BAD_REQUEST, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, TOO_MANY_REQUESTS)
+
+  val errorCode5xxList: Gen[Int] =
+    Gen.oneOf(INTERNAL_SERVER_ERROR, BAD_GATEWAY, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT, NOT_IMPLEMENTED)
+
+  def generateErrorCode: Gen[Int] = for {
+    a <- errorCode4xxList
+    b <- errorCode5xxList
+    c <- Gen.oneOf(a, b)
+  } yield c
+
 }

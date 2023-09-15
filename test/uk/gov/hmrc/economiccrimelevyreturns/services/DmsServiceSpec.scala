@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatchers.any
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.DmsConnector
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DmsSubmissionError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.SubmitEclReturnResponse
 import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
 
@@ -37,37 +38,40 @@ class DmsServiceSpec extends SpecBase {
 
   "submitToDms" should {
     "return correct value when the submission is successful" in {
-      val encoded          = Base64.getEncoder.encodeToString(html.getBytes)
+      val encoded = Base64.getEncoder.encodeToString(html.getBytes)
       val expectedResponse = HttpResponse.apply(ACCEPTED, "")
 
       when(mockDmsConnector.sendPdf(any())(any())).thenReturn(Future.successful(Right(expectedResponse)))
 
-      val result = await(service.submitToDms(Some(encoded), now))
+      val result = await(service.submitToDms(encoded, now).value)
 
       result shouldBe Right(SubmitEclReturnResponse(now, None))
     }
 
-    "return upstream error if submission fails" in {
-      val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
-      val upstream5xxResponse = UpstreamErrorResponse.apply("", INTERNAL_SERVER_ERROR)
-      when(mockDmsConnector.sendPdf(any())(any())).thenReturn(Future.successful(Left(upstream5xxResponse)))
+    "return DmsSubmissionError.BadGateway if submission fails" in forAll(generateErrorCode) {
+      errorCode: Int =>
+        val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
-      val result = await(service.submitToDms(Some(encoded), now))
+        val message = "Gateway Error"
 
-      result shouldBe Left(upstream5xxResponse)
+        when(mockDmsConnector.sendPdf(any())(any())).thenReturn(Future.successful(Left(UpstreamErrorResponse.apply(message, errorCode))))
+
+        val result = await(service.submitToDms(encoded, now).value)
+
+        result shouldBe Left(DmsSubmissionError.BadGateway(message, errorCode))
     }
 
-    "return upstream error if no data to submit" in {
+    "return DmsSubmissionError.InternalUnexpectedError if an exception is thrown in sendPdf" in {
+        val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
-      val upstream5xxResponse = UpstreamErrorResponse.apply(
-        "Base64 encoded DMS submission HTML not found in returns data",
-        INTERNAL_SERVER_ERROR
-      )
+        val exception = new Exception("Unexpected error")
 
-      val result = await(service.submitToDms(None, now))
+        when(mockDmsConnector.sendPdf(any())(any())).thenReturn(Future.failed(exception))
 
-      result shouldBe Left(upstream5xxResponse)
+        val result = await(service.submitToDms(encoded, now).value)
+
+        result shouldBe Left(DmsSubmissionError.InternalUnexpectedError(exception.getMessage, Some(exception)))
     }
   }
 }

@@ -47,6 +47,7 @@ class DmsService @Inject() (
     hc: HeaderCarrier
   ): EitherT[Future, DmsSubmissionError, SubmitEclReturnResponse] =
     EitherT {
+      //TODO - wrap in Try as it can throw exceptions - see if can use retry on eitherT and use a string that makes decode throw an exception
       val html = new String(Base64.getDecoder.decode(base64EncodedDmsSubmissionHtml))
       val pdf  = buildPdf(html)
 
