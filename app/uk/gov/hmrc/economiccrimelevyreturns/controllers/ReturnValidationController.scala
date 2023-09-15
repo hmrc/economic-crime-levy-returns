@@ -29,11 +29,12 @@ import scala.concurrent.ExecutionContext
 @Singleton()
 class ReturnValidationController @Inject() (
   cc: ControllerComponents,
-  returnsRepository: ReturnsRepository,
+  dataRetrievalService: DataRetrievalService,
   authorise: AuthorisedAction,
   returnValidationService: ReturnValidationService
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+    extends BackendController(cc) with BaseController
+      with ErrorHandler {
 
   def getValidationErrors(id: String): Action[AnyContent] = authorise.async { _ =>
       (for {
@@ -41,6 +42,6 @@ class ReturnValidationController @Inject() (
         eclReturnSubmission <- returnValidationService.validateReturn(eclReturn).map(_ => ()).asResponseError
       } yield eclReturnSubmission).convertToResult
     }
-  }
+
 
 }

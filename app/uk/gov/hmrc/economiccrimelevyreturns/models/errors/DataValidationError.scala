@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
-import play.api.libs.json.{Json, OFormat}
-
 sealed trait DataValidationError
 
 object DataValidationError {
   case class SchemaValidationError(message: String) extends DataValidationError
   case class DataMissing(errorMessage: String) extends DataValidationError
 }
+
+case class DataValidationErrorList(errors: List[DataValidationError])
