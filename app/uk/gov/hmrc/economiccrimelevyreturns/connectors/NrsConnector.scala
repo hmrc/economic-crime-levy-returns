@@ -50,10 +50,6 @@ class NrsConnector @Inject() (
   private def retryCondition: PartialFunction[Exception, Boolean] = {
     case e: UpstreamErrorResponse if UpstreamErrorResponse.Upstream5xxResponse.unapply(e).isDefined => true
   }
-
-  //TODO - how come this retry stops after 3 attempts.
-  // A: Part of the config. We should check does the retry work properly
-
   def submitToNrs(nrsSubmission: NrsSubmission)(implicit
     hc: HeaderCarrier
   ): Future[NrsSubmissionResponse] =
