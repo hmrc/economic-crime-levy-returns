@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
+import cats.data.EitherT
 import cats.implicits.catsSyntaxValidatedId
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
@@ -24,54 +25,52 @@ import play.api.mvc.Result
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrors}
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataInvalid
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataRetrievalError, DataValidationError, DataValidationErrorList}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.EclReturnSubmission
-import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
-import uk.gov.hmrc.economiccrimelevyreturns.services.ReturnValidationService
+import uk.gov.hmrc.economiccrimelevyreturns.services.{DataRetrievalService, ReturnValidationService}
 
 import scala.concurrent.Future
 
 class ReturnValidationControllerSpec extends SpecBase {
 
   val mockReturnValidationService: ReturnValidationService = mock[ReturnValidationService]
-  val mockReturnsRepository: ReturnsRepository             = mock[ReturnsRepository]
+  val mockDataRetrievalService: DataRetrievalService       = mock[DataRetrievalService]
 
   val controller = new ReturnValidationController(
     cc,
-    mockReturnsRepository,
+    mockDataRetrievalService,
     fakeAuthorisedAction,
     mockReturnValidationService
   )
 
   "getValidationErrors" should {
-    "return 204 NO_CONTENT when the ECL return data is valid" in forAll {
+    "return 200 OK when the ECL return data is valid" in forAll {
       (eclReturn: EclReturn, eclReturnSubmission: EclReturnSubmission) =>
-        when(mockReturnsRepository.get(ArgumentMatchers.eq(eclReturn.internalId)))
-          .thenReturn(Future.successful(Some(eclReturn)))
+        when(mockDataRetrievalService.get(ArgumentMatchers.eq(eclReturn.internalId)))
+          .thenReturn(EitherT.right[DataRetrievalError](Future.successful(eclReturn)))
 
         when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(eclReturn)))
-          .thenReturn(eclReturnSubmission.validNel)
+          .thenReturn(EitherT.right[DataValidationErrorList](Future.successful(eclReturnSubmission)))
 
         val result: Future[Result] = controller.getValidationErrors(eclReturn.internalId)(fakeRequest)
 
-        status(result) shouldBe NO_CONTENT
+        status(result) shouldBe OK
     }
 
-    "return 200 OK with validation errors in the JSON response body when the ECL return data is invalid" in forAll {
+    "return 400 BAD_REQUEST with validation errors in the JSON response body when the ECL return data is invalid" in forAll {
       eclReturn: EclReturn =>
-        when(mockReturnsRepository.get(ArgumentMatchers.eq(eclReturn.internalId)))
-          .thenReturn(Future.successful(Some(eclReturn)))
+        when(mockDataRetrievalService.get(ArgumentMatchers.eq(eclReturn.internalId)))
+          .thenReturn(EitherT.rightT[Future, DataRetrievalError](Future.successful(eclReturn)))
+
+        val validationErrors = DataValidationErrorList(List(DataValidationError.DataMissing("Invalid data")))
 
         when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(eclReturn)))
-          .thenReturn(DataValidationError(DataInvalid, "Invalid data").invalidNel)
+          .thenReturn(EitherT.left[EclReturnSubmission](Future.successful(validationErrors)))
 
         val result: Future[Result] = controller.getValidationErrors(eclReturn.internalId)(fakeRequest)
 
-        status(result)        shouldBe OK
-        contentAsJson(result) shouldBe Json.toJson(
-          DataValidationErrors(Seq(DataValidationError(DataInvalid, "Invalid data")))
-        )
+        status(result)        shouldBe BAD_REQUEST
+        contentAsJson(result) shouldBe Json.toJson(validationErrors) // TODO - convert to response error
     }
 
     "return 404 NOT_FOUND when there is no ECL return data to validate" in forAll { eclReturn: EclReturn =>

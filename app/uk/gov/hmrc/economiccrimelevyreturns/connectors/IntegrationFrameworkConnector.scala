@@ -37,7 +37,7 @@ class IntegrationFrameworkConnector @Inject() (
 )(implicit ec: ExecutionContext)
     extends BaseConnector {
 
-  def integrationFrameworkHeaders: Seq[(String, String)] = Seq(
+  private def integrationFrameworkHeaders: Seq[(String, String)] = Seq(
     (HeaderNames.AUTHORIZATION, s"Bearer ${appConfig.integrationFrameworkBearerToken}"),
     (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
     (CustomHeaderNames.CorrelationId, correlationIdGenerator.generateCorrelationId)

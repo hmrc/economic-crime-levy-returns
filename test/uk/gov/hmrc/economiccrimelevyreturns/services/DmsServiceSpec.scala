@@ -38,7 +38,7 @@ class DmsServiceSpec extends SpecBase {
 
   "submitToDms" should {
     "return correct value when the submission is successful" in {
-      val encoded = Base64.getEncoder.encodeToString(html.getBytes)
+      val encoded          = Base64.getEncoder.encodeToString(html.getBytes)
       val expectedResponse = HttpResponse.apply(ACCEPTED, "")
 
       when(mockDmsConnector.sendPdf(any())(any())).thenReturn(Future.successful(Right(expectedResponse)))
@@ -48,30 +48,29 @@ class DmsServiceSpec extends SpecBase {
       result shouldBe Right(SubmitEclReturnResponse(now, None))
     }
 
+    "return DmsSubmissionError.BadGateway if submission fails" in forAll(generateErrorCode) { errorCode: Int =>
+      val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
-    "return DmsSubmissionError.BadGateway if submission fails" in forAll(generateErrorCode) {
-      errorCode: Int =>
-        val encoded = Base64.getEncoder.encodeToString(html.getBytes)
+      val message = "Gateway Error"
 
-        val message = "Gateway Error"
+      when(mockDmsConnector.sendPdf(any())(any()))
+        .thenReturn(Future.failed(UpstreamErrorResponse.apply(message, errorCode)))
 
-        when(mockDmsConnector.sendPdf(any())(any())).thenReturn(Future.successful(Left(UpstreamErrorResponse.apply(message, errorCode))))
+      val result = await(service.submitToDms(encoded, now).value)
 
-        val result = await(service.submitToDms(encoded, now).value)
-
-        result shouldBe Left(DmsSubmissionError.BadGateway(message, errorCode))
+      result shouldBe Left(DmsSubmissionError.BadGateway(message, errorCode))
     }
 
     "return DmsSubmissionError.InternalUnexpectedError if an exception is thrown in sendPdf" in {
-        val encoded = Base64.getEncoder.encodeToString(html.getBytes)
+      val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
-        val exception = new Exception("Unexpected error")
+      val exception = new Exception("Unexpected error")
 
-        when(mockDmsConnector.sendPdf(any())(any())).thenReturn(Future.failed(exception))
+      when(mockDmsConnector.sendPdf(any())(any())).thenReturn(Future.failed(exception))
 
-        val result = await(service.submitToDms(encoded, now).value)
+      val result = await(service.submitToDms(encoded, now).value)
 
-        result shouldBe Left(DmsSubmissionError.InternalUnexpectedError(exception.getMessage, Some(exception)))
+      result shouldBe Left(DmsSubmissionError.InternalUnexpectedError(exception.getMessage, Some(exception)))
     }
   }
 }

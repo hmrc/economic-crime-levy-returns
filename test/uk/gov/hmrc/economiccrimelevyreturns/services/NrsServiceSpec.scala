@@ -26,8 +26,10 @@ import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.NrsConnector
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.NrsSubmissionError
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsSubmissionResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import java.time.{Clock, Instant, ZoneId}
 import scala.concurrent.Future
@@ -41,7 +43,7 @@ class NrsServiceSpec extends SpecBase {
 
   val service = new NrsService(mockNrsConnector, stubClock)
 
-  val returnNotableEvent = "ecl-return"
+  val returnNotableEvent      = "ecl-return"
   val amendReturnNotableEvent = "ecl-amend-return"
 
   "submitToNrs" should {
@@ -61,19 +63,72 @@ class NrsServiceSpec extends SpecBase {
 
       val result =
         await(
-          service.submitToNrs(
-            validNrsSubmission.base64EncodedNrsSubmissionHtml,
-            validNrsSubmission.eclRegistrationReference,
-            returnNotableEvent
-          )(hc, request).value
+          service
+            .submitToNrs(
+              validNrsSubmission.base64EncodedNrsSubmissionHtml,
+              validNrsSubmission.eclRegistrationReference,
+              returnNotableEvent
+            )(hc, request)
+            .value
         )
 
       result shouldBe nrsSubmissionResponse
     }
 
-    "return NrsSubmissionError.BadGateway when call to NRS fails" in forAll(
-      arbValidNrsSubmission(fakeRequestWithAuthorisation, stubClock).arbitrary
+    "return NrsSubmissionError.InternalUnexpectedError when the authorization header is empty" in forAll(
+      arbValidNrsSubmission(fakeRequest, stubClock).arbitrary
+    ) { (validNrsSubmission: ValidNrsSubmission) =>
+      val request = AuthorisedRequest(
+        fakeRequest,
+        validNrsSubmission.nrsSubmission.metadata.identityData.internalId,
+        validNrsSubmission.eclRegistrationReference,
+        validNrsSubmission.nrsSubmission.metadata.identityData
+      )
+
+      val result =
+        await(
+          service
+            .submitToNrs(
+              "YQ==,",
+              validNrsSubmission.eclRegistrationReference,
+              returnNotableEvent
+            )(hc, request)
+            .value
+        )
+
+      result shouldBe Left(NrsSubmissionError.InternalUnexpectedError("User auth token missing from header", None))
+    }
+
+    "return NrsSubmissionError.InternalUnexpectedError when an exception is thrown while decoding due to invalid base 64 string" in forAll(
+      arbValidNrsSubmission(fakeRequest, stubClock).arbitrary
     ) { validNrsSubmission: ValidNrsSubmission =>
+      val request = AuthorisedRequest(
+        fakeRequest,
+        validNrsSubmission.nrsSubmission.metadata.identityData.internalId,
+        validNrsSubmission.eclRegistrationReference,
+        validNrsSubmission.nrsSubmission.metadata.identityData
+      )
+
+      val result =
+        await(
+          service
+            .submitToNrs(
+              "_",
+              validNrsSubmission.eclRegistrationReference,
+              returnNotableEvent
+            )(hc, request)
+            .value
+        )
+
+      result shouldBe Left(
+        NrsSubmissionError.InternalUnexpectedError("User auth token missing from header", None)
+      ) //TODO how do we want to check the exception
+    }
+
+    "return NrsSubmissionError.BadGateway when call to NRS returns an error response" in forAll(
+      arbValidNrsSubmission(fakeRequestWithAuthorisation, stubClock).arbitrary,
+      generateErrorCode
+    ) { (validNrsSubmission: ValidNrsSubmission, errorCode: Int) =>
       val request = AuthorisedRequest(
         fakeRequestWithAuthorisation,
         validNrsSubmission.nrsSubmission.metadata.identityData.internalId,
@@ -81,17 +136,23 @@ class NrsServiceSpec extends SpecBase {
         validNrsSubmission.nrsSubmission.metadata.identityData
       )
 
-      val result = intercept[IllegalStateException] {
-        await(
-          service.submitToNrs(
-            "",
-            validNrsSubmission.eclRegistrationReference,
-            returnNotableEvent
-          )(hc, request).value
-        )
-      }
+      val message = "Gateway Error"
 
-      result.getMessage shouldBe "Base64 encoded NRS submission HTML not found in registration data"
+      when(mockNrsConnector.submitToNrs(ArgumentMatchers.eq(validNrsSubmission.nrsSubmission))(any()))
+        .thenReturn(Future.failed(UpstreamErrorResponse.apply(message, errorCode)))
+
+      val result =
+        await(
+          service
+            .submitToNrs(
+              "YQ==,",
+              validNrsSubmission.eclRegistrationReference,
+              returnNotableEvent
+            )(hc, request)
+            .value
+        )
+
+      result shouldBe Left(NrsSubmissionError.BadGateway(message, errorCode))
     }
   }
 

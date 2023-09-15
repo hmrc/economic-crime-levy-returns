@@ -20,7 +20,7 @@ import org.mockito.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.{OptionValues, TryValues}
+import org.scalatest.{BeforeAndAfterEach, OptionValues, TryValues}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
@@ -54,7 +54,8 @@ trait SpecBase
     with MockitoSugar
     with ScalaCheckPropertyChecks
     with EclTestData
-    with Generators {
+    with Generators
+    with BeforeAndAfterEach {
 
   def configOverrides: Map[String, Any] = Map()
 

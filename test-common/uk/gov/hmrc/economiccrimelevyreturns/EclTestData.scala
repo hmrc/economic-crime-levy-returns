@@ -254,7 +254,7 @@ trait EclTestData { self: Generators =>
             payloadSha256Checksum = nrsSubmissionHtmlSha256Checksum,
             userSubmissionTimestamp = Instant.now(clock),
             identityData = nrsIdentityData,
-            userAuthToken = authorisedRequest.headers.get(HeaderNames.AUTHORIZATION).get,
+            userAuthToken = authorisedRequest.headers.get(HeaderNames.AUTHORIZATION).getOrElse(""),
             headerData = new JsObject(authorisedRequest.headers.toMap.map(x => x._1 -> JsString(x._2 mkString ","))),
             searchKeys = NrsSearchKeys(
               eclRegistrationReference = eclRegistrationReference
