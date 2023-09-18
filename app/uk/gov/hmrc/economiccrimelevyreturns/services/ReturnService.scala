@@ -18,7 +18,6 @@ package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import cats.data.EitherT
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
-import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ReturnsSubmissionError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}

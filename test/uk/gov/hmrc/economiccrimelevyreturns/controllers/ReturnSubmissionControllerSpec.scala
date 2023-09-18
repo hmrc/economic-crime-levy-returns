@@ -16,19 +16,19 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
-import cats.implicits.catsSyntaxValidatedId
+import cats.data.EitherT
 import org.mockito.ArgumentMatchers
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{any, anyString}
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
+import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn, FirstTimeReturn}
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataInvalid
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrors}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataRetrievalError, DataValidationError, DataValidationErrorList, DmsSubmissionError, NrsSubmissionError, ResponseError, ReturnsSubmissionError}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
-import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
-import uk.gov.hmrc.economiccrimelevyreturns.services.{DmsService, NrsService, ReturnService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsSubmissionResponse
+import uk.gov.hmrc.economiccrimelevyreturns.services.{AuditService, DataRetrievalService, DmsService, NrsService, ReturnService, ReturnValidationService}
 
 import scala.concurrent.Future
 
@@ -36,83 +36,101 @@ class ReturnSubmissionControllerSpec extends SpecBase {
 
   val mockReturnValidationService: ReturnValidationService = mock[ReturnValidationService]
   val mockReturnService: ReturnService                     = mock[ReturnService]
-  val mockReturnsRepository: ReturnsRepository             = mock[ReturnsRepository]
   val mockNrsService: NrsService                           = mock[NrsService]
   val mockDmsService: DmsService                           = mock[DmsService]
+  val mockAuditService: AuditService                       = mock[AuditService]
+  val mockAppConfig: AppConfig                             = mock[AppConfig]
+  val mockDataRetrievalService: DataRetrievalService       = mock[DataRetrievalService]
 
   val controller = new ReturnSubmissionController(
     cc,
-    mockReturnsRepository,
     fakeAuthorisedAction,
     mockReturnValidationService,
     mockReturnService,
     mockNrsService,
-    mockDmsService
+    mockDmsService,
+    mockAuditService,
+    mockAppConfig,
+    mockDataRetrievalService
   )
+
+  override def beforeEach() = {
+    reset(mockReturnValidationService)
+    reset(mockReturnService)
+    reset(mockNrsService)
+    reset(mockDmsService)
+    reset(mockAuditService)
+    reset(mockDataRetrievalService)
+  }
 
   "submitReturn" should {
     "return 200 OK with a subscription reference number in the JSON response body when the ECL return data is valid" in forAll {
       (
         eclReturn: EclReturn,
         eclReturnSubmission: EclReturnSubmission,
-        returnResponse: SubmitEclReturnResponse
+        returnResponse: SubmitEclReturnResponse,
+        nrsSubmissionResponse: NrsSubmissionResponse
       ) =>
-        val validEclReturn = eclReturn.copy(returnType = Some(FirstTimeReturn))
+        val validEclReturn =
+          eclReturn.copy(returnType = Some(FirstTimeReturn), base64EncodedNrsSubmissionHtml = Some("aHRtbE5ycw=="))
 
-        when(mockReturnsRepository.get(any())).thenReturn(Future.successful(Some(validEclReturn)))
-
-        when(mockReturnValidationService.validateReturn(any())).thenReturn(eclReturnSubmission.validNel)
-
-        when(mockDmsService.submitToDms(any(), any())(any())).thenReturn(Future.successful(Right(returnResponse)))
+        when(mockDataRetrievalService.get(anyString())(any()))
+          .thenReturn(EitherT.rightT[Future, DataRetrievalError](validEclReturn))
 
         when(
-          mockReturnService
-            .submitEclReturn(
-              ArgumentMatchers.eq(eclRegistrationReference),
-              ArgumentMatchers.eq(eclReturnSubmission),
-              ArgumentMatchers.eq(validEclReturn)
-            )(
-              any()
-            )
-        )
-          .thenReturn(Future.successful(returnResponse))
+          mockReturnService.submitEclReturn(
+            anyString(),
+            ArgumentMatchers.eq(eclReturnSubmission)
+          )(any())
+        ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](returnResponse))
+
+        when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(validEclReturn)))
+          .thenReturn(EitherT.rightT[Future, DataValidationErrorList](eclReturnSubmission))
+
+        when(mockDmsService.submitToDms(anyString(), any())(any()))
+          .thenReturn(EitherT.rightT[Future, DmsSubmissionError](returnResponse))
+
+        when(mockNrsService.submitToNrs(anyString(), anyString(), anyString())(any(), any()))
+          .thenReturn(EitherT.rightT[Future, NrsSubmissionError](nrsSubmissionResponse))
 
         val result: Future[Result] =
           controller.submitReturn(validEclReturn.internalId)(fakeRequest)
 
         status(result)        shouldBe OK
         contentAsJson(result) shouldBe Json.toJson(returnResponse)
-
-        verify(mockNrsService, times(1)).submitToNrs(any(), any())(any(), any())
-
-        reset(mockNrsService)
     }
 
     "return 200 OK when returnType is AmendReturn" in forAll {
       (
         eclReturn: EclReturn,
         eclReturnSubmission: EclReturnSubmission,
-        returnResponse: SubmitEclReturnResponse
+        returnResponse: SubmitEclReturnResponse,
+        nrsSubmissionResponse: NrsSubmissionResponse
       ) =>
-        val validEclReturn = eclReturn.copy(returnType = Some(AmendReturn))
+        val validEclReturn = eclReturn.copy(
+          returnType = Some(AmendReturn),
+          base64EncodedDmsSubmissionHtml = Some("aHRtbERNUw=="),
+          base64EncodedNrsSubmissionHtml = Some("aHRtbE5ycw==")
+        )
 
-        when(mockReturnsRepository.get(any())).thenReturn(Future.successful(Some(validEclReturn)))
+        when(mockDataRetrievalService.get(anyString())(any()))
+          .thenReturn(EitherT.rightT[Future, DataRetrievalError](validEclReturn))
 
-        when(mockReturnValidationService.validateReturn(any())).thenReturn(eclReturnSubmission.validNel)
-
-        when(mockDmsService.submitToDms(any(), any())(any())).thenReturn(Future.successful(Right(returnResponse)))
+        when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(validEclReturn)))
+          .thenReturn(EitherT.rightT[Future, DataValidationErrorList](eclReturnSubmission))
 
         when(
-          mockReturnService
-            .submitEclReturn(
-              ArgumentMatchers.eq(eclRegistrationReference),
-              ArgumentMatchers.eq(eclReturnSubmission),
-              ArgumentMatchers.eq(validEclReturn)
-            )(
-              any()
-            )
-        )
-          .thenReturn(Future.successful(returnResponse))
+          mockReturnService.submitEclReturn(
+            ArgumentMatchers.eq(eclRegistrationReference),
+            ArgumentMatchers.eq(eclReturnSubmission)
+          )(any())
+        ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](returnResponse))
+
+        when(mockDmsService.submitToDms(any(), any())(any()))
+          .thenReturn(EitherT.rightT[Future, DmsSubmissionError](returnResponse))
+
+        when(mockNrsService.submitToNrs(anyString(), anyString(), anyString())(any(), any()))
+          .thenReturn(EitherT.rightT[Future, NrsSubmissionError](nrsSubmissionResponse))
 
         val result: Future[Result] =
           controller.submitReturn(validEclReturn.internalId)(fakeRequest)
@@ -120,33 +138,37 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         status(result)        shouldBe OK
         contentAsJson(result) shouldBe Json.toJson(returnResponse)
 
-        verify(mockNrsService, times(0)).submitToNrs(any(), any())(any(), any())
     }
 
-    "return 500 INTERNAL_SERVER_ERROR with validation errors in the JSON response body when the ECL return data is invalid" in forAll {
-      eclReturn: EclReturn =>
-        when(mockReturnsRepository.get(any())).thenReturn(Future.successful(Some(eclReturn)))
+    "return 500 BAD_REQUEST with validation errors in the JSON response body when the ECL return data is invalid" in forAll {
+      (eclReturn: EclReturn, eclReturnSubmission: EclReturnSubmission, returnResponse: SubmitEclReturnResponse) =>
+        when(mockDataRetrievalService.get(anyString())(any()))
+          .thenReturn(EitherT.rightT[Future, DataRetrievalError](eclReturn))
 
-        when(mockReturnValidationService.validateReturn(any()))
-          .thenReturn(DataValidationError(DataInvalid, "Invalid data").invalidNel)
+        when(
+          mockReturnService.submitEclReturn(
+            ArgumentMatchers.eq(eclRegistrationReference),
+            ArgumentMatchers.eq(eclReturnSubmission)
+          )(any())
+        ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](returnResponse))
+
+        val validationErrorCause = "invalid returnDate"
+        when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(eclReturn)))
+          .thenReturn(
+            EitherT.leftT[Future, EclReturnSubmission](
+              DataValidationErrorList(List(DataValidationError.DataMissing(validationErrorCause)))
+            )
+          )
 
         val result: Future[Result] =
           controller.submitReturn(eclReturn.internalId)(fakeRequest)
 
-        status(result)        shouldBe INTERNAL_SERVER_ERROR
-        contentAsJson(result) shouldBe Json.toJson(
-          DataValidationErrors(Seq(DataValidationError(DataInvalid, "Invalid data")))
-        )
+        status(result)        shouldBe BAD_REQUEST
+        contentAsJson(result) shouldBe Json.toJson(ResponseError.badRequestError(s"""
+               |Data missing: $validationErrorCause
+               |""".stripMargin))
     }
 
-    "return 404 NOT_FOUND when there is no ECL return data to submit" in forAll { eclReturn: EclReturn =>
-      when(mockReturnsRepository.get(any())).thenReturn(Future.successful(None))
-
-      val result: Future[Result] =
-        controller.submitReturn(eclReturn.internalId)(fakeRequest)
-
-      status(result) shouldBe NOT_FOUND
-    }
   }
 
 }

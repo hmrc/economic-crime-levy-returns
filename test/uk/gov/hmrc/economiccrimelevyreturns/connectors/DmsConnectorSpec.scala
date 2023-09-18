@@ -20,12 +20,14 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import com.typesafe.config.Config
 import org.mockito.ArgumentMatchers.any
+import play.api.http.Status.ACCEPTED
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
 import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
 
 import scala.concurrent.Future
+import scala.util.{Failure, Try}
 
 class DmsConnectorSpec extends SpecBase {
 
@@ -44,45 +46,37 @@ class DmsConnectorSpec extends SpecBase {
     actorSystem
   )
 
+  override def beforeEach(): Unit = {
+    reset(mockRequestBuilder)
+    reset(mockHttpClient)
+  }
+
   "sendPdf" should {
     "return HttpResponse if post to DMS queue succeeds" in {
 
-      val expectedResponse = HttpResponse.apply(ACCEPTED, "")
-
       when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
       when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
       when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.execute[Either[UpstreamErrorResponse, HttpResponse]](any(), any()))
-        .thenReturn(Future.successful(Right(expectedResponse)))
+      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(ACCEPTED, "")))
 
-      val result = await(connector.sendPdf(Source(Seq.empty)))
-
-      result shouldBe Right(expectedResponse)
-
-      verify(mockRequestBuilder, times(1))
-        .execute(any(), any())
-
-      reset(mockRequestBuilder)
+      await(connector.sendPdf(Source(Seq.empty))) shouldBe ()
     }
 
-    "return UpstreamErrorResponse if post to DMS queue fails" in {
+    "return UpstreamErrorResponse if post to DMS queue returns an error response" in forAll(generateErrorCode) {
+      errorCode: Int =>
+        val errorMessage = s"Upstream error code $errorCode"
+        when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+          .thenReturn(Future.successful(HttpResponse.apply(errorCode, errorMessage)))
 
-      val upstream5xxResponse = UpstreamErrorResponse.apply("", INTERNAL_SERVER_ERROR)
-
-      when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.execute[Either[UpstreamErrorResponse, HttpResponse]](any(), any()))
-        .thenReturn(Future.successful(Left(upstream5xxResponse)))
-
-      val result = await(connector.sendPdf(Source(Seq.empty)))
-
-      result shouldBe Left(upstream5xxResponse)
-
-      verify(mockRequestBuilder, times(1))
-        .execute(any(), any())
-
-      reset(mockRequestBuilder)
+        Try(await(connector.sendPdf(Source(Seq.empty)))) match {
+          case Failure(UpstreamErrorResponse(msg, _, _, _)) =>
+            msg shouldEqual errorMessage
+          case _                                            => fail("expected UpstreamErrorResponse when an error is received from DMS")
+        }
     }
   }
 }

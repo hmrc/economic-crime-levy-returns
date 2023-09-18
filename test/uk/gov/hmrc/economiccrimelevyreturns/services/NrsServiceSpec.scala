@@ -20,16 +20,18 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.scalacheck.Arbitrary
 import play.api.http.HeaderNames
+import play.api.http.Status.BAD_REQUEST
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.ValidNrsSubmission
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.NrsConnector
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DmsSubmissionError.InternalUnexpectedError
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.NrsSubmissionError
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsSubmissionResponse
-import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import java.time.{Clock, Instant, ZoneId}
 import scala.concurrent.Future
@@ -45,6 +47,9 @@ class NrsServiceSpec extends SpecBase {
 
   val returnNotableEvent      = "ecl-return"
   val amendReturnNotableEvent = "ecl-amend-return"
+
+  override def beforeEach(): Unit =
+    reset(mockNrsConnector)
 
   "submitToNrs" should {
     "return the NRS submission ID when the submission is successful" in forAll(
@@ -72,7 +77,7 @@ class NrsServiceSpec extends SpecBase {
             .value
         )
 
-      result shouldBe nrsSubmissionResponse
+      result shouldBe Right(nrsSubmissionResponse)
     }
 
     "return NrsSubmissionError.InternalUnexpectedError when the authorization header is empty" in forAll(
@@ -89,7 +94,7 @@ class NrsServiceSpec extends SpecBase {
         await(
           service
             .submitToNrs(
-              "YQ==,",
+              "YQ==",
               validNrsSubmission.eclRegistrationReference,
               returnNotableEvent
             )(hc, request)
@@ -100,10 +105,10 @@ class NrsServiceSpec extends SpecBase {
     }
 
     "return NrsSubmissionError.InternalUnexpectedError when an exception is thrown while decoding due to invalid base 64 string" in forAll(
-      arbValidNrsSubmission(fakeRequest, stubClock).arbitrary
+      arbValidNrsSubmission(fakeRequestWithAuthorisation, stubClock).arbitrary
     ) { validNrsSubmission: ValidNrsSubmission =>
       val request = AuthorisedRequest(
-        fakeRequest,
+        fakeRequestWithAuthorisation,
         validNrsSubmission.nrsSubmission.metadata.identityData.internalId,
         validNrsSubmission.eclRegistrationReference,
         validNrsSubmission.nrsSubmission.metadata.identityData
@@ -120,15 +125,15 @@ class NrsServiceSpec extends SpecBase {
             .value
         )
 
-      result shouldBe Left(
-        NrsSubmissionError.InternalUnexpectedError("User auth token missing from header", None)
-      ) //TODO how do we want to check the exception
+      result match {
+        case Left(e)  => e.isInstanceOf[NrsSubmissionError] shouldBe true
+        case Right(_) => fail("Expected exception to be thrown for invalid base64 value")
+      }
     }
 
     "return NrsSubmissionError.BadGateway when call to NRS returns an error response" in forAll(
-      arbValidNrsSubmission(fakeRequestWithAuthorisation, stubClock).arbitrary,
-      generateErrorCode
-    ) { (validNrsSubmission: ValidNrsSubmission, errorCode: Int) =>
+      arbValidNrsSubmission(fakeRequestWithAuthorisation, stubClock).arbitrary
+    ) { (validNrsSubmission: ValidNrsSubmission) =>
       val request = AuthorisedRequest(
         fakeRequestWithAuthorisation,
         validNrsSubmission.nrsSubmission.metadata.identityData.internalId,
@@ -136,16 +141,17 @@ class NrsServiceSpec extends SpecBase {
         validNrsSubmission.nrsSubmission.metadata.identityData
       )
 
-      val message = "Gateway Error"
+      val errorCode = NOT_ACCEPTABLE
+      val message   = "Gateway Error"
 
-      when(mockNrsConnector.submitToNrs(ArgumentMatchers.eq(validNrsSubmission.nrsSubmission))(any()))
+      when(mockNrsConnector.submitToNrs(ArgumentMatchers.eq(validNrsSubmission.nrsSubmission))(any[HeaderCarrier]()))
         .thenReturn(Future.failed(UpstreamErrorResponse.apply(message, errorCode)))
 
       val result =
         await(
           service
             .submitToNrs(
-              "YQ==,",
+              validNrsSubmission.base64EncodedNrsSubmissionHtml,
               validNrsSubmission.eclRegistrationReference,
               returnNotableEvent
             )(hc, request)

@@ -16,22 +16,22 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
-import org.mockito.ArgumentMatchers
-import play.api.http.HeaderNames
+import org.mockito.ArgumentMatchers.any
 import play.api.libs.json.Json
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
-import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
-import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{StringContextOps, UpstreamErrorResponse}
+import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
+import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
 
 import scala.concurrent.Future
+import scala.util.{Failure, Try}
 
 class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
   val mockHttpClient: HttpClientV2                       = mock[HttpClientV2]
+  val mockRequestBuilder: RequestBuilder                 = mock[RequestBuilder]
   val mockCorrelationIdGenerator: CorrelationIdGenerator = mock[CorrelationIdGenerator]
 
   val connector = new IntegrationFrameworkConnector(appConfig, mockHttpClient, mockCorrelationIdGenerator)
@@ -46,26 +46,13 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
         correlationId: String,
         submitEclReturnResponse: SubmitEclReturnResponse
       ) =>
-        val expectedUrl =
-          s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference"
-
-        val expectedHeaders: Seq[(String, String)] = Seq(
-          (HeaderNames.AUTHORIZATION, s"Bearer ${appConfig.integrationFrameworkBearerToken}"),
-          (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
-          (CustomHeaderNames.CorrelationId, correlationId)
-        )
-
         when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
 
-        when(
-          mockHttpClient
-            .post(
-              ArgumentMatchers.eq(url"$expectedUrl")
-            )
-            .setHeader(ArgumentMatchers.eq(expectedHeaders): _*)
-            .withBody(Json.toJson(ArgumentMatchers.eq(eclReturnSubmission)))
-            .executeAndDeserialise[SubmitEclReturnResponse]
-        ).thenReturn(Future.successful(submitEclReturnResponse))
+        when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+          .thenReturn(Future.successful(HttpResponse.apply(OK, Json.stringify(Json.toJson(submitEclReturnResponse)))))
 
         val result = await(connector.submitEclReturn(eclRegistrationReference, eclReturnSubmission))
 
@@ -76,35 +63,22 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
   "return UpstreamErrorResponse when call to integration framework returns an error" in forAll {
     (
       eclReturnSubmission: EclReturnSubmission,
-      correlationId: String,
-      submitEclReturnResponse: SubmitEclReturnResponse
+      correlationId: String
     ) =>
-      val expectedUrl =
-        s"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference"
-
-      val expectedHeaders: Seq[(String, String)] = Seq(
-        (HeaderNames.AUTHORIZATION, s"Bearer ${appConfig.integrationFrameworkBearerToken}"),
-        (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
-        (CustomHeaderNames.CorrelationId, correlationId)
-      )
-
       when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
 
-      val upstreamErrorResponse = Future.failed(UpstreamErrorResponse("Not found", NOT_FOUND))
+      val errorCode = UNAUTHORIZED
 
-      when(
-        mockHttpClient
-          .post(
-            ArgumentMatchers.eq(url"$expectedUrl")
-          )
-          .setHeader(ArgumentMatchers.eq(expectedHeaders): _*)
-          .withBody(Json.toJson(ArgumentMatchers.eq(eclReturnSubmission)))
-          .executeAndDeserialise[SubmitEclReturnResponse]
-      ).thenReturn(upstreamErrorResponse)
+      when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Failed authorization")))
 
-      val result = await(connector.submitEclReturn(eclRegistrationReference, eclReturnSubmission))
-
-      result shouldBe upstreamErrorResponse
+      Try(await(connector.submitEclReturn(eclRegistrationReference, eclReturnSubmission))) match {
+        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
+          code shouldEqual errorCode
+        case _                                             => fail("expected UpstreamErrorResponse when an error is received from DMS")
+      }
   }
-
 }

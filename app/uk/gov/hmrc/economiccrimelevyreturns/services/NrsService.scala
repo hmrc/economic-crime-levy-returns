@@ -25,6 +25,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.errors.NrsSubmissionError
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+
 import scala.util.{Failure, Success, Try}
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest

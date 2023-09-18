@@ -52,12 +52,12 @@ class NrsConnector @Inject() (
   }
   def submitToNrs(nrsSubmission: NrsSubmission)(implicit
     hc: HeaderCarrier
-  ): Future[NrsSubmissionResponse] =
-    retryFor[NrsSubmissionResponse]("NRS submission")(retryCondition)(
+  ): Future[NrsSubmissionResponse]                                =
+    retryFor[NrsSubmissionResponse]("NRS submission")(retryCondition) {
       httpClient
         .post(url"$nrsSubmissionUrl")
         .setHeader(nrsHeaders: _*)
         .withBody(Json.toJson(nrsSubmission))
         .executeAndDeserialise[NrsSubmissionResponse]
-    )
+    }
 }

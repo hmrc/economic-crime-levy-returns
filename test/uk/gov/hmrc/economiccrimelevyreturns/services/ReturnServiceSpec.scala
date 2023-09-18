@@ -53,7 +53,7 @@ class ReturnServiceSpec extends SpecBase {
 
         val result = await(service.submitEclReturn(eclRegistrationReference, eclReturnSubmission).value)
 
-        result shouldBe returnResponse
+        result shouldBe Right(returnResponse)
     }
 
     "return ReturnsSubmissionError.BadGateway when call to the integration framework returns an error response" in forAll(

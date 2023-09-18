@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
-import cats.data.Validated.Valid
 import cats.implicits.catsSyntaxValidatedId
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
@@ -26,7 +25,6 @@ import uk.gov.hmrc.economiccrimelevyreturns.ValidEclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band._
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrorList}
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataMissing
 import uk.gov.hmrc.economiccrimelevyreturns.models.{Band, EclReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.utils.SchemaValidator
 

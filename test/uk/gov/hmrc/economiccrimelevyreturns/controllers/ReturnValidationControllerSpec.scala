@@ -17,15 +17,14 @@
 package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
 import cats.data.EitherT
-import cats.implicits.catsSyntaxValidatedId
 import org.mockito.ArgumentMatchers
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{any, anyString}
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataRetrievalError, DataValidationError, DataValidationErrorList}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataRetrievalError, DataValidationError, DataValidationErrorList, ResponseError}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.EclReturnSubmission
 import uk.gov.hmrc.economiccrimelevyreturns.services.{DataRetrievalService, ReturnValidationService}
 
@@ -46,8 +45,8 @@ class ReturnValidationControllerSpec extends SpecBase {
   "getValidationErrors" should {
     "return 200 OK when the ECL return data is valid" in forAll {
       (eclReturn: EclReturn, eclReturnSubmission: EclReturnSubmission) =>
-        when(mockDataRetrievalService.get(ArgumentMatchers.eq(eclReturn.internalId)))
-          .thenReturn(EitherT.right[DataRetrievalError](Future.successful(eclReturn)))
+        when(mockDataRetrievalService.get(anyString())(any()))
+          .thenReturn(EitherT.rightT[Future, DataRetrievalError](eclReturn))
 
         when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(eclReturn)))
           .thenReturn(EitherT.right[DataValidationErrorList](Future.successful(eclReturnSubmission)))
@@ -59,10 +58,11 @@ class ReturnValidationControllerSpec extends SpecBase {
 
     "return 400 BAD_REQUEST with validation errors in the JSON response body when the ECL return data is invalid" in forAll {
       eclReturn: EclReturn =>
-        when(mockDataRetrievalService.get(ArgumentMatchers.eq(eclReturn.internalId)))
-          .thenReturn(EitherT.rightT[Future, DataRetrievalError](Future.successful(eclReturn)))
+        when(mockDataRetrievalService.get(anyString())(any()))
+          .thenReturn(EitherT.rightT[Future, DataRetrievalError](eclReturn))
 
-        val validationErrors = DataValidationErrorList(List(DataValidationError.DataMissing("Invalid data")))
+        val errorMessage     = "Invalid data"
+        val validationErrors = DataValidationErrorList(List(DataValidationError.DataMissing(errorMessage)))
 
         when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(eclReturn)))
           .thenReturn(EitherT.left[EclReturnSubmission](Future.successful(validationErrors)))
@@ -70,15 +70,21 @@ class ReturnValidationControllerSpec extends SpecBase {
         val result: Future[Result] = controller.getValidationErrors(eclReturn.internalId)(fakeRequest)
 
         status(result)        shouldBe BAD_REQUEST
-        contentAsJson(result) shouldBe Json.toJson(validationErrors) // TODO - convert to response error
+        contentAsJson(result) shouldBe Json.toJson(ResponseError.badRequestError(s"""
+             |Data missing: $errorMessage
+             |""".stripMargin))
     }
 
     "return 404 NOT_FOUND when there is no ECL return data to validate" in forAll { eclReturn: EclReturn =>
-      when(mockReturnsRepository.get(any())).thenReturn(Future.successful(None))
+      when(mockDataRetrievalService.get(anyString())(any()))
+        .thenReturn(EitherT.leftT[Future, EclReturn](DataRetrievalError.NotFound(eclReturn.internalId)))
 
       val result: Future[Result] = controller.getValidationErrors(eclReturn.internalId)(fakeRequest)
 
-      status(result) shouldBe NOT_FOUND
+      status(result)        shouldBe NOT_FOUND
+      contentAsJson(result) shouldBe Json.toJson(
+        ResponseError.notFoundError(s"Unable to find record with id: ${eclReturn.internalId}")
+      )
     }
   }
 

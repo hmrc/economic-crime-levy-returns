@@ -88,7 +88,7 @@ trait ErrorHandler extends Logging {
   implicit val dataRetrievalErrorConverter: Converter[DataRetrievalError] =
     new Converter[DataRetrievalError] {
       override def convert(error: DataRetrievalError): ResponseError = error match {
-        case DataRetrievalError.NotFound(id)                            => ResponseError.notFoundError(s"Haven't found any record for id $id")
+        case DataRetrievalError.NotFound(id)                            => ResponseError.notFoundError(s"Unable to find record with id: $id")
         case DataRetrievalError.InternalUnexpectedError(message, cause) =>
           ResponseError.internalServiceError(message = message, cause = cause)
       }

@@ -33,15 +33,15 @@ class ReturnValidationController @Inject() (
   authorise: AuthorisedAction,
   returnValidationService: ReturnValidationService
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc) with BaseController
-      with ErrorHandler {
+    extends BackendController(cc)
+    with BaseController
+    with ErrorHandler {
 
   def getValidationErrors(id: String): Action[AnyContent] = authorise.async { _ =>
-      (for {
-        eclReturn <- dataRetrievalService.get(id).asResponseError
-        eclReturnSubmission <- returnValidationService.validateReturn(eclReturn).map(_ => ()).asResponseError
-      } yield eclReturnSubmission).convertToResult
-    }
-
+    (for {
+      eclReturn <- dataRetrievalService.get(id).asResponseError
+      _         <- returnValidationService.validateReturn(eclReturn).asResponseError
+    } yield ()).convertToResult
+  }
 
 }
