@@ -50,17 +50,6 @@ trait BaseConnector {
           }
         }
 
-    def executeAndThrowOnFailure[T](implicit ec: ExecutionContext, reads: Reads[T]): Future[T] =
-      requestBuilder
-        .execute[HttpResponse]
-        .flatMap { response =>
-          response.status match {
-            case OK | CREATED | ACCEPTED => response.as[T]
-            case _                       =>
-              throw UpstreamErrorResponse(response.body, response.status)
-          }
-        }
-
     def executeAndExpect(expected: Int)(implicit ec: ExecutionContext): Future[Unit] =
       requestBuilder
         .execute[HttpResponse]

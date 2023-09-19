@@ -69,8 +69,10 @@ class ReturnSubmissionController @Inject() (
         )
       case Some(AmendReturn)     =>
         amendSubmission(eclReturn, request.eclRegistrationReference)
-     case None                  =>
-       EitherT.left[SubmitEclReturnResponse](Future.successful(ResponseError.internalServiceError(message = "Return type is missing")))
+      case None                  =>
+        EitherT.left[SubmitEclReturnResponse](
+          Future.successful(ResponseError.internalServiceError(message = "Return type is missing"))
+        )
     }
 
   private def firstTimeSubmission(

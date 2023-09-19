@@ -50,6 +50,4 @@ trait BaseController {
       override def getResponse(response: Unit) = Ok
     }
 
-
-
 }

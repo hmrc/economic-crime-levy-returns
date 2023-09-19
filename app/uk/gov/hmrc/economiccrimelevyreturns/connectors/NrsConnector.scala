@@ -42,11 +42,10 @@ class NrsConnector @Inject() (
 
   private val nrsSubmissionUrl: String = s"${appConfig.nrsBaseUrl}/submission"
 
-  private def nrsHeaders: Seq[(String, String)] = Seq(
+  private def nrsHeaders: Seq[(String, String)]                   = Seq(
     (HeaderNames.CONTENT_TYPE, MimeTypes.JSON),
     (CustomHeaderNames.ApiKey, appConfig.nrsApiKey)
   )
-
   private def retryCondition: PartialFunction[Exception, Boolean] = {
     case e: UpstreamErrorResponse if UpstreamErrorResponse.Upstream5xxResponse.unapply(e).isDefined => true
   }
