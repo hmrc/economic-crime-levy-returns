@@ -82,10 +82,12 @@ class ReturnSubmissionController @Inject() (
     eventName: String
   )(implicit hc: HeaderCarrier, request: AuthorisedRequest[_]) =
     for {
-      base64EncodedNrsSubmissionHtml <- checkOptionalValueExists(eclReturn.base64EncodedNrsSubmissionHtml)
+      base64EncodedNrsSubmissionHtml <- checkOptionalValueExists[String](eclReturn.base64EncodedNrsSubmissionHtml)
       submitEclReturnResponse        <-
         returnService.submitEclReturn(eclReference, eclReturnSubmission).asResponseError
       _                              <- nrsService.submitToNrs(base64EncodedNrsSubmissionHtml, eclReference, eventName).asResponseError
+      _                               = auditService.sendReturnSubmittedEvent(eclReturn, eclReference, submitEclReturnResponse.chargeReference)
+
     } yield submitEclReturnResponse
 
   private def amendSubmission(eclReturn: EclReturn, eclRegistrationReference: String)(implicit
@@ -93,22 +95,13 @@ class ReturnSubmissionController @Inject() (
     request: AuthorisedRequest[_]
   ) =
     for {
-      base64EncodedDmsSubmissionHtml <- checkOptionalValueExists(eclReturn.base64EncodedDmsSubmissionHtml)
-      base64EncodedNrsSubmissionHtml <- checkOptionalValueExists(eclReturn.base64EncodedNrsSubmissionHtml)
+      base64EncodedDmsSubmissionHtml <- checkOptionalValueExists[String](eclReturn.base64EncodedDmsSubmissionHtml)
+      base64EncodedNrsSubmissionHtml <- checkOptionalValueExists[String](eclReturn.base64EncodedNrsSubmissionHtml)
       _                              <- nrsService
                                           .submitToNrs(base64EncodedNrsSubmissionHtml, eclRegistrationReference, appConfig.amendReturnNotableEvent)
                                           .asResponseError
       eclReturnResponse              <- dmsService.submitToDms(base64EncodedDmsSubmissionHtml, Instant.now).asResponseError
       _                               = auditService.sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, None)
     } yield eclReturnResponse
-
-  private def checkOptionalValueExists(value: Option[String]): EitherT[Future, ResponseError, String] = EitherT(
-    Future.successful(
-      value match {
-        case Some(value) => Right(value)
-        case None        => Left(ResponseError.internalServiceError())
-      }
-    )
-  )
 
 }

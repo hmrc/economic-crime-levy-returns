@@ -27,7 +27,7 @@ import play.api.http.Status.ACCEPTED
 import play.api.mvc.MultipartFormData
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, Retries, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, Retries, StringContextOps, UpstreamErrorResponse}
 
 import java.net.URL
 import javax.inject.{Inject, Singleton}
@@ -53,7 +53,7 @@ class DmsConnector @Inject() (
   )(implicit hc: HeaderCarrier): Future[Unit] =
     retryFor[Unit]("DMS submission")(retryCondition) {
       httpClient
-        .post(new URL(appConfig.dmsSubmissionUrl))
+        .post(url"${appConfig.dmsSubmissionUrl}")
         .setHeader(AUTHORIZATION -> appConfig.internalAuthToken)
         .withBody(body)
         .executeAndExpect(ACCEPTED)

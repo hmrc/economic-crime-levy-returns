@@ -40,12 +40,16 @@ class NrsConnectorSpec extends SpecBase {
   val connector                          = new NrsConnector(appConfig, mockHttpClient, config, actorSystem)
   val nrsSubmissionUrl                   = url"${appConfig.nrsBaseUrl}/submission"
 
-  override def beforeEach(): Unit =
+  override def beforeEach(): Unit = {
     reset(mockHttpClient)
+    reset(mockRequestBuilder)
+  }
 
   "submitToNrs" should {
     "return a NRS submission response when the http client returns a NRS submission response" in forAll {
       (nrsSubmission: NrsSubmission, nrsSubmissionResponse: NrsSubmissionResponse) =>
+        beforeEach()
+
         when(mockHttpClient.post(ArgumentMatchers.eq(nrsSubmissionUrl))(any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
@@ -55,12 +59,17 @@ class NrsConnectorSpec extends SpecBase {
         val result = await(connector.submitToNrs(nrsSubmission))
 
         result shouldBe nrsSubmissionResponse
+
+        verify(mockRequestBuilder, times(1))
+          .execute(any(), any())
     }
 
-    "return UpstreamErrorResponse when call to integration framework returns an error" in forAll {
+    "return 4xx UpstreamErrorResponse when call to integration framework returns an error" in forAll {
       (
         nrsSubmission: NrsSubmission
       ) =>
+        beforeEach()
+
         val errorCode = NOT_FOUND
 
         when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
@@ -72,9 +81,36 @@ class NrsConnectorSpec extends SpecBase {
         Try(await(connector.submitToNrs(nrsSubmission))) match {
           case Failure(UpstreamErrorResponse(_, code, _, _)) =>
             code shouldEqual errorCode
-          case _                                             => fail("expected UpstreamErrorResponse when an error is received from DMS")
+          case _                                             => fail("expected UpstreamErrorResponse when an error is received from NRS")
         }
+
+        verify(mockRequestBuilder, times(1))
+          .execute(any(), any())
     }
+  }
+
+  "retry 3 times when a 5xx UpstreamErrorResponse is returned from integration framework" in forAll {
+    (
+      nrsSubmission: NrsSubmission
+    ) =>
+      beforeEach()
+
+      val errorCode = INTERNAL_SERVER_ERROR
+
+      when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Internal server error")))
+
+      Try(await(connector.submitToNrs(nrsSubmission))) match {
+        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
+          code shouldEqual errorCode
+        case _                                             => fail("expected UpstreamErrorResponse when an error is received from NRS")
+      }
+
+      verify(mockRequestBuilder, times(4))
+        .execute(any(), any())
   }
 
 }

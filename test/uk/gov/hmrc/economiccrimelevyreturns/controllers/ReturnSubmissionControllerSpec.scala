@@ -71,6 +71,8 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         returnResponse: SubmitEclReturnResponse,
         nrsSubmissionResponse: NrsSubmissionResponse
       ) =>
+        beforeEach()
+
         val validEclReturn =
           eclReturn.copy(returnType = Some(FirstTimeReturn), base64EncodedNrsSubmissionHtml = Some("aHRtbE5ycw=="))
 
@@ -98,6 +100,9 @@ class ReturnSubmissionControllerSpec extends SpecBase {
 
         status(result)        shouldBe OK
         contentAsJson(result) shouldBe Json.toJson(returnResponse)
+
+        verify(mockAuditService, times(1))
+          .sendReturnSubmittedEvent(any(), any(), any())(any())
     }
 
     "return 200 OK when returnType is AmendReturn" in forAll {
@@ -107,6 +112,8 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         returnResponse: SubmitEclReturnResponse,
         nrsSubmissionResponse: NrsSubmissionResponse
       ) =>
+        beforeEach()
+
         val validEclReturn = eclReturn.copy(
           returnType = Some(AmendReturn),
           base64EncodedDmsSubmissionHtml = Some("aHRtbERNUw=="),
@@ -138,6 +145,8 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         status(result)        shouldBe OK
         contentAsJson(result) shouldBe Json.toJson(returnResponse)
 
+        verify(mockAuditService, times(1))
+          .sendReturnSubmittedEvent(any(), any(), any())(any())
     }
 
     "return 500 BAD_REQUEST with validation errors in the JSON response body when the ECL return data is invalid" in forAll {

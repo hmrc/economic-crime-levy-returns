@@ -36,8 +36,10 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
 
   val connector = new IntegrationFrameworkConnector(appConfig, mockHttpClient, mockCorrelationIdGenerator)
 
-  override def beforeEach(): Unit =
+  override def beforeEach(): Unit = {
     reset(mockHttpClient)
+    reset(mockRequestBuilder)
+  }
 
   "submitEclReturn" should {
     "return submit return response when call to integration framework succeeds" in forAll {
@@ -46,6 +48,8 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
         correlationId: String,
         submitEclReturnResponse: SubmitEclReturnResponse
       ) =>
+        beforeEach()
+
         when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
 
         when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
@@ -60,11 +64,13 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
     }
   }
 
-  "return UpstreamErrorResponse when call to integration framework returns an error" in forAll {
+  "return 4xx UpstreamErrorResponse when call to integration framework returns an error" in forAll {
     (
       eclReturnSubmission: EclReturnSubmission,
       correlationId: String
     ) =>
+      beforeEach()
+
       when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
 
       val errorCode = UNAUTHORIZED
@@ -74,6 +80,30 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
       when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
       when(mockRequestBuilder.execute[HttpResponse](any(), any()))
         .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Failed authorization")))
+
+      Try(await(connector.submitEclReturn(eclRegistrationReference, eclReturnSubmission))) match {
+        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
+          code shouldEqual errorCode
+        case _                                             => fail("expected UpstreamErrorResponse when an error is received from DMS")
+      }
+  }
+
+  "return 5xx UpstreamErrorResponse when call to integration framework returns an error" in forAll {
+    (
+      eclReturnSubmission: EclReturnSubmission,
+      correlationId: String
+    ) =>
+      beforeEach()
+
+      when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
+
+      val errorCode = INTERNAL_SERVER_ERROR
+
+      when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Internal server error")))
 
       Try(await(connector.submitEclReturn(eclRegistrationReference, eclReturnSubmission))) match {
         case Failure(UpstreamErrorResponse(_, code, _, _)) =>
