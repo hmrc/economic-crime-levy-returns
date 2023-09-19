@@ -19,11 +19,12 @@ package uk.gov.hmrc.economiccrimelevyreturns.connectors
 import akka.actor.ActorSystem
 import com.typesafe.config.Config
 import play.api.http.{HeaderNames, MimeTypes}
+import play.api.libs.json.Json
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.{NrsSubmission, NrsSubmissionResponse}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, Retries, UpstreamErrorResponse}
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.{HeaderCarrier, Retries, StringContextOps, UpstreamErrorResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,29 +32,31 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class NrsConnector @Inject() (
   appConfig: AppConfig,
-  httpClient: HttpClient,
+  httpClient: HttpClientV2,
   override val configuration: Config,
   override val actorSystem: ActorSystem
 )(implicit
   ec: ExecutionContext
-) extends Retries {
+) extends Retries
+    with BaseConnector {
 
   private val nrsSubmissionUrl: String = s"${appConfig.nrsBaseUrl}/submission"
 
-  private def nrsHeaders: Seq[(String, String)] = Seq(
+  private def nrsHeaders: Seq[(String, String)]                   = Seq(
     (HeaderNames.CONTENT_TYPE, MimeTypes.JSON),
     (CustomHeaderNames.ApiKey, appConfig.nrsApiKey)
   )
-
   private def retryCondition: PartialFunction[Exception, Boolean] = {
     case e: UpstreamErrorResponse if UpstreamErrorResponse.Upstream5xxResponse.unapply(e).isDefined => true
   }
-
   def submitToNrs(nrsSubmission: NrsSubmission)(implicit
     hc: HeaderCarrier
-  ): Future[NrsSubmissionResponse] =
-    retryFor[NrsSubmissionResponse]("NRS submission")(retryCondition)(
-      httpClient.POST[NrsSubmission, NrsSubmissionResponse](nrsSubmissionUrl, nrsSubmission, headers = nrsHeaders)
-    )
-
+  ): Future[NrsSubmissionResponse]                                =
+    retryFor[NrsSubmissionResponse]("NRS submission")(retryCondition) {
+      httpClient
+        .post(url"$nrsSubmissionUrl")
+        .setHeader(nrsHeaders: _*)
+        .withBody(Json.toJson(nrsSubmission))
+        .executeAndDeserialise[NrsSubmissionResponse]
+    }
 }

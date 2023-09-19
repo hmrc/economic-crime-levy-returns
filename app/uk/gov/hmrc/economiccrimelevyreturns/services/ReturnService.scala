@@ -16,55 +16,38 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
-import play.api.Logging
+import cats.data.EitherT
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
-import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
-import uk.gov.hmrc.economiccrimelevyreturns.models.audit.RequestStatus.{Failed, Success}
-import uk.gov.hmrc.economiccrimelevyreturns.models.audit.{RequestStatus, ReturnResult, ReturnSubmittedAuditEvent}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ReturnsSubmissionError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 class ReturnService @Inject() (
-  integrationFrameworkConnector: IntegrationFrameworkConnector,
-  auditConnector: AuditConnector
-)(implicit ec: ExecutionContext)
-    extends Logging {
+  integrationFrameworkConnector: IntegrationFrameworkConnector
+)(implicit ec: ExecutionContext) {
 
-  private val loggerContext = "ReturnService"
-
-  def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission, eclReturn: EclReturn)(
-    implicit hc: HeaderCarrier
-  ): Future[SubmitEclReturnResponse] =
-    integrationFrameworkConnector.submitEclReturn(eclRegistrationReference, eclReturnSubmission).map {
-      case Right(submitEclReturnResponse) =>
-        logger.info(s"$loggerContext - ECL Return successfully submitted")
-        sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, submitEclReturnResponse.chargeReference, Failed)
-
-        submitEclReturnResponse
-      case Left(e)                        =>
-        logger.error(s"$loggerContext - ECL Return submission failed with error ${e.message}")
-        sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, None, Failed)
-        throw e
-    }
-
-  def sendReturnSubmittedEvent(
-    eclReturn: EclReturn,
-    eclRegistrationReference: String,
-    chargeReference: Option[String],
-    stauts: RequestStatus
-  )(implicit
+  def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit
     hc: HeaderCarrier
-  ): Future[AuditResult] =
-    auditConnector.sendExtendedEvent(
-      ReturnSubmittedAuditEvent(
-        eclReturn,
-        eclRegistrationReference,
-        ReturnResult(Success, chargeReference, None)
-      ).extendedDataEvent
-    )(hc, ec)
+  ): EitherT[Future, ReturnsSubmissionError, SubmitEclReturnResponse] =
+    EitherT {
+      integrationFrameworkConnector
+        .submitEclReturn(eclRegistrationReference, eclReturnSubmission)
+        .map { submitEclResponse =>
+          Right(submitEclResponse)
+        }
+        .recover {
+          case error @ UpstreamErrorResponse(message, code, _, _)
+              if UpstreamErrorResponse.Upstream5xxResponse
+                .unapply(error)
+                .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
+            Left(ReturnsSubmissionError.BadGateway(reason = message, code = code))
+
+          case NonFatal(thr) => Left(ReturnsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr)))
+        }
+    }
 
 }

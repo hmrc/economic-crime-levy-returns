@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
-import cats.data.Validated.Valid
 import cats.implicits.catsSyntaxValidatedId
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.scalacheck.Gen
+import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.ValidEclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band._
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataMissing
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrorList}
 import uk.gov.hmrc.economiccrimelevyreturns.models.{Band, EclReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.utils.SchemaValidator
 
@@ -47,29 +46,28 @@ class ReturnValidationServiceSpec extends SpecBase {
         )(any())
       ).thenReturn(validEclReturn.expectedEclReturnSubmission.validNel)
 
-      val result = service.validateReturn(validEclReturn.eclReturn)
+      val result = await(service.validateReturn(validEclReturn.eclReturn).value)
 
-      result shouldBe Valid(validEclReturn.expectedEclReturnSubmission)
+      result shouldBe Right(validEclReturn.expectedEclReturnSubmission)
     }
 
-    "return a non-empty list of errors when unconditional mandatory ECL return data items are missing" in {
+    "return DataValidationErrorList containing the list of errors when unconditional mandatory ECL return data items are missing" in {
       val eclReturn = EclReturn.empty("internalId")
 
-      val expectedErrors = Seq(
-        DataValidationError(DataMissing, "Relevant AP 12 months choice is missing"),
-        DataValidationError(DataMissing, "Relevant AP revenue is missing"),
-        DataValidationError(DataMissing, "Calculated liability is missing"),
-        DataValidationError(DataMissing, "Contact name is missing"),
-        DataValidationError(DataMissing, "Contact role is missing"),
-        DataValidationError(DataMissing, "Contact email address is missing"),
-        DataValidationError(DataMissing, "Contact telephone number is missing"),
-        DataValidationError(DataMissing, "Obligation details is missing")
+      val expectedErrors = List(
+        DataValidationError.DataMissing("Relevant AP 12 months choice is missing"),
+        DataValidationError.DataMissing("Relevant AP revenue is missing"),
+        DataValidationError.DataMissing("Calculated liability is missing"),
+        DataValidationError.DataMissing("Contact name is missing"),
+        DataValidationError.DataMissing("Contact role is missing"),
+        DataValidationError.DataMissing("Contact email address is missing"),
+        DataValidationError.DataMissing("Contact telephone number is missing"),
+        DataValidationError.DataMissing("Obligation details is missing")
       )
 
-      val result = service.validateReturn(eclReturn)
+      val result = await(service.validateReturn(eclReturn).value)
 
-      result.isValid shouldBe false
-      result.leftMap(nel => nel.toList should contain theSameElementsAs expectedErrors)
+      result shouldBe Left(DataValidationErrorList(expectedErrors))
     }
 
     "return an error if the relevant AP is not 12 months and the relevant AP length is missing" in forAll {
@@ -77,13 +75,15 @@ class ReturnValidationServiceSpec extends SpecBase {
         val invalidEclReturn =
           validEclReturn.eclReturn.copy(relevantAp12Months = Some(false), relevantApLength = None)
 
-        val result = service.validateReturn(invalidEclReturn)
+        val result = await(service.validateReturn(invalidEclReturn).value)
 
-        result.isValid shouldBe false
-        result.leftMap(nel =>
-          nel.toList should contain only DataValidationError(
-            DataMissing,
-            "Relevant AP length is missing"
+        result shouldBe Left(
+          DataValidationErrorList(
+            List(
+              DataValidationError.DataMissing(
+                "Relevant AP length is missing"
+              )
+            )
           )
         )
     }
@@ -97,13 +97,15 @@ class ReturnValidationServiceSpec extends SpecBase {
         validEclReturn.eclReturn
           .copy(calculatedLiability = Some(calculatedLiability), carriedOutAmlRegulatedActivityForFullFy = None)
 
-      val result = service.validateReturn(invalidEclReturn)
+      val result = await(service.validateReturn(invalidEclReturn).value)
 
-      result.isValid shouldBe false
-      result.leftMap(nel =>
-        nel.toList should contain only DataValidationError(
-          DataMissing,
-          "Carried out AML regulated activity for full FY choice is missing"
+      result shouldBe Left(
+        DataValidationErrorList(
+          List(
+            DataValidationError.DataMissing(
+              "Carried out AML regulated activity for full FY choice is missing"
+            )
+          )
         )
       )
     }
@@ -114,13 +116,15 @@ class ReturnValidationServiceSpec extends SpecBase {
           validEclReturn.eclReturn
             .copy(carriedOutAmlRegulatedActivityForFullFy = Some(false), amlRegulatedActivityLength = None)
 
-        val result = service.validateReturn(invalidEclReturn)
+        val result = await(service.validateReturn(invalidEclReturn).value)
 
-        result.isValid shouldBe false
-        result.leftMap(nel =>
-          nel.toList should contain only DataValidationError(
-            DataMissing,
-            "AML regulated activity length is missing"
+        result shouldBe Left(
+          DataValidationErrorList(
+            List(
+              DataValidationError.DataMissing(
+                "AML regulated activity length is missing"
+              )
+            )
           )
         )
     }

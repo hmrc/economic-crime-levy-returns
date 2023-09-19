@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
-sealed trait DataValidationError
+sealed trait NrsSubmissionError
 
-object DataValidationError {
-  case class SchemaValidationError(message: String) extends DataValidationError
-  case class DataMissing(errorMessage: String) extends DataValidationError
+object NrsSubmissionError {
+  case class InternalUnexpectedError(message: String, cause: Option[Throwable]) extends NrsSubmissionError
+
+  case class BadGateway(reason: String, code: Int) extends NrsSubmissionError
 }
-
-case class DataValidationErrorList(errors: List[DataValidationError])

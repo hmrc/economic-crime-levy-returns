@@ -16,11 +16,9 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
-sealed trait DataValidationError
+trait DataRetrievalError
 
-object DataValidationError {
-  case class SchemaValidationError(message: String) extends DataValidationError
-  case class DataMissing(errorMessage: String) extends DataValidationError
+object DataRetrievalError {
+  case class NotFound(id: String) extends DataRetrievalError
+  case class InternalUnexpectedError(message: String, cause: Option[Throwable]) extends DataRetrievalError
 }
-
-case class DataValidationErrorList(errors: List[DataValidationError])

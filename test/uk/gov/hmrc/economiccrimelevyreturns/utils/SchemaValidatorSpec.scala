@@ -21,7 +21,6 @@ import io.circe.schema.Schema
 import play.api.libs.json._
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.SchemaValidationError
 
 class SchemaValidatorSpec extends SpecBase {
   case class TestObject(foo: String, bar: String)
@@ -63,10 +62,8 @@ class SchemaValidatorSpec extends SpecBase {
 
       result.isValid shouldBe false
       result.leftMap(nec =>
-        nec.toList should contain only DataValidationError(
-          SchemaValidationError,
-          "Schema validation error for field: #/bar (pattern)"
-        )
+        nec.toList shouldEqual
+          List(DataValidationError.SchemaValidationError("Schema validation error for field: #/bar (pattern)"))
       )
     }
   }

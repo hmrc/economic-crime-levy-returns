@@ -14,7 +14,7 @@ lazy val root = (project in file("."))
   .settings(scoverageSettings: _*)
   .settings(scalaCompilerOptions: _*)
   .settings(
-    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources"
   )
   .settings(
     scalaVersion := "2.13.8",
@@ -26,6 +26,7 @@ lazy val root = (project in file("."))
     PlayKeys.playDefaultPort := 14003,
     libraryDependencies ++= AppDependencies(),
     retrieveManaged := true,
+    scalafmtOnCompile := true,
     (update / evictionWarningOptions).withRank(KeyRanks.Invisible) :=
       EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
     resolvers ++= Seq(Resolver.jcenterRepo)
@@ -36,7 +37,8 @@ lazy val testSettings: Seq[Def.Setting[_]] = Seq(
     baseDirectory.value / "test",
     baseDirectory.value / "test-common"
   ),
-  fork := true
+  fork := true,
+  scalafmtOnCompile := true
 )
 
 lazy val itSettings: Seq[Def.Setting[_]] = Defaults.itSettings ++ Seq(
@@ -45,7 +47,8 @@ lazy val itSettings: Seq[Def.Setting[_]] = Defaults.itSettings ++ Seq(
     baseDirectory.value / "test-common"
   ),
   parallelExecution := false,
-  fork := true
+  fork := true,
+  scalafmtOnCompile := true
 )
 
 val excludedScoveragePackages: Seq[String] = Seq(

@@ -16,19 +16,20 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
-import cats.data.Validated.Valid
-import cats.data.ValidatedNel
+import cats.data.Validated.{Invalid, Valid}
+import cats.data.{EitherT, ValidatedNel}
 import cats.implicits._
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band.Small
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.DataMissing
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
 import uk.gov.hmrc.economiccrimelevyreturns.utils.{SchemaLoader, SchemaValidator}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationErrorList
 
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, Instant, ZoneOffset}
 import javax.inject.Inject
+import scala.concurrent.Future
 
 class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaValidator) {
 
@@ -36,17 +37,21 @@ class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaVa
 
   private val YearInDays: Int = 365
 
-  def validateReturn(eclReturn: EclReturn): ValidationResult[EclReturnSubmission] =
-    transformToEclReturnSubmission(eclReturn) match {
+  def validateReturn(eclReturn: EclReturn): EitherT[Future, DataValidationErrorList, EclReturnSubmission] = EitherT {
+    val validationResult = transformToEclReturnSubmission(eclReturn) match {
       case Valid(eclReturnSubmission) =>
         schemaValidator
           .validateAgainstJsonSchema(
             eclReturnSubmission,
             SchemaLoader.loadSchema("create-ecl-return-request.json")
           )
-          .map(_ => eclReturnSubmission)
       case invalid                    => invalid
     }
+    validationResult match {
+      case Valid(eclReturnSubmission) => Future.successful(Right(eclReturnSubmission))
+      case Invalid(validationError)   => Future.successful(Left(DataValidationErrorList(validationError.toList)))
+    }
+  }
 
   private def transformToEclReturnSubmission(eclReturn: EclReturn): ValidationResult[EclReturnSubmission] =
     (
@@ -111,7 +116,7 @@ class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaVa
   private def validateOptExists[T](optData: Option[T], description: String): ValidationResult[T] =
     optData match {
       case Some(value) => value.validNel
-      case _           => DataValidationError(DataMissing, missingErrorMessage(description)).invalidNel
+      case _           => DataValidationError.DataMissing(missingErrorMessage(description)).invalidNel
     }
 
   private def validateConditionalOptExists[T](
@@ -122,7 +127,8 @@ class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaVa
     if (condition) {
       optData match {
         case Some(value) => Some(value).validNel
-        case _           => DataValidationError(DataMissing, missingErrorMessage(description)).invalidNel
+        case _           => DataValidationError.DataMissing(missingErrorMessage(description)).invalidNel
+
       }
     } else {
       None.validNel

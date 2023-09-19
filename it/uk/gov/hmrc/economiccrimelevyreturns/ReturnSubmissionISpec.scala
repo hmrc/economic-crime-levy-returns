@@ -23,8 +23,8 @@ class ReturnSubmissionISpec extends ISpecBase {
     "return 200 OK with an ECL return reference number in the JSON response body when the ECL return data is valid" in {
       stubAuthorised()
 
-      val validEclReturn    = random[ValidEclReturn]
-      val eclReturn = validEclReturn.eclReturn.copy(returnType = Some(FirstTimeReturn))
+      val validEclReturn               = random[ValidEclReturn]
+      val eclReturn                    = validEclReturn.eclReturn.copy(returnType = Some(FirstTimeReturn))
       val validEclReturnWithReturnType = validEclReturn.copy(eclReturn = eclReturn)
 
       val eclReturnResponse =
@@ -33,7 +33,9 @@ class ReturnSubmissionISpec extends ISpecBase {
       stubSubmitEclReturn(
         testEclRegistrationReference,
         validEclReturnWithReturnType.expectedEclReturnSubmission
-          .copy(returnDetails = validEclReturnWithReturnType.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)),
+          .copy(returnDetails =
+            validEclReturnWithReturnType.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)
+          ),
         eclReturnResponse
       )
 
@@ -66,8 +68,8 @@ class ReturnSubmissionISpec extends ISpecBase {
     "retry the NRS submission call 3 times after the initial attempt if it fails with a 5xx response" in {
       stubAuthorised()
 
-      val validEclReturn    = random[ValidEclReturn]
-      val eclReturn = validEclReturn.eclReturn.copy(returnType = Some(FirstTimeReturn))
+      val validEclReturn               = random[ValidEclReturn]
+      val eclReturn                    = validEclReturn.eclReturn.copy(returnType = Some(FirstTimeReturn))
       val validEclReturnWithReturnType = validEclReturn.copy(eclReturn = eclReturn)
 
       val eclReturnResponse =
@@ -76,7 +78,9 @@ class ReturnSubmissionISpec extends ISpecBase {
       stubSubmitEclReturn(
         testEclRegistrationReference,
         validEclReturnWithReturnType.expectedEclReturnSubmission
-          .copy(returnDetails = validEclReturnWithReturnType.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)),
+          .copy(returnDetails =
+            validEclReturnWithReturnType.expectedEclReturnSubmission.returnDetails.copy(returnDate = returnDate)
+          ),
         eclReturnResponse
       )
 
@@ -96,8 +100,7 @@ class ReturnSubmissionISpec extends ISpecBase {
         )
       )
 
-      status(result)        shouldBe OK
-      contentAsJson(result) shouldBe Json.toJson(eclReturnResponse)
+      status(result) shouldBe BAD_GATEWAY
 
       eventually {
         verify(4, postRequestedFor(urlEqualTo("/submission")))

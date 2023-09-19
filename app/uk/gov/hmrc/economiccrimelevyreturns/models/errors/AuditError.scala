@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
-sealed trait DataValidationError
+sealed trait AuditError
 
-object DataValidationError {
-  case class SchemaValidationError(message: String) extends DataValidationError
-  case class DataMissing(errorMessage: String) extends DataValidationError
+object AuditError {
+  case class InternalUnexpectedError(message: String, cause: Option[Throwable]) extends AuditError
+
+  case class BadGateway(reason: String, code: Int) extends AuditError
 }
-
-case class DataValidationErrorList(errors: List[DataValidationError])
