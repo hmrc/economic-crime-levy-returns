@@ -178,6 +178,105 @@ class ReturnSubmissionControllerSpec extends SpecBase {
                |""".stripMargin))
     }
 
+    "return 200 OK when returnType is AmendReturn and amendReturnsNrsEnabled is ON" in forAll {
+      (
+        eclReturn: EclReturn,
+        eclReturnSubmission: EclReturnSubmission,
+        returnResponse: SubmitEclReturnResponse,
+        nrsSubmissionResponse: NrsSubmissionResponse
+      ) =>
+        beforeEach()
+
+        val validEclReturn = eclReturn.copy(
+          returnType = Some(AmendReturn),
+          base64EncodedDmsSubmissionHtml = Some("aHRtbERNUw=="),
+          base64EncodedNrsSubmissionHtml = Some("aHRtbE5ycw==")
+        )
+
+        when(mockAppConfig.amendReturnsNrsEnabled)
+          .thenReturn(true)
+
+        when(mockDataRetrievalService.get(anyString())(any()))
+          .thenReturn(EitherT.rightT[Future, DataRetrievalError](validEclReturn))
+
+        when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(validEclReturn)))
+          .thenReturn(EitherT.rightT[Future, DataValidationErrorList](eclReturnSubmission))
+
+        when(
+          mockReturnService.submitEclReturn(
+            ArgumentMatchers.eq(eclRegistrationReference),
+            ArgumentMatchers.eq(eclReturnSubmission)
+          )(any())
+        ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](returnResponse))
+
+        when(mockDmsService.submitToDms(any(), any())(any()))
+          .thenReturn(EitherT.rightT[Future, DmsSubmissionError](returnResponse))
+
+        when(mockNrsService.submitToNrs(anyString(), anyString(), anyString())(any(), any()))
+          .thenReturn(EitherT.rightT[Future, NrsSubmissionError](nrsSubmissionResponse))
+
+        val result: Future[Result] =
+          controller.submitReturn(validEclReturn.internalId)(fakeRequest)
+
+        status(result)        shouldBe OK
+        contentAsJson(result) shouldBe Json.toJson(returnResponse)
+
+        verify(mockAuditService, times(1))
+          .sendReturnSubmittedEvent(any(), any(), any())(any())
+
+        verify(mockNrsService, times(1))
+          .submitToNrs(anyString(), anyString(), anyString())(any(), any())
+    }
+
+    "return 200 OK when returnType is AmendReturn and amendReturnsNrsEnabled is OFF" in forAll {
+      (
+        eclReturn: EclReturn,
+        eclReturnSubmission: EclReturnSubmission,
+        returnResponse: SubmitEclReturnResponse,
+        nrsSubmissionResponse: NrsSubmissionResponse
+      ) =>
+        beforeEach()
+
+        val validEclReturn = eclReturn.copy(
+          returnType = Some(AmendReturn),
+          base64EncodedDmsSubmissionHtml = Some("aHRtbERNUw=="),
+          base64EncodedNrsSubmissionHtml = Some("aHRtbE5ycw==")
+        )
+
+        when(mockAppConfig.amendReturnsNrsEnabled)
+          .thenReturn(false)
+
+        when(mockDataRetrievalService.get(anyString())(any()))
+          .thenReturn(EitherT.rightT[Future, DataRetrievalError](validEclReturn))
+
+        when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(validEclReturn)))
+          .thenReturn(EitherT.rightT[Future, DataValidationErrorList](eclReturnSubmission))
+
+        when(
+          mockReturnService.submitEclReturn(
+            ArgumentMatchers.eq(eclRegistrationReference),
+            ArgumentMatchers.eq(eclReturnSubmission)
+          )(any())
+        ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](returnResponse))
+
+        when(mockDmsService.submitToDms(any(), any())(any()))
+          .thenReturn(EitherT.rightT[Future, DmsSubmissionError](returnResponse))
+
+        when(mockNrsService.submitToNrs(anyString(), anyString(), anyString())(any(), any()))
+          .thenReturn(EitherT.rightT[Future, NrsSubmissionError](nrsSubmissionResponse))
+
+        val result: Future[Result] =
+          controller.submitReturn(validEclReturn.internalId)(fakeRequest)
+
+        status(result)        shouldBe OK
+        contentAsJson(result) shouldBe Json.toJson(returnResponse)
+
+        verify(mockAuditService, times(1))
+          .sendReturnSubmittedEvent(any(), any(), any())(any())
+
+        verify(mockNrsService, times(0))
+          .submitToNrs(anyString(), anyString(), anyString())(any(), any())
+    }
   }
 
 }

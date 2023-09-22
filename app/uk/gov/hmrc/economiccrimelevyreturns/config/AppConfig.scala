@@ -71,4 +71,5 @@ class AppConfig @Inject() (configuration: Configuration, servicesConfig: Service
     configuration.get[String]("microservice.services.dms-submission.amend-returns-submission.source")
   val dmsSubmissionUrl: String                = dmsBaseUrl + "/dms-submission/submit"
 
+  val amendReturnsNrsEnabled: Boolean = configuration.get[Boolean]("features.amendReturnsNrsEnabled")
 }

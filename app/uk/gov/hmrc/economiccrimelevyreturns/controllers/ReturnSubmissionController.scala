@@ -97,11 +97,20 @@ class ReturnSubmissionController @Inject() (
     for {
       base64EncodedDmsSubmissionHtml <- checkOptionalValueExists[String](eclReturn.base64EncodedDmsSubmissionHtml)
       base64EncodedNrsSubmissionHtml <- checkOptionalValueExists[String](eclReturn.base64EncodedNrsSubmissionHtml)
-      _                              <- nrsService
-                                          .submitToNrs(base64EncodedNrsSubmissionHtml, eclRegistrationReference, appConfig.amendReturnNotableEvent)
-                                          .asResponseError
-      eclReturnResponse              <- dmsService.submitToDms(base64EncodedDmsSubmissionHtml, Instant.now).asResponseError
-      _                               = auditService.sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, None)
+      _                              <- if (appConfig.amendReturnsNrsEnabled) {
+                                          nrsService
+                                            .submitToNrs(
+                                              base64EncodedNrsSubmissionHtml,
+                                              eclRegistrationReference,
+                                              appConfig.amendReturnNotableEvent
+                                            )
+                                            .asResponseError
+                                        } else {
+                                          EitherT.right(Future.successful())
+                                        }
+
+      eclReturnResponse <- dmsService.submitToDms(base64EncodedDmsSubmissionHtml, Instant.now).asResponseError
+      _                  = auditService.sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, None)
     } yield eclReturnResponse
 
 }
