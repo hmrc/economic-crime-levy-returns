@@ -9,9 +9,9 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclRetu
 trait IntegrationFrameworkStubs { self: WireMockStubs =>
 
   def stubSubmitEclReturn(
-                           eclRegistrationReference: String,
-                           eclReturnSubmission: EclReturnSubmission,
-                           eclReturnResponse: SubmitEclReturnResponse
+    eclRegistrationReference: String,
+    eclReturnSubmission: EclReturnSubmission,
+    eclReturnResponse: SubmitEclReturnResponse
   ): StubMapping =
     stub(
       post(urlEqualTo(s"/economic-crime-levy/return/$eclRegistrationReference"))

@@ -57,8 +57,7 @@ abstract class ISpecBase
     with EclTestData
     with Generators {
 
-
-  implicit lazy val arbString: Arbitrary[String]    = Arbitrary(Gen.alphaNumStr.retryUntil(_.nonEmpty))
+  implicit lazy val arbString: Arbitrary[String] = Arbitrary(Gen.alphaNumStr.retryUntil(_.nonEmpty))
 
   implicit lazy val system: ActorSystem        = ActorSystem()
   implicit lazy val materializer: Materializer = Materializer(system)
@@ -72,10 +71,10 @@ abstract class ISpecBase
 
   val additionalAppConfig: Map[String, Any] = Map(
     "create-internal-auth-token-on-start" -> false,
-    "metrics.enabled"              -> false,
-    "auditing.enabled"             -> false,
-    "http-verbs.retries.intervals" -> List("1ms", "1ms", "1ms"),
-    "application.router"           -> "testOnlyDoNotUseInAppConf.Routes"
+    "metrics.enabled"                     -> false,
+    "auditing.enabled"                    -> false,
+    "http-verbs.retries.intervals"        -> List("1ms", "1ms", "1ms"),
+    "application.router"                  -> "testOnlyDoNotUseInAppConf.Routes"
   ) ++ setWireMockPort(
     "auth",
     "integration-framework",
