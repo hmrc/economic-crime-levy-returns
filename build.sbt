@@ -10,7 +10,7 @@ lazy val root = (project in file("."))
   .configs(IntegrationTest)
   .settings(inConfig(IntegrationTest)(itSettings): _*)
   .settings(majorVersion := 0)
-  .settings(inThisBuild(buildSettings))
+  .settings(ThisBuild / useSuperShell := false)
   .settings(scoverageSettings: _*)
   .settings(scalaCompilerOptions: _*)
   .settings(
@@ -49,11 +49,6 @@ lazy val itSettings: Seq[Def.Setting[_]] = Defaults.itSettings ++ Seq(
   parallelExecution := false,
   fork := true,
   scalafmtOnCompile := true
-)
-
-lazy val buildSettings = Def.settings(
-  scalafmtOnCompile := true,
-  useSuperShell := false
 )
 
 val excludedScoveragePackages: Seq[String] = Seq(
