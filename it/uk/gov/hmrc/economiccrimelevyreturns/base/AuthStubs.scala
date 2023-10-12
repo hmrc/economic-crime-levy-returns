@@ -12,8 +12,7 @@ trait AuthStubs { self: WireMockStubs =>
       post(urlEqualTo("/auth/authorise")),
       aResponse()
         .withStatus(OK)
-        .withBody(
-          s"""
+        .withBody(s"""
              |{
              |  "internalId": "$testInternalId",
              |  "authorisedEnrolments": [{
