@@ -20,7 +20,7 @@ import org.mockito.ArgumentMatchers.any
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
-import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
+import uk.gov.hmrc.economiccrimelevyreturns.repositories.{InfoRepository, ReturnsRepository}
 import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 
 import scala.concurrent.Future
@@ -28,10 +28,12 @@ import scala.concurrent.Future
 class ReturnsControllerSpec extends SpecBase {
 
   val mockReturnsRepository: ReturnsRepository = mock[ReturnsRepository]
+  val mockInfoRepository: InfoRepository       = mock[InfoRepository]
 
   val controller = new ReturnsController(
     cc,
     mockReturnsRepository,
+    mockInfoRepository,
     fakeAuthorisedAction
   )
 
@@ -82,4 +84,50 @@ class ReturnsControllerSpec extends SpecBase {
     }
   }
 
+  "upsertInfo" should {
+    "return 200 OK with the info that was upserted" in {
+      when(mockInfoRepository.upsert(any())).thenReturn(Future.successful(true))
+
+      val result: Future[Result] =
+        controller.upsertInfo()(
+          fakeRequestWithJsonBody(Json.toJson(emptyReturn))
+        )
+
+      status(result)        shouldBe OK
+      contentAsJson(result) shouldBe Json.toJson(emptyReturn)
+    }
+  }
+
+  "getInfo" should {
+    "return 200 OK with an existing info when there is one for the id" in {
+      when(mockInfoRepository.get(any())).thenReturn(Future.successful(Some(emptyInfo)))
+
+      val result: Future[Result] =
+        controller.getInfo("id")(fakeRequest)
+
+      status(result)        shouldBe OK
+      contentAsJson(result) shouldBe Json.toJson(emptyInfo)
+    }
+
+    "return 404 NOT_FOUND when there is no info for the id" in {
+      when(mockInfoRepository.get(any())).thenReturn(Future.successful(None))
+
+      val result: Future[Result] =
+        controller.getInfo("id")(fakeRequest)
+
+      status(result)        shouldBe NOT_FOUND
+      contentAsJson(result) shouldBe Json.toJson(ErrorResponse(NOT_FOUND, "No additional info"))
+    }
+  }
+
+  "deleteInfo" should {
+    "return 204 NO_CONTENT when an info is deleted" in {
+      when(mockInfoRepository.clear(any())).thenReturn(Future.successful(true))
+
+      val result: Future[Result] =
+        controller.deleteInfo("id")(fakeRequest)
+
+      status(result) shouldBe NO_CONTENT
+    }
+  }
 }

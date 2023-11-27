@@ -19,8 +19,8 @@ package uk.gov.hmrc.economiccrimelevyreturns.controllers
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
-import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
-import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
+import uk.gov.hmrc.economiccrimelevyreturns.models.{AdditionalInfo, EclReturn}
+import uk.gov.hmrc.economiccrimelevyreturns.repositories.{InfoRepository, ReturnsRepository}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 
@@ -31,6 +31,7 @@ import scala.concurrent.ExecutionContext
 class ReturnsController @Inject() (
   cc: ControllerComponents,
   returnsRepository: ReturnsRepository,
+  infoRepository: InfoRepository,
   authorise: AuthorisedAction
 )(implicit ec: ExecutionContext)
     extends BackendController(cc) {
@@ -52,4 +53,20 @@ class ReturnsController @Inject() (
     returnsRepository.clear(id).map(_ => NoContent)
   }
 
+  def upsertInfo: Action[JsValue] = authorise(parse.json).async { implicit request =>
+    withJsonBody[AdditionalInfo] { info =>
+      infoRepository.upsert(info).map(_ => Ok(Json.toJson(info)))
+    }
+  }
+
+  def getInfo(id: String): Action[AnyContent] = authorise.async { _ =>
+    infoRepository.get(id).map {
+      case Some(info) => Ok(Json.toJson(info))
+      case None       => NotFound(Json.toJson(ErrorResponse(NOT_FOUND, "No additional info")))
+    }
+  }
+
+  def deleteInfo(id: String): Action[AnyContent] = authorise.async { _ =>
+    infoRepository.clear(id).map(_ => NoContent)
+  }
 }
