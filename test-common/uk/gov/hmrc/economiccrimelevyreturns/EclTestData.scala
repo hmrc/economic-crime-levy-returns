@@ -134,19 +134,26 @@ trait EclTestData { self: Generators =>
     Gen.listOfN(4, Gen.alphaNumChar).map(_.mkString).map(p => ValidPeriodKey(p.toUpperCase))
   }
 
-  implicit val arbValidAmountDue: Arbitrary[BigDecimal] = Arbitrary {
-    Gen.chooseNum[Double](MinAmountDue, MaxAmountDue).map(BigDecimal.apply(_).setScale(2, RoundingMode.DOWN))
-  }
+  implicit def arbBigDecimal(min: Double, max: Double): Arbitrary[BigDecimal] =
+    Arbitrary {
+      Gen.chooseNum[Double](min, max).map(BigDecimal.apply(_).setScale(2, RoundingMode.DOWN))
+    }
 
   implicit val arbValidEclReturn: Arbitrary[ValidEclReturn] = Arbitrary {
     for {
       relevantAp12Months                      <- Arbitrary.arbitrary[Boolean]
       relevantApLength                        <- Gen.chooseNum[Int](MinApDays, MaxApDays)
-      relevantApRevenue                       <-
-        Gen.chooseNum[Double](MinRevenue, MaxRevenue).map(BigDecimal.apply(_).setScale(2, RoundingMode.DOWN))
+      relevantApRevenue                       <- arbBigDecimal(MinRevenue, MaxRevenue).arbitrary
       carriedOutAmlRegulatedActivityForFullFy <- Arbitrary.arbitrary[Boolean]
       amlRegulatedActivityLength              <- Gen.chooseNum[Int](MinAmlDays, MaxAmlDays)
-      calculatedLiability                     <- Arbitrary.arbitrary[CalculatedLiability].map(_.copy(calculatedBand = Medium))
+      liabilityAmountDue                      <- arbBigDecimal(MinAmountDue, MaxAmountDue).arbitrary
+      calculatedLiability                     <-
+        Arbitrary
+          .arbitrary[CalculatedLiability]
+          .map(calcLiability =>
+            calcLiability
+              .copy(calculatedBand = Medium, amountDue = calcLiability.amountDue.copy(amount = liabilityAmountDue))
+          )
       contactName                             <- stringFromRegex(160, Regex.NameRegex)
       contactRole                             <- stringFromRegex(160, Regex.PositionInCompanyRegex)
       contactEmailAddress                     <- emailAddress(160)
