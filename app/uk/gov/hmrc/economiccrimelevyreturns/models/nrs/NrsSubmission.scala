@@ -20,8 +20,6 @@ import play.api.http.MimeTypes
 import play.api.libs.json._
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.auth.core.{AffinityGroup, CredentialRole}
-import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
-
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.{Instant, LocalDate}

@@ -43,7 +43,7 @@ object Band {
   }
 }
 
-final case class EclAmount(amount: Double, apportioned: Boolean)
+final case class EclAmount(amount: BigDecimal, apportioned: Boolean)
 
 object EclAmount {
   implicit val format: OFormat[EclAmount] = Json.format[EclAmount]

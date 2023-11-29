@@ -49,7 +49,7 @@ case class EnrolmentsWithoutEcl(enrolments: Enrolments)
 
 final case class EclLiabilityCalculationData(
   relevantApLength: Int,
-  relevantApRevenue: Long,
+  relevantApRevenue: BigDecimal,
   amlRegulatedActivityLength: Int
 )
 
@@ -71,15 +71,15 @@ trait EclTestData { self: Generators =>
   private val base64EncodedNrsSubmissionHtml  = "PGh0bWw+PHRpdGxlPkhlbGxvIFdvcmxkITwvdGl0bGU+PC9odG1sPg=="
   private val nrsSubmissionHtmlSha256Checksum = "38a8012d1af5587a9b37aef812810e31b2ddf7d405d20b5f1230a209d95c9d2b"
 
-  private val MinRevenue: Long = 0L
-  private val MaxRevenue: Long = 99999999999L
-  private val MinApDays: Int   = 1
-  private val MaxApDays: Int   = 999
-  private val MinAmlDays: Int  = 0
-  private val MaxAmlDays: Int  = 365
-  private val YearInDays: Int  = 365
-  private val MinAmountDue     = 0
-  private val MaxAmountDue     = 250000
+  private val MinRevenue: Double = 0.00
+  private val MaxRevenue: Double = 99999999999.99
+  private val MinApDays: Int     = 1
+  private val MaxApDays: Int     = 999
+  private val MinAmlDays: Int    = 0
+  private val MaxAmlDays: Int    = 365
+  private val YearInDays: Int    = 365
+  private val MinAmountDue       = 0
+  private val MaxAmountDue       = 250000
 
   implicit val arbInstant: Arbitrary[Instant] = Arbitrary {
     Instant.now()
@@ -142,7 +142,8 @@ trait EclTestData { self: Generators =>
     for {
       relevantAp12Months                      <- Arbitrary.arbitrary[Boolean]
       relevantApLength                        <- Gen.chooseNum[Int](MinApDays, MaxApDays)
-      relevantApRevenue                       <- Gen.chooseNum[Long](MinRevenue, MaxRevenue)
+      relevantApRevenue                       <-
+        Gen.chooseNum[Double](MinRevenue, MaxRevenue).map(BigDecimal.apply(_).setScale(2, RoundingMode.DOWN))
       carriedOutAmlRegulatedActivityForFullFy <- Arbitrary.arbitrary[Boolean]
       amlRegulatedActivityLength              <- Gen.chooseNum[Int](MinAmlDays, MaxAmlDays)
       calculatedLiability                     <- Arbitrary.arbitrary[CalculatedLiability].map(_.copy(calculatedBand = Medium))

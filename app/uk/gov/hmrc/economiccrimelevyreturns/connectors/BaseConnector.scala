@@ -23,6 +23,7 @@ import play.api.libs.json.JsResult
 import play.api.libs.json.Reads
 import uk.gov.hmrc.http.client.RequestBuilder
 import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 trait BaseConnector {
 

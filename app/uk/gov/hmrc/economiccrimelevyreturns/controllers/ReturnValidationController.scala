@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
-import cats.data.Validated.{Invalid, Valid}
-import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
 import uk.gov.hmrc.economiccrimelevyreturns.services.{DataRetrievalService, ReturnValidationService}

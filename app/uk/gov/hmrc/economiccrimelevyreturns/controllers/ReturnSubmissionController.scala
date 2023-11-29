@@ -106,7 +106,7 @@ class ReturnSubmissionController @Inject() (
                                             )
                                             .asResponseError
                                         } else {
-                                          EitherT.right(Future.successful())
+                                          EitherT.right(Future.successful(()))
                                         }
 
       eclReturnResponse <- dmsService.submitToDms(base64EncodedDmsSubmissionHtml, Instant.now).asResponseError
