@@ -20,7 +20,7 @@ import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitr
 import org.scalacheck.Arbitrary
 import org.scalacheck.derive.MkArbitrary
 import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
-import uk.gov.hmrc.economiccrimelevyreturns.models.CalculatedLiability
+import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, SessionData}
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationStatus
 import uk.gov.hmrc.economiccrimelevyreturns.models.dms.DmsNotification
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
@@ -38,5 +38,6 @@ object CachedArbitraries extends EclTestData with Generators {
   implicit lazy val arbNrsSubmission: Arbitrary[NrsSubmission]                     = mkArb
   implicit lazy val arbNrsSubmissionResponse: Arbitrary[NrsSubmissionResponse]     = mkArb
   implicit lazy val arbDmsNotification: Arbitrary[DmsNotification]                 = mkArb
+  implicit lazy val arbSessionData: Arbitrary[SessionData]                         = mkArb
 
 }

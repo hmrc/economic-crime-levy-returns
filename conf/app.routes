@@ -13,3 +13,7 @@ POST          /dms-returns-callback                 uk.gov.hmrc.economiccrimelev
 GET           /info/:id                             uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnsController.getInfo(id)
 PUT           /info                                 uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnsController.upsertInfo
 DELETE        /info/:id                             uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnsController.deleteInfo(id)
+
+GET           /session/:id                          uk.gov.hmrc.economiccrimelevyreturns.controllers.SessionController.get(id)
+PUT           /session                              uk.gov.hmrc.economiccrimelevyreturns.controllers.SessionController.upsert
+DELETE        /session/:id                          uk.gov.hmrc.economiccrimelevyreturns.controllers.SessionController.delete(id)
