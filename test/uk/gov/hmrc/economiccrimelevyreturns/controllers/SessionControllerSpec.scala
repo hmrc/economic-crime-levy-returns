@@ -69,9 +69,8 @@ class SessionControllerSpec extends SpecBase {
       when(mockSessionService.upsert(ArgumentMatchers.eq(sessionData)))
         .thenReturn(EitherT.leftT[Future, Unit](DataRetrievalError.InternalUnexpectedError("error", None)))
 
-      controller.upsert()(
-        fakeRequestWithJsonBody(Json.toJson(sessionData))
-      )
+      val result: Future[Result] =
+        controller.upsert()(fakeRequestWithJsonBody(Json.toJson(sessionData)))
 
       status(result) shouldBe INTERNAL_SERVER_ERROR
     }

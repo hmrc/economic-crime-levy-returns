@@ -20,6 +20,7 @@ import cats.data.EitherT
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.mvc.Results.{Ok, Status}
+import uk.gov.hmrc.economiccrimelevyreturns.models.SessionData
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ResponseError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.SubmitEclReturnResponse
 
@@ -43,20 +44,41 @@ trait BaseController {
         err => Status(err.code.statusCode)(Json.toJson(err)),
         response => c.getResponse(response)
       )
+
+    def convertToResult(responseCode: Int)(implicit c: Converter[R], ec: ExecutionContext): Future[Result] =
+      value.fold(
+        err => Status(err.code.statusCode)(Json.toJson(err)),
+        response => c.getResponseWithCode(response, responseCode)
+      )
   }
 
   trait Converter[R] {
     def getResponse(response: R): Result
+
+    def getResponseWithCode(response: R, responseCode: Int): Result
   }
 
   implicit val submitEclReturnResponse: Converter[SubmitEclReturnResponse] =
     new Converter[SubmitEclReturnResponse] {
       override def getResponse(response: SubmitEclReturnResponse) = Ok(Json.toJson(response))
+
+      override def getResponseWithCode(response: SubmitEclReturnResponse, responseCode: Int): Result =
+        Status(responseCode)(Json.toJson(response))
     }
 
   implicit val unitResponse: Converter[Unit] =
     new Converter[Unit] {
       override def getResponse(response: Unit) = Ok
+
+      override def getResponseWithCode(response: Unit, responseCode: Int): Result =
+        Ok
     }
 
+  implicit val sessionDataResponse: Converter[SessionData] =
+    new Converter[SessionData] {
+      override def getResponse(response: SessionData): Result = Ok(Json.toJson(response))
+
+      override def getResponseWithCode(response: SessionData, responseCode: Int): Result =
+        Status(responseCode)(Json.toJson(response))
+    }
 }

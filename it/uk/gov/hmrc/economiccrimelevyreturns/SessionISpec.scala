@@ -21,54 +21,55 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import uk.gov.hmrc.economiccrimelevyreturns.base.ISpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.routes
+import uk.gov.hmrc.economiccrimelevyreturns.models.SessionData
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ResponseError
 
 class SessionISpec extends ISpecBase {
 
-  s"PUT ${routes.SessionController.upsert.url}"                              should {
-    "create or update a registration additional info and return 200 OK with the registration" in {
+  s"PUT ${routes.SessionController.upsert.url}"           should {
+    "create or update a session data additional info and return 200 OK with the registration" in {
       stubAuthorised()
 
-      val registrationAdditionalInfo = random[RegistrationAdditionalInfo]
+      val sessionData = random[SessionData]
 
       lazy val putResult = callRoute(
-        FakeRequest(routes.RegistrationAdditionalInfoController.upsert)
-          .withJsonBody(Json.toJson(registrationAdditionalInfo))
+        FakeRequest(routes.SessionController.upsert)
+          .withJsonBody(Json.toJson(sessionData))
       )
 
       lazy val getResult =
-        callRoute(FakeRequest(routes.RegistrationAdditionalInfoController.get(registrationAdditionalInfo.internalId)))
+        callRoute(FakeRequest(routes.SessionController.get(sessionData.internalId)))
 
       status(putResult)        shouldBe OK
       status(getResult)        shouldBe OK
-      contentAsJson(getResult) shouldBe Json.toJson(registrationAdditionalInfo.copy(lastUpdated = Some(now)))
+      contentAsJson(getResult) shouldBe Json.toJson(sessionData.copy(lastUpdated = Some(now)))
     }
   }
 
-  s"GET ${routes.RegistrationAdditionalInfoController.get(":id").url}"       should {
-    "return 200 OK with registration additional info that is already in the database" in {
+  s"GET ${routes.SessionController.get(":id").url}"       should {
+    "return 200 OK with session data additional info that is already in the database" in {
       stubAuthorised()
 
-      val registrationAdditionalInfo = random[RegistrationAdditionalInfo]
+      val sessionData = random[SessionData]
 
       callRoute(
-        FakeRequest(routes.RegistrationAdditionalInfoController.upsert).withJsonBody(
-          Json.toJson(registrationAdditionalInfo)
+        FakeRequest(routes.SessionController.upsert).withJsonBody(
+          Json.toJson(sessionData)
         )
       ).futureValue
 
       lazy val result =
-        callRoute(FakeRequest(routes.RegistrationAdditionalInfoController.get(registrationAdditionalInfo.internalId)))
+        callRoute(FakeRequest(routes.SessionController.get(sessionData.internalId)))
 
       status(result)        shouldBe OK
-      contentAsJson(result) shouldBe Json.toJson(registrationAdditionalInfo.copy(lastUpdated = Some(now)))
+      contentAsJson(result) shouldBe Json.toJson(sessionData.copy(lastUpdated = Some(now)))
     }
 
-    "return 404 NOT_FOUND when trying to get a registration that doesn't exist" in {
+    "return 404 NOT_FOUND when trying to get a session data that doesn't exist" in {
       stubAuthorised()
 
       val result =
-        callRoute(FakeRequest(routes.RegistrationAdditionalInfoController.get("invalidId")))
+        callRoute(FakeRequest(routes.SessionController.get("invalidId")))
 
       status(result)        shouldBe NOT_FOUND
       contentAsJson(result) shouldBe Json.toJson(
@@ -77,31 +78,31 @@ class SessionISpec extends ISpecBase {
     }
   }
 
-  s"DELETE ${routes.RegistrationAdditionalInfoController.delete(":id").url}" should {
-    "delete a registration and return 200 OK" in {
+  s"DELETE ${routes.SessionController.delete(":id").url}" should {
+    "delete a session data and return 200 OK" in {
       stubAuthorised()
 
-      val registrationAdditionalInfo = random[RegistrationAdditionalInfo]
+      val registrationAdditionalInfo = random[SessionData]
 
       callRoute(
-        FakeRequest(routes.RegistrationAdditionalInfoController.upsert).withJsonBody(
+        FakeRequest(routes.SessionController.upsert).withJsonBody(
           Json.toJson(registrationAdditionalInfo)
         )
       ).futureValue
 
       lazy val getResultBeforeDelete =
-        callRoute(FakeRequest(routes.RegistrationAdditionalInfoController.get(registrationAdditionalInfo.internalId)))
+        callRoute(FakeRequest(routes.SessionController.get(registrationAdditionalInfo.internalId)))
 
       lazy val deleteResult =
         callRoute(
-          FakeRequest(routes.RegistrationAdditionalInfoController.delete(registrationAdditionalInfo.internalId))
+          FakeRequest(routes.SessionController.delete(registrationAdditionalInfo.internalId))
         )
 
       lazy val getResultAfterDelete =
-        callRoute(FakeRequest(routes.RegistrationAdditionalInfoController.get(registrationAdditionalInfo.internalId)))
+        callRoute(FakeRequest(routes.SessionController.get(registrationAdditionalInfo.internalId)))
 
       status(getResultBeforeDelete) shouldBe OK
-      status(deleteResult)          shouldBe NO_CONTENT
+      status(deleteResult)          shouldBe OK
       status(getResultAfterDelete)  shouldBe NOT_FOUND
     }
   }
