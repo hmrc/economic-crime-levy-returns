@@ -21,8 +21,8 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.Band
 
 final case class EclReturnDetails(
   revenueBand: Band,
-  amountOfEclDutyLiable: BigDecimal,
-  accountingPeriodRevenue: BigDecimal,
+  amountOfEclDutyLiable: Double,
+  accountingPeriodRevenue: Double,
   accountingPeriodLength: Int,
   numberOfDaysRegulatedActivityTookPlace: Option[Int],
   returnDate: String
