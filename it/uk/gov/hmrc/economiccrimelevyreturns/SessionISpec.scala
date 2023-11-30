@@ -82,24 +82,24 @@ class SessionISpec extends ISpecBase {
     "delete a session data and return 200 OK" in {
       stubAuthorised()
 
-      val registrationAdditionalInfo = random[SessionData]
+      val sessionData = random[SessionData]
 
       callRoute(
         FakeRequest(routes.SessionController.upsert).withJsonBody(
-          Json.toJson(registrationAdditionalInfo)
+          Json.toJson(sessionData)
         )
       ).futureValue
 
       lazy val getResultBeforeDelete =
-        callRoute(FakeRequest(routes.SessionController.get(registrationAdditionalInfo.internalId)))
+        callRoute(FakeRequest(routes.SessionController.get(sessionData.internalId)))
 
       lazy val deleteResult =
         callRoute(
-          FakeRequest(routes.SessionController.delete(registrationAdditionalInfo.internalId))
+          FakeRequest(routes.SessionController.delete(sessionData.internalId))
         )
 
       lazy val getResultAfterDelete =
-        callRoute(FakeRequest(routes.SessionController.get(registrationAdditionalInfo.internalId)))
+        callRoute(FakeRequest(routes.SessionController.get(sessionData.internalId)))
 
       status(getResultBeforeDelete) shouldBe OK
       status(deleteResult)          shouldBe OK

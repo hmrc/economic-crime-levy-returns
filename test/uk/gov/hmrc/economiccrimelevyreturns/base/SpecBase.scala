@@ -34,7 +34,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.FakeAuthorisedAction
 import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
-import uk.gov.hmrc.economiccrimelevyreturns.models.{AdditionalInfo, EclReturn}
+import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext
@@ -74,7 +74,6 @@ trait SpecBase
   val internalId: String                               = "test-id"
   val eclRegistrationReference: String                 = "test-ecl-registration-reference"
   val emptyReturn: EclReturn                           = EclReturn.empty(internalId)
-  val emptyInfo: AdditionalInfo                        = AdditionalInfo.empty(internalId)
   val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
   val appConfig: AppConfig                             = app.injector.instanceOf[AppConfig]
   val bodyParsers: PlayBodyParsers                     = app.injector.instanceOf[PlayBodyParsers]

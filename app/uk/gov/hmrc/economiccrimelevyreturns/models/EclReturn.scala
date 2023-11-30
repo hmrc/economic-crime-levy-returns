@@ -84,18 +84,3 @@ object EclReturn {
 
   implicit val format: OFormat[EclReturn] = Json.format[EclReturn]
 }
-
-final case class AdditionalInfo(
-  internalId: String,
-  periodKey: Option[String],
-  returnNumber: Option[String],
-  fromYear: Option[String],
-  toYear: Option[String],
-  lastUpdated: Option[Instant] = None
-)
-
-object AdditionalInfo {
-  def empty(internalId: String): AdditionalInfo = AdditionalInfo(internalId, None, None, None, None)
-
-  implicit val format: OFormat[AdditionalInfo] = Json.format[AdditionalInfo]
-}
