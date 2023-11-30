@@ -57,7 +57,7 @@ class ReturnSubmissionISpec extends ISpecBase {
         )
       )
 
-//      status(result)        shouldBe OK
+      status(result)        shouldBe OK
       contentAsJson(result) shouldBe Json.toJson(eclReturnResponse)
 
       eventually {
