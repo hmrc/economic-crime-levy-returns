@@ -20,17 +20,14 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.scalacheck.Arbitrary
 import play.api.http.HeaderNames
-import play.api.http.Status.BAD_REQUEST
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.ValidNrsSubmission
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
-import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.NrsConnector
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DmsSubmissionError.InternalUnexpectedError
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.NrsSubmissionError
-import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsSubmissionResponse
+import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import java.time.{Clock, Instant, ZoneId}

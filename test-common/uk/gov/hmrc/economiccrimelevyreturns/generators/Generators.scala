@@ -57,12 +57,6 @@ trait Generators {
   def nonNumerics: Gen[String] =
     alphaStr suchThat (_.size > 0)
 
-  def decimals: Gen[String] =
-    arbitrary[BigDecimal]
-      .suchThat(_.abs < Int.MaxValue)
-      .suchThat(!_.isValidInt)
-      .map("%f".format(_))
-
   def intsBelowValue(value: Int): Gen[Int] =
     arbitrary[Int] suchThat (_ < value)
 

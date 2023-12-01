@@ -23,7 +23,7 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.economiccrimelevyreturns.models.audit.RequestStatus.{Failed, Success}
+import uk.gov.hmrc.economiccrimelevyreturns.models.audit.RequestStatus.Success
 import uk.gov.hmrc.economiccrimelevyreturns.models.audit.{ReturnResult, ReturnSubmittedAuditEvent}
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.AuditError

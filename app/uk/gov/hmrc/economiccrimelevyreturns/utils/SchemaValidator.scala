@@ -22,7 +22,6 @@ import io.circe.parser.{parse => circeParse}
 import io.circe.schema.Schema
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError.SchemaValidationError
 
 import javax.inject.Inject
 

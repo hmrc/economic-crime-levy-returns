@@ -19,8 +19,6 @@ package uk.gov.hmrc.economiccrimelevyreturns.utils
 import java.io.ByteArrayOutputStream
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 
-import java.nio.file.{Files, Paths}
-
 object PdfGenerator {
   def buildPdf(html: String): ByteArrayOutputStream = {
     val os       = new ByteArrayOutputStream()

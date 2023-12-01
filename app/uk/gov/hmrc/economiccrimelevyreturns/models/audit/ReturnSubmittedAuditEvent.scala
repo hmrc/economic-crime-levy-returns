@@ -17,7 +17,7 @@
 package uk.gov.hmrc.economiccrimelevyreturns.models.audit
 
 import play.api.libs.json._
-import uk.gov.hmrc.economiccrimelevyreturns.models.{EclReturn, ReturnType}
+import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 
 sealed trait RequestStatus
 

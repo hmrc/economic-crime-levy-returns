@@ -48,7 +48,7 @@ final case class EclReturn(
   internalId: String,
   relevantAp12Months: Option[Boolean],
   relevantApLength: Option[Int],
-  relevantApRevenue: Option[Long],
+  relevantApRevenue: Option[BigDecimal],
   carriedOutAmlRegulatedActivityForFullFy: Option[Boolean],
   amlRegulatedActivityLength: Option[Int],
   calculatedLiability: Option[CalculatedLiability],
