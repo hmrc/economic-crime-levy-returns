@@ -8,4 +8,8 @@ GET           /returns/:id/validation-errors        uk.gov.hmrc.economiccrimelev
 
 POST          /submit-return/:id                    uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnSubmissionController.submitReturn(id)
 
-POST          /dms-returns-callback            uk.gov.hmrc.economiccrimelevyreturns.controllers.DmsNotificationController.dmsCallback()
+POST          /dms-returns-callback                 uk.gov.hmrc.economiccrimelevyreturns.controllers.DmsNotificationController.dmsCallback()
+
+GET           /session/:id                          uk.gov.hmrc.economiccrimelevyreturns.controllers.SessionController.get(id)
+PUT           /session                              uk.gov.hmrc.economiccrimelevyreturns.controllers.SessionController.upsert
+DELETE        /session/:id                          uk.gov.hmrc.economiccrimelevyreturns.controllers.SessionController.delete(id)

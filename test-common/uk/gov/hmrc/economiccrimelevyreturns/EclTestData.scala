@@ -35,7 +35,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
-import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclReturn, ObligationDetails}
+import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, EclReturn, ObligationDetails, SessionData}
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import java.time.{Clock, Instant, LocalDate}
@@ -277,4 +277,11 @@ trait EclTestData { self: Generators =>
   val testInternalId: String               = alphaNumericString
   val testEclRegistrationReference: String = alphaNumericString
 
+  implicit val arbSessionData: Arbitrary[SessionData] =
+    Arbitrary {
+      for {
+        id     <- Gen.uuid
+        values <- Arbitrary.arbitrary[Map[String, String]]
+      } yield SessionData(id.toString, values, None)
+    }
 }
