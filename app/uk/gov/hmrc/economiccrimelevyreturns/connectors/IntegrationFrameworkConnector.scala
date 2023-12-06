@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
+import akka.actor.ActorSystem
+import com.typesafe.config.Config
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
@@ -23,7 +25,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
+import uk.gov.hmrc.http.{HeaderCarrier, Retries, StringContextOps}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,9 +34,12 @@ import scala.concurrent.{ExecutionContext, Future}
 class IntegrationFrameworkConnector @Inject() (
   appConfig: AppConfig,
   httpClient: HttpClientV2,
-  correlationIdGenerator: CorrelationIdGenerator
+  correlationIdGenerator: CorrelationIdGenerator,
+  override val configuration: Config,
+  override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
-    extends BaseConnector {
+    extends Retries
+    with BaseConnector {
 
   private def integrationFrameworkHeaders: Seq[(String, String)] = Seq(
     (HeaderNames.AUTHORIZATION, s"Bearer ${appConfig.integrationFrameworkBearerToken}"),
@@ -45,9 +50,11 @@ class IntegrationFrameworkConnector @Inject() (
   def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit
     hc: HeaderCarrier
   ): Future[SubmitEclReturnResponse] =
-    httpClient
-      .post(url"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference")
-      .setHeader(integrationFrameworkHeaders: _*)
-      .withBody(Json.toJson(eclReturnSubmission))
-      .executeAndDeserialise[SubmitEclReturnResponse]
+    retryFor[SubmitEclReturnResponse]("DES - obligation data")(retryCondition) {
+      httpClient
+        .post(url"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference")
+        .setHeader(integrationFrameworkHeaders: _*)
+        .withBody(Json.toJson(eclReturnSubmission))
+        .executeAndDeserialise[SubmitEclReturnResponse]
+    }
 }

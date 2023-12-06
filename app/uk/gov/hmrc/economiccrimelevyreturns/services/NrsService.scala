@@ -38,7 +38,7 @@ import scala.util.control.NonFatal
 @Singleton
 class NrsService @Inject() (nrsConnector: NrsConnector, clock: Clock)(implicit
   ec: ExecutionContext
-) extends Logging {
+) {
 
   def submitToNrs(
     base64EncodedNrsSubmissionHtml: String,

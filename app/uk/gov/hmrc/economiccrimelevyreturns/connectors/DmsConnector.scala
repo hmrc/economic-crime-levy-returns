@@ -39,15 +39,10 @@ class DmsConnector @Inject() (
   override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
     extends Retries
-    with Logging
     with BaseConnector {
 
-  private def retryCondition: PartialFunction[Exception, Boolean] = {
-    case e: UpstreamErrorResponse if UpstreamErrorResponse.Upstream5xxResponse.unapply(e).isDefined => true
-  }
-
   def sendPdf(
-    body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]] with Product with Serializable, NotUsed]
+    body: Source[MultipartFormData.Part[Source[ByteString, _]] with Product with Serializable, NotUsed]
   )(implicit hc: HeaderCarrier): Future[Unit] =
     retryFor[Unit]("DMS submission")(retryCondition) {
       httpClient

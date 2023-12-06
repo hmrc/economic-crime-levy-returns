@@ -36,12 +36,14 @@ class ReturnsController @Inject() (
     extends BackendController(cc) {
 
   def upsertReturn: Action[JsValue] = authorise(parse.json).async { implicit request =>
+    //TO DO - use returns service
     withJsonBody[EclReturn] { eclReturn =>
       returnsRepository.upsert(eclReturn).map(_ => Ok(Json.toJson(eclReturn)))
     }
   }
 
   def getReturn(id: String): Action[AnyContent] = authorise.async { _ =>
+    //TO DO - use returns service
     returnsRepository.get(id).map {
       case Some(eclReturn) => Ok(Json.toJson(eclReturn))
       case None            => NotFound(Json.toJson(ErrorResponse(NOT_FOUND, "Return not found")))
@@ -49,6 +51,7 @@ class ReturnsController @Inject() (
   }
 
   def deleteReturn(id: String): Action[AnyContent] = authorise.async { _ =>
+    //TO DO - use returns service
     returnsRepository.clear(id).map(_ => NoContent)
   }
 

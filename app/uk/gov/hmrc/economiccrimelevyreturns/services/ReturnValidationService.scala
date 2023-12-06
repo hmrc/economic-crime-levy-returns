@@ -92,6 +92,7 @@ class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaVa
         telephoneNumber,
         obligationDetails
       ) =>
+        //TO DO - write apply method for EclReturnSubmission
         EclReturnSubmission(
           periodKey = obligationDetails.periodKey,
           returnDetails = EclReturnDetails(
