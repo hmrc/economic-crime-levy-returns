@@ -16,11 +16,9 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
-import akka.NotUsed
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
-import play.api.mvc.MultipartFormData
 import play.api.mvc.MultipartFormData.{DataPart, FilePart}
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.DmsConnector
@@ -50,41 +48,11 @@ class DmsService @Inject() (
   def submitToDms(base64EncodedDmsSubmissionHtml: String, now: Instant)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, DmsSubmissionError, SubmitEclReturnResponse] =
-    EitherT {
-      //TODO - wrap in Try as it can throw exceptions - see if can use retry on eitherT and use a string that makes decode throw an exception
-
-      for {
-
-
-      }
-
-      val html = new String(Base64.getDecoder.decode(base64EncodedDmsSubmissionHtml))
-      val pdf  = buildPdf(html)
-
-      val dateOfReceipt = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(
-        LocalDateTime.ofInstant(now.truncatedTo(ChronoUnit.SECONDS), ZoneOffset.UTC)
-      )
-
-//      val body = Source(
-//        Seq(
-//          DataPart("callbackUrl", appConfig.dmsSubmissionCallbackUrl),
-//          DataPart("metadata.source", appConfig.dmsSubmissionSource),
-//          DataPart("metadata.timeOfReceipt", dateOfReceipt),
-//          DataPart("metadata.formId", appConfig.dmsSubmissionFormId),
-//          DataPart("metadata.customerId", appConfig.dmsSubmissionCustomerId),
-//          DataPart("metadata.classificationType", appConfig.dmsSubmissionClassificationType),
-//          DataPart("metadata.businessArea", appConfig.dmsSubmissionBusinessArea),
-//          FilePart(
-//            key = "form",
-//            filename = "form.pdf",
-//            contentType = Some("application/pdf"),
-//            ref = Source.single(ByteString(pdf.toByteArray))
-//          )
-//        )
-//      )
-
-
-    }
+    for {
+      pdf    <- generatePdf(base64EncodedDmsSubmissionHtml)
+      date   <- getDateOfReceipt(now)
+      result <- submitPdfToDms(date, pdf, now)
+    } yield result
 
   private def generatePdf(
     base64EncodedNrsSubmissionHtml: String
@@ -100,21 +68,23 @@ class DmsService @Inject() (
       }
     }
 
-  private def submitPdfToDms(dateOfReceipt: String, pdf: ByteArrayOutputStream)(implicit hc: HeaderCarrier): EitherT[Future, DmsSubmissionError, SubmitEclReturnResponse] = {
-    val body = createBody(dateOfReceipt, pdf)
-      dmsConnector.sendPdf(body).map(_ => Right(SubmitEclReturnResponse(Instant.now, None))).recover {
-        case error@UpstreamErrorResponse(message, code, _, _)
-          if UpstreamErrorResponse.Upstream5xxResponse
-            .unapply(error)
-            .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
+  private def submitPdfToDms(dateOfReceipt: String, pdf: ByteArrayOutputStream, now: Instant)(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, DmsSubmissionError, SubmitEclReturnResponse] =
+    EitherT {
+      val body = createBody(dateOfReceipt, pdf)
+      dmsConnector.sendPdf(body).map(_ => Right(SubmitEclReturnResponse(now, None))).recover {
+        case error @ UpstreamErrorResponse(message, code, _, _)
+            if UpstreamErrorResponse.Upstream5xxResponse
+              .unapply(error)
+              .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
           Left(DmsSubmissionError.BadGateway(reason = message, code = code))
         case NonFatal(thr) => Left(DmsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr)))
       }
-  }
+    }
 
-  private def createBody(dateOfReceipt: String, pdf: ByteArrayOutputStream): Source[MultipartFormData.Part[Source[ByteString, _]] with Product with Serializable, NotUsed] = {
-
-    val body = Source(
+  private def createBody(dateOfReceipt: String, pdf: ByteArrayOutputStream) =
+    Source(
       Seq(
         DataPart("callbackUrl", appConfig.dmsSubmissionCallbackUrl),
         DataPart("metadata.source", appConfig.dmsSubmissionSource),
@@ -131,17 +101,18 @@ class DmsService @Inject() (
         )
       )
     )
-  }
 
-  private def getDateOfReceipt(): EitherT[Future, DmsSubmissionError, String] = {
+  private def getDateOfReceipt(now: Instant): EitherT[Future, DmsSubmissionError, String] =
     EitherT {
       Try {
-        DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.ofInstant(Instant.now.truncatedTo(ChronoUnit.SECONDS), ZoneOffset.UTC))
+        DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(
+          LocalDateTime.ofInstant(now.truncatedTo(ChronoUnit.SECONDS), ZoneOffset.UTC)
+        )
       } match {
         case Success(date) => Future.successful(Right(date))
-        case Failure(thr) => Future.successful(Left(DmsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr))))
+        case Failure(thr)  =>
+          Future.successful(Left(DmsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr))))
       }
     }
-  }
 
 }

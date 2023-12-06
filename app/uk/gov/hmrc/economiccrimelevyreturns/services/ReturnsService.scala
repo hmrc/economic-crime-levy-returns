@@ -25,7 +25,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class DataRetrievalService @Inject() (
+class ReturnsService @Inject()(
   returnsRepository: ReturnsRepository
 ) {
   def get(id: String)(implicit ec: ExecutionContext): EitherT[Future, DataRetrievalError, EclReturn] =

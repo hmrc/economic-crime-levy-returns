@@ -26,7 +26,7 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
-class ReturnService @Inject() (
+class IntegrationFrameworkService @Inject()(
   integrationFrameworkConnector: IntegrationFrameworkConnector
 )(implicit ec: ExecutionContext) {
 

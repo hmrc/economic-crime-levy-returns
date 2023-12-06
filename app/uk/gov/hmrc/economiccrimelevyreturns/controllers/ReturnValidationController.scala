@@ -18,7 +18,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
-import uk.gov.hmrc.economiccrimelevyreturns.services.{DataRetrievalService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.services.{ReturnsService, ReturnValidationService}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
@@ -26,10 +26,10 @@ import scala.concurrent.ExecutionContext
 
 @Singleton()
 class ReturnValidationController @Inject() (
-  cc: ControllerComponents,
-  dataRetrievalService: DataRetrievalService,
-  authorise: AuthorisedAction,
-  returnValidationService: ReturnValidationService
+                                             cc: ControllerComponents,
+                                             dataRetrievalService: ReturnsService,
+                                             authorise: AuthorisedAction,
+                                             returnValidationService: ReturnValidationService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with BaseController

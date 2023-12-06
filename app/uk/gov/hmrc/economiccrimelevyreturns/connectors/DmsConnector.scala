@@ -42,7 +42,7 @@ class DmsConnector @Inject() (
     with BaseConnector {
 
   def sendPdf(
-    body: Source[MultipartFormData.Part[Source[ByteString, _]] with Product with Serializable, NotUsed]
+    body: Source[MultipartFormData.Part[Source[ByteString, _]], NotUsed]
   )(implicit hc: HeaderCarrier): Future[Unit] =
     retryFor[Unit]("DMS submission")(retryCondition) {
       httpClient

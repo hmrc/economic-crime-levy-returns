@@ -29,11 +29,11 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import scala.concurrent.Future
 
-class ReturnServiceSpec extends SpecBase {
+class IntegrationFrameworkServiceSpec extends SpecBase {
 
   private val mockIntegrationFrameworkConnector = mock[IntegrationFrameworkConnector]
 
-  val service = new ReturnService(mockIntegrationFrameworkConnector)
+  val service = new IntegrationFrameworkService(mockIntegrationFrameworkConnector)
 
   "submitEclReturn" should {
     "return successful submit return response when call to the integration framework succeeds" in forAll {
