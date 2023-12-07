@@ -16,11 +16,25 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.utils
 
+import play.api.mvc.Request
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
+
 import java.util.UUID
 import javax.inject.Singleton
 
-@Singleton
-class CorrelationIdGenerator {
+object CorrelationIdHelper {
 
-  def generateCorrelationId: String = UUID.randomUUID().toString
+  val HEADER_X_CORRELATION_ID: String = "X-Correlation-Id"
+
+  def headerCarrierWithCorrelationId(request: Request[_]): HeaderCarrier = {
+    val hcFromRequest: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
+    hcFromRequest
+      .headers(scala.Seq(HEADER_X_CORRELATION_ID)) match {
+      case Nil =>
+        hcFromRequest.withExtraHeaders((HEADER_X_CORRELATION_ID, UUID.randomUUID().toString))
+      case _   =>
+        hcFromRequest
+    }
+  }
 }

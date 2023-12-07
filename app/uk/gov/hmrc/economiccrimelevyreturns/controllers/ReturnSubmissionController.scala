@@ -25,6 +25,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclRetu
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn, FirstTimeReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.services._
+import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdHelper
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -49,6 +50,7 @@ class ReturnSubmissionController @Inject() (
     with ErrorHandler {
 
   def submitReturn(id: String): Action[AnyContent] = authorise.async { implicit request =>
+    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
       eclReturn           <- dataRetrievalService.get(id).asResponseError
       eclReturnSubmission <- returnValidationService.validateReturn(eclReturn).asResponseError

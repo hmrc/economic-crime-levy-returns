@@ -18,7 +18,9 @@ package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
-import uk.gov.hmrc.economiccrimelevyreturns.services.{ReturnsService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.services.{ReturnValidationService, ReturnsService}
+import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdHelper
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
@@ -26,16 +28,17 @@ import scala.concurrent.ExecutionContext
 
 @Singleton()
 class ReturnValidationController @Inject() (
-                                             cc: ControllerComponents,
-                                             returnsService: ReturnsService,
-                                             authorise: AuthorisedAction,
-                                             returnValidationService: ReturnValidationService
+  cc: ControllerComponents,
+  returnsService: ReturnsService,
+  authorise: AuthorisedAction,
+  returnValidationService: ReturnValidationService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with BaseController
     with ErrorHandler {
 
-  def getValidationErrors(id: String): Action[AnyContent] = authorise.async { _ =>
+  def getValidationErrors(id: String): Action[AnyContent] = authorise.async { request =>
+    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
       eclReturn <- returnsService.get(id).asResponseError
       _         <- returnValidationService.validateReturn(eclReturn).asResponseError

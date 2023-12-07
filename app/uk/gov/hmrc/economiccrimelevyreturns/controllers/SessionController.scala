@@ -21,6 +21,8 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
 import uk.gov.hmrc.economiccrimelevyreturns.models.SessionData
 import uk.gov.hmrc.economiccrimelevyreturns.services.SessionService
+import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdHelper
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
@@ -37,6 +39,7 @@ class SessionController @Inject() (
     with ErrorHandler {
 
   def upsert: Action[JsValue] = authorise(parse.json).async { implicit request =>
+    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     withJsonBody[SessionData] { sessionData =>
       (for {
         unit <- sessionService.upsert(sessionData).asResponseError
@@ -44,13 +47,15 @@ class SessionController @Inject() (
     }
   }
 
-  def get(id: String): Action[AnyContent] = authorise.async { _ =>
+  def get(id: String): Action[AnyContent] = authorise.async { request =>
+    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
       sessionData <- sessionService.get(id).asResponseError
     } yield sessionData).convertToResult(OK)
   }
 
-  def delete(id: String): Action[AnyContent] = authorise.async { _ =>
+  def delete(id: String): Action[AnyContent] = authorise.async { request =>
+    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
       unit <- sessionService.delete(id).asResponseError
     } yield unit).convertToResult(NO_CONTENT)

@@ -21,6 +21,8 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.services.ReturnsService
+import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdHelper
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
@@ -37,6 +39,7 @@ class ReturnsController @Inject() (
     with ErrorHandler {
 
   def upsertReturn: Action[JsValue] = authorise(parse.json).async { implicit request =>
+    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     withJsonBody[EclReturn] { eclReturn =>
       (for {
         result <- returnsService.upsert(eclReturn).asResponseError
@@ -44,13 +47,15 @@ class ReturnsController @Inject() (
     }
   }
 
-  def getReturn(id: String): Action[AnyContent] = authorise.async { _ =>
+  def getReturn(id: String): Action[AnyContent] = authorise.async { request =>
+    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
       eclReturn <- returnsService.get(id).asResponseError
     } yield eclReturn).convertToResult(OK)
   }
 
-  def deleteReturn(id: String): Action[AnyContent] = authorise.async { _ =>
+  def deleteReturn(id: String): Action[AnyContent] = authorise.async { request =>
+    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
       deletedReturn <- returnsService.delete(id).asResponseError
     } yield deletedReturn).convertToResult(OK)
