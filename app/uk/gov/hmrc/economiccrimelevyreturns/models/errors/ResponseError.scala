@@ -37,6 +37,9 @@ object ResponseError {
   def badRequestError(message: String): ResponseError =
     StandardError(message, ErrorCode.BadRequest)
 
+  def unauthorisedError(message: String): ResponseError =
+    StandardError(message, ErrorCode.Unauthorized)
+
   def notFoundError(message: String): ResponseError =
     StandardError(message, ErrorCode.NotFound)
 

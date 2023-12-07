@@ -18,19 +18,17 @@ package uk.gov.hmrc.economiccrimelevyreturns.controllers.actions
 
 import cats.data.EitherT
 import com.google.inject.Inject
-import play.api.http.Status.UNAUTHORIZED
 import play.api.libs.json.Json
-import play.api.mvc.Results.Unauthorized
+import play.api.mvc.Results.Status
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.AuthorisationError
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ResponseError
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsIdentityData
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendHeaderCarrierProvider
-import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 
 import java.lang
 import scala.concurrent.{ExecutionContext, Future}
@@ -48,7 +46,7 @@ class BaseAuthorisedAction @Inject() (
     with BackendHeaderCarrierProvider
     with AuthorisedFunctions {
 
-  val retrievals = Retrievals.externalId and Retrievals.confidenceLevel and
+  private val nrsIdentityDataRetrievals = Retrievals.externalId and Retrievals.confidenceLevel and
     Retrievals.nino and Retrievals.saUtr and Retrievals.mdtpInformation and Retrievals.credentialStrength and
     Retrievals.loginTimes and Retrievals.credentials and Retrievals.name and Retrievals.dateOfBirth and Retrievals.email and
     Retrievals.affinityGroup and Retrievals.agentCode and Retrievals.agentInformation and Retrievals.credentialRole and
@@ -57,68 +55,27 @@ class BaseAuthorisedAction @Inject() (
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
     val authorisedFunction = authorised(Enrolment(EclEnrolment.ServiceName))
 
-    for {
-      eclReference   <- getEclRegistrationReference(authorisedFunction, request)
-      internalId     <- getInternalId(authorisedFunction, request)
-      nrsIdentityData = generateNrsIdentityData(internalId, authorisedFunction, request)
-
-    } yield nrsIdentityData
-
+    (for {
+      eclReference     <- getEclRegistrationReference(authorisedFunction, request)
+      internalId       <- getInternalId(authorisedFunction, request)
+      nrsIdentityData  <- generateNrsIdentityData(internalId, authorisedFunction, request)
+      authorisedRequest = AuthorisedRequest(request, internalId, eclReference, nrsIdentityData)
+    } yield authorisedRequest).foldF(
+      err => Future.successful(Status(err.code.statusCode)(Json.toJson(err))),
+      response => block(response)
+    )
   }
 
-//      authorised(Enrolment(EclEnrolment.ServiceName)).retrieve(retrievals) {
-//      case optInternalId ~ enrolments ~ optExternalId ~ confidenceLevel ~ optNino ~ optSaUtr ~
-//          optMdtpInformation ~ optCredentialStrength ~ loginTimes ~ optCredentials ~ optName ~ optDateOfBirth ~
-//          optEmail ~ optAffinityGroup ~ optAgentCode ~ agentInformation ~ optCredentialRole ~ optGroupIdentifier ~
-//          optItmpName ~ optItmpDateOfBirth ~ optItmpAddress =>
-//        val internalId = optInternalId.getOrElseFail("Unable to retrieve internalId")
-//
-//        val eclRegistrationReference =
-//          enrolments
-//            .getEnrolment(EclEnrolment.ServiceName)
-//            .flatMap(_.getIdentifier(EclEnrolment.IdentifierKey))
-//            .getOrElseFail(
-//              s"Unable to retrieve enrolment with key ${EclEnrolment.ServiceName} and identifier ${EclEnrolment.IdentifierKey}"
-//            )
-//            .value
-//
-//        val nrsIdentityData = NrsIdentityData(
-//          internalId,
-//          optExternalId,
-//          optAgentCode,
-//          optCredentials,
-//          confidenceLevel.level,
-//          optNino,
-//          optSaUtr,
-//          optName,
-//          optDateOfBirth,
-//          optEmail,
-//          agentInformation,
-//          optGroupIdentifier,
-//          optCredentialRole,
-//          optMdtpInformation,
-//          optItmpName,
-//          optItmpDateOfBirth,
-//          optItmpAddress,
-//          optAffinityGroup,
-//          optCredentialStrength,
-//          loginTimes
-//        )
-//
-//        block(AuthorisedRequest(request, internalId, eclRegistrationReference, nrsIdentityData))
-//
-//    }(hc(request), executionContext) recover { case e: AuthorisationException =>
-//      Unauthorized(
-//        Json.toJson(
-//          ErrorResponse(
-//            UNAUTHORIZED,
-//            e.reason
-//          )
-//        )
-//      )
-//    }
+  private def convertToAuthorisationError: PartialFunction[Throwable, Either[ResponseError, _]] = {
+    case e: AuthorisationException =>
+      Left(ResponseError.unauthorisedError(e.reason))
+    case e                         => Left(ResponseError.internalServiceError(cause = Some(e)))
+  }
 
-  def getEclRegistrationReference(authorisedFunction: AuthorisedFunction, request: Request[_]) =
+  private def getEclRegistrationReference(
+    authorisedFunction: AuthorisedFunction,
+    request: Request[_]
+  ): EitherT[Future, ResponseError, String] =
     EitherT {
       authorisedFunction
         .retrieve(Retrievals.authorisedEnrolments) { case enrolments =>
@@ -126,7 +83,7 @@ class BaseAuthorisedAction @Inject() (
             .getEnrolment(EclEnrolment.ServiceName)
             .flatMap(_.getIdentifier(EclEnrolment.IdentifierKey)) match {
             case Some(eclReference) => Future.successful(Right(eclReference.value))
-            case None               => Future.successful(Left(AuthorisationError.InternalUnexpectedError(None)))
+            case None               => Future.successful(Left(ResponseError.internalServiceError(cause = None)))
           }
         }(hc(request), executionContext)
         .recover {
@@ -134,102 +91,63 @@ class BaseAuthorisedAction @Inject() (
         }
     }
 
-  def getInternalId(
+  private def getInternalId(
     authorisedFunction: AuthorisedFunction,
     request: Request[_]
-  ): EitherT[Future, AuthorisationError, String] =
+  ): EitherT[Future, ResponseError, String] =
     EitherT {
       authorisedFunction
         .retrieve(Retrievals.internalId) {
           case Some(internalId) => Future.successful(Right(internalId))
-          case None             => Future.successful(Left(AuthorisationError.InternalUnexpectedError(None)))
+          case None             => Future.successful(Left(ResponseError.internalServiceError(cause = None)))
         }(hc(request), executionContext)
         .recover {
           convertToAuthorisationError
         }
     }
 
-  val convertToAuthorisationError: PartialFunction[Throwable, Either[AuthorisationError, String]] = {
-    case e: AuthorisationException =>
-      Left(AuthorisationError.Unauthorized(e.reason, Some(e)))
-    case e                         => Left(AuthorisationError.InternalUnexpectedError(Some(e)))
-  }
-
-  def generateNrsIdentityData(internalId: String, authorisedFunction: AuthorisedFunction, request: Request[_]) =
-    authorisedFunction.retrieve(retrievals) {
-      case optExternalId ~ confidenceLevel ~ optNino ~ optSaUtr ~
-          optMdtpInformation ~ optCredentialStrength ~ loginTimes ~ optCredentials ~ optName ~ optDateOfBirth ~
-          optEmail ~ optAffinityGroup ~ optAgentCode ~ agentInformation ~ optCredentialRole ~ optGroupIdentifier ~
-          optItmpName ~ optItmpDateOfBirth ~ optItmpAddress =>
-        Future.successful(
-          NrsIdentityData(
-            internalId,
-            optExternalId,
-            optAgentCode,
-            optCredentials,
-            confidenceLevel.level,
-            optNino,
-            optSaUtr,
-            optName,
-            optDateOfBirth,
-            optEmail,
-            agentInformation,
-            optGroupIdentifier,
-            optCredentialRole,
-            optMdtpInformation,
-            optItmpName,
-            optItmpDateOfBirth,
-            optItmpAddress,
-            optAffinityGroup,
-            optCredentialStrength,
-            loginTimes
-          )
-        )
-    }(hc(request), executionContext)
-
-  def getAuthorisedRequest(internalId: String, eclReference: String, nrsIdentityData: NrsIdentityData) = {}
-
-//  def getAuthorisedRequest(
-//    eclReference: String,
-//    request: Request[_]
-//  ): EitherT[Future, AuthorisationError, AuthorisedRequest] =
-//    EitherT {
-//      authorised(Enrolment(EclEnrolment.ServiceName)).retrieve(retrievals) {
-//        case Some(internalId) ~ enrolments ~ optExternalId ~ confidenceLevel ~ optNino ~ optSaUtr ~
-//            optMdtpInformation ~ optCredentialStrength ~ loginTimes ~ optCredentials ~ optName ~ optDateOfBirth ~
-//            optEmail ~ optAffinityGroup ~ optAgentCode ~ agentInformation ~ optCredentialRole ~ optGroupIdentifier ~
-//            optItmpName ~ optItmpDateOfBirth ~ optItmpAddress =>
-//
-//          val nrsIdentityData = NrsIdentityData(
-//            internalId,
-//            optExternalId,
-//            optAgentCode,
-//            optCredentials,
-//            confidenceLevel.level,
-//            optNino,
-//            optSaUtr,
-//            optName,
-//            optDateOfBirth,
-//            optEmail,
-//            agentInformation,
-//            optGroupIdentifier,
-//            optCredentialRole,
-//            optMdtpInformation,
-//            optItmpName,
-//            optItmpDateOfBirth,
-//            optItmpAddress,
-//            optAffinityGroup,
-//            optCredentialStrength,
-//            loginTimes
-//          )
-//          Future.successful(Right(AuthorisedRequest(request, internalId, eclReference, nrsIdentityData)))
-//        case _ =>
-//          Future.successful(Left(AuthorisationError.InternalUnexpectedError(None)))
-//      }(hc(request), executionContext)
-//    }
-
-  implicit class OptionOps[T](o: Option[T]) {
-    def getOrElseFail(failureMessage: String): T = o.getOrElse(throw new IllegalStateException(failureMessage))
-  }
+  private def generateNrsIdentityData(
+    internalId: String,
+    authorisedFunction: AuthorisedFunction,
+    request: Request[_]
+  ): EitherT[Future, ResponseError, NrsIdentityData] =
+    EitherT {
+      authorisedFunction
+        .retrieve(nrsIdentityDataRetrievals) {
+          case optExternalId ~ confidenceLevel ~ optNino ~ optSaUtr ~
+              optMdtpInformation ~ optCredentialStrength ~ loginTimes ~ optCredentials ~ optName ~ optDateOfBirth ~
+              optEmail ~ optAffinityGroup ~ optAgentCode ~ agentInformation ~ optCredentialRole ~ optGroupIdentifier ~
+              optItmpName ~ optItmpDateOfBirth ~ optItmpAddress =>
+            Future.successful(
+              Right(
+                NrsIdentityData(
+                  internalId,
+                  optExternalId,
+                  optAgentCode,
+                  optCredentials,
+                  confidenceLevel.level,
+                  optNino,
+                  optSaUtr,
+                  optName,
+                  optDateOfBirth,
+                  optEmail,
+                  agentInformation,
+                  optGroupIdentifier,
+                  optCredentialRole,
+                  optMdtpInformation,
+                  optItmpName,
+                  optItmpDateOfBirth,
+                  optItmpAddress,
+                  optAffinityGroup,
+                  optCredentialStrength,
+                  loginTimes
+                )
+              )
+            )
+        }(hc(request), executionContext)
+        .recover {
+          convertToAuthorisationError
+        }
+    }
 
 }
