@@ -34,15 +34,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ReturnSubmissionController @Inject() (
-                                             cc: ControllerComponents,
-                                             authorise: AuthorisedAction,
-                                             returnValidationService: ReturnValidationService,
-                                             returnService: IntegrationFrameworkService,
-                                             nrsService: NrsService,
-                                             dmsService: DmsService,
-                                             auditService: AuditService,
-                                             appConfig: AppConfig,
-                                             dataRetrievalService: ReturnsService
+  cc: ControllerComponents,
+  authorise: AuthorisedAction,
+  returnValidationService: ReturnValidationService,
+  returnService: IntegrationFrameworkService,
+  nrsService: NrsService,
+  dmsService: DmsService,
+  auditService: AuditService,
+  appConfig: AppConfig,
+  dataRetrievalService: ReturnsService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with BaseController
@@ -71,7 +71,7 @@ class ReturnSubmissionController @Inject() (
         amendSubmission(eclReturn, request.eclRegistrationReference)
       case None                  =>
         EitherT.left[SubmitEclReturnResponse](
-          Future.successful(ResponseError.internalServiceError(message = "Return type is missing"))
+          Future.successful(ResponseError.internalServiceError(cause = None))
         )
     }
 

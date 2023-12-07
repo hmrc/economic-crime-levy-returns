@@ -54,6 +54,8 @@ class DmsService @Inject() (
       result <- submitPdfToDms(date, pdf, now)
     } yield result
 
+
+
   private def generatePdf(
     base64EncodedNrsSubmissionHtml: String
   ): EitherT[Future, DmsSubmissionError, ByteArrayOutputStream] =
@@ -64,7 +66,7 @@ class DmsService @Inject() (
       } match {
         case Success(pdf) => Future.successful(Right(pdf))
         case Failure(thr) =>
-          Future.successful(Left(DmsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr))))
+          Future.successful(Left(DmsSubmissionError.InternalUnexpectedError(Some(thr))))
       }
     }
 
@@ -79,7 +81,7 @@ class DmsService @Inject() (
               .unapply(error)
               .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
           Left(DmsSubmissionError.BadGateway(reason = message, code = code))
-        case NonFatal(thr) => Left(DmsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr)))
+        case NonFatal(thr) => Left(DmsSubmissionError.InternalUnexpectedError(Some(thr)))
       }
     }
 
@@ -111,7 +113,7 @@ class DmsService @Inject() (
       } match {
         case Success(date) => Future.successful(Right(date))
         case Failure(thr)  =>
-          Future.successful(Left(DmsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr))))
+          Future.successful(Left(DmsSubmissionError.InternalUnexpectedError(Some(thr))))
       }
     }
 

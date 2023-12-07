@@ -40,25 +40,14 @@ object ResponseError {
   def notFoundError(message: String): ResponseError =
     StandardError(message, ErrorCode.NotFound)
 
-  def unauthorized(message: String): ResponseError =
-    StandardError(message, ErrorCode.Unauthorized)
-
   def badGateway(message: String, code: Int): ResponseError =
     BadGateway(message, ErrorCode.BadGateway, code)
 
-  def upstreamServiceError(
-    message: String = "Internal server error",
-    code: ErrorCode = ErrorCode.InternalServerError,
-    cause: UpstreamErrorResponse
-  ): ResponseError =
-    UpstreamServiceError(message, code, cause)
-
   def internalServiceError(
-    message: String = "Internal server error",
     code: ErrorCode = ErrorCode.InternalServerError,
     cause: Option[Throwable] = None
   ): ResponseError =
-    InternalServiceError(message, code, cause)
+    InternalServiceError("Internal server error", code, cause)
 
   implicit val errorWrites: OWrites[ResponseError] =
     (
@@ -89,24 +78,8 @@ case class BadGateway(
   responseCode: Int
 ) extends ResponseError
 
-object BadGateway {
-  def causedBy(message: String, code: Int): ResponseError =
-    ResponseError.badGateway(message = message, code = code)
-}
-
-object UpstreamServiceError {
-
-  def causedBy(cause: UpstreamErrorResponse): ResponseError =
-    ResponseError.upstreamServiceError(cause = cause)
-}
-
 case class InternalServiceError(
   message: String = "Internal server error",
   code: ErrorCode = ErrorCode.InternalServerError,
   cause: Option[Throwable] = None
 ) extends ResponseError
-
-object InternalServiceError {
-  def causedBy(cause: Throwable): ResponseError =
-    ResponseError.internalServiceError(cause = Some(cause))
-}

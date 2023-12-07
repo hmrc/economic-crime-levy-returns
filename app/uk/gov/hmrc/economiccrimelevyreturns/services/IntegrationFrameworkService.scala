@@ -46,7 +46,7 @@ class IntegrationFrameworkService @Inject()(
                 .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
             Left(ReturnsSubmissionError.BadGateway(reason = message, code = code))
 
-          case NonFatal(thr) => Left(ReturnsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr)))
+          case NonFatal(thr) => Left(ReturnsSubmissionError.InternalUnexpectedError(Some(thr)))
         }
     }
 

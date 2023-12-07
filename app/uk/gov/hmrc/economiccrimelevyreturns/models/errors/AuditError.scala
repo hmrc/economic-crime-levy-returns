@@ -19,7 +19,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 sealed trait AuditError
 
 object AuditError {
-  case class InternalUnexpectedError(message: String, cause: Option[Throwable]) extends AuditError
+  case class InternalUnexpectedError(cause: Option[Throwable]) extends AuditError
 
   case class BadGateway(reason: String, code: Int) extends AuditError
 }

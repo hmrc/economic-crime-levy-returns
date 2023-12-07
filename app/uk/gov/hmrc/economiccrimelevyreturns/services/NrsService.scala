@@ -82,19 +82,19 @@ class NrsService @Inject() (nrsConnector: NrsConnector, clock: Clock)(implicit
                 .unapply(error)
                 .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
             Left(NrsSubmissionError.BadGateway(reason = message, code = code))
-          case NonFatal(thr) => Left(NrsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr)))
+          case NonFatal(thr) => Left(NrsSubmissionError.InternalUnexpectedError(Some(thr)))
         }
     }
 
   private def getAuthorizationHeader(implicit
     request: AuthorisedRequest[_]
-  ): EitherT[Future, NrsSubmissionError, String] =
+  ): EitherT[Future, NrsSubmissionError, String] = // TO DO - should this be unauthorized
     EitherT {
       request.headers.get(HeaderNames.AUTHORIZATION) match {
         case Some(value) => Future.successful(Right(value))
         case None        =>
           Future.successful(
-            Left(NrsSubmissionError.InternalUnexpectedError("User auth token missing from header", None))
+            Left(NrsSubmissionError.InternalUnexpectedError(None))
           )
       }
     }
@@ -114,7 +114,7 @@ class NrsService @Inject() (nrsConnector: NrsConnector, clock: Clock)(implicit
       } match {
         case Success(html) => Future.successful(Right(html))
         case Failure(thr)  =>
-          Future.successful(Left(NrsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr))))
+          Future.successful(Left(NrsSubmissionError.InternalUnexpectedError(Some(thr))))
       }
     }
 

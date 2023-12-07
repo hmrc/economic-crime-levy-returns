@@ -20,7 +20,7 @@ import cats.data.EitherT
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.mvc.Results.{Ok, Status}
-import uk.gov.hmrc.economiccrimelevyreturns.models.SessionData
+import uk.gov.hmrc.economiccrimelevyreturns.models.{EclReturn, SessionData}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ResponseError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.SubmitEclReturnResponse
 
@@ -57,6 +57,14 @@ trait BaseController {
 
     def getResponseWithCode(response: R, responseCode: Int): Result
   }
+
+  implicit val submitEclReturn: Converter[EclReturn] =
+    new Converter[EclReturn] {
+      override def getResponse(response: EclReturn) = Ok(Json.toJson(response))
+
+      override def getResponseWithCode(response: EclReturn, responseCode: Int): Result =
+        Status(responseCode)(Json.toJson(response))
+    }
 
   implicit val submitEclReturnResponse: Converter[SubmitEclReturnResponse] =
     new Converter[SubmitEclReturnResponse] {

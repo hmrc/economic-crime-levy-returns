@@ -27,7 +27,7 @@ import scala.concurrent.ExecutionContext
 @Singleton()
 class ReturnValidationController @Inject() (
                                              cc: ControllerComponents,
-                                             dataRetrievalService: ReturnsService,
+                                             returnsService: ReturnsService,
                                              authorise: AuthorisedAction,
                                              returnValidationService: ReturnValidationService
 )(implicit ec: ExecutionContext)
@@ -37,7 +37,7 @@ class ReturnValidationController @Inject() (
 
   def getValidationErrors(id: String): Action[AnyContent] = authorise.async { _ =>
     (for {
-      eclReturn <- dataRetrievalService.get(id).asResponseError
+      eclReturn <- returnsService.get(id).asResponseError
       _         <- returnValidationService.validateReturn(eclReturn).asResponseError
     } yield ()).convertToResult
   }

@@ -21,6 +21,7 @@ sealed trait DataValidationError
 object DataValidationError {
   case class SchemaValidationError(message: String) extends DataValidationError
   case class DataMissing(errorMessage: String) extends DataValidationError
+  case class DataInvalid(errorMessage: String) extends DataValidationError
 }
 
 case class DataValidationErrorList(errors: List[DataValidationError])
