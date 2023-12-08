@@ -42,7 +42,7 @@ class ReturnValidationController @Inject() (
     (for {
       eclReturn <- returnsService.get(id).asResponseError
       _         <- returnValidationService.validateReturn(eclReturn).asResponseError
-    } yield ()).convertToResult
+    } yield ()).convertToResult(OK)
   }
 
 }

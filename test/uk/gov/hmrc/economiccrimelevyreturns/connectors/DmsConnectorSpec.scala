@@ -29,9 +29,6 @@ import scala.concurrent.Future
 import scala.util.{Failure, Try}
 
 class DmsConnectorSpec extends SpecBase {
-
-  val actorSystem: ActorSystem           = ActorSystem("test")
-  val config: Config                     = app.injector.instanceOf[Config]
   val mockRequestBuilder: RequestBuilder = mock[RequestBuilder]
   val mockHttpClient: HttpClientV2       = mock[HttpClientV2]
   val connector                          = new DmsConnector(

@@ -55,7 +55,7 @@ class ReturnSubmissionController @Inject() (
       eclReturn           <- dataRetrievalService.get(id).asResponseError
       eclReturnSubmission <- returnValidationService.validateReturn(eclReturn).asResponseError
       eclReturnResponse   <- routeReturnSubmission(eclReturn, eclReturnSubmission)
-    } yield eclReturnResponse).convertToResult
+    } yield eclReturnResponse).convertToResult(OK)
   }
 
   private def routeReturnSubmission(eclReturn: EclReturn, eclReturnSubmission: EclReturnSubmission)(implicit

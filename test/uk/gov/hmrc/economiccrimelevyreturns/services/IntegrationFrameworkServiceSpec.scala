@@ -101,7 +101,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         val result =
           await(service.submitEclReturn(eclRegistrationReference, eclReturn.expectedEclReturnSubmission).value)
 
-        result shouldBe Left(ReturnsSubmissionError.InternalUnexpectedError(exception.getMessage, Some(exception)))
+        result shouldBe Left(ReturnsSubmissionError.InternalUnexpectedError(Some(exception)))
     }
   }
 }

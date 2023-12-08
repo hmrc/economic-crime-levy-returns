@@ -33,8 +33,6 @@ import scala.util.{Failure, Try}
 
 class NrsConnectorSpec extends SpecBase {
 
-  val actorSystem: ActorSystem           = ActorSystem("test")
-  val config: Config                     = app.injector.instanceOf[Config]
   val mockHttpClient: HttpClientV2       = mock[HttpClientV2]
   val mockRequestBuilder: RequestBuilder = mock[RequestBuilder]
   val connector                          = new NrsConnector(appConfig, mockHttpClient, config, actorSystem)

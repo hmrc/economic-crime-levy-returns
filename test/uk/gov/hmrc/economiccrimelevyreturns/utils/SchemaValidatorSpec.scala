@@ -60,10 +60,8 @@ class SchemaValidatorSpec extends SpecBase {
     "serialize an object into JSON and validate it against a JSON schema, returning errors if there are any" in {
       val result = schemaValidator.validateAgainstJsonSchema(TestObject("foo", "123"), testJsonSchema)
 
-      result.isValid shouldBe false
-      result.leftMap(nec =>
-        nec.toList shouldEqual
-          List(DataValidationError.SchemaValidationError("Schema validation error for field: #/bar (pattern)"))
+      result shouldBe Left(
+        DataValidationError.SchemaValidationError("Schema validation error for field: #/bar (pattern)")
       )
     }
   }

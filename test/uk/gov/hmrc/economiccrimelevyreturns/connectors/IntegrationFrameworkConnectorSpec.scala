@@ -22,7 +22,6 @@ import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
-import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
 import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
 
@@ -30,11 +29,10 @@ import scala.concurrent.Future
 import scala.util.{Failure, Try}
 
 class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
-  val mockHttpClient: HttpClientV2                       = mock[HttpClientV2]
-  val mockRequestBuilder: RequestBuilder                 = mock[RequestBuilder]
-  val mockCorrelationIdGenerator: CorrelationIdGenerator = mock[CorrelationIdGenerator]
+  val mockHttpClient: HttpClientV2       = mock[HttpClientV2]
+  val mockRequestBuilder: RequestBuilder = mock[RequestBuilder]
 
-  val connector = new IntegrationFrameworkConnector(appConfig, mockHttpClient, mockCorrelationIdGenerator)
+  val connector = new IntegrationFrameworkConnector(appConfig, mockHttpClient, config, actorSystem)
 
   override def beforeEach(): Unit = {
     reset(mockHttpClient)
@@ -49,8 +47,6 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
         submitEclReturnResponse: SubmitEclReturnResponse
       ) =>
         beforeEach()
-
-        when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
 
         when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
@@ -71,8 +67,6 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
     ) =>
       beforeEach()
 
-      when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
-
       val errorCode = UNAUTHORIZED
 
       when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
@@ -90,12 +84,9 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
 
   "return 5xx UpstreamErrorResponse when call to integration framework returns an error" in forAll {
     (
-      eclReturnSubmission: EclReturnSubmission,
-      correlationId: String
+      eclReturnSubmission: EclReturnSubmission
     ) =>
       beforeEach()
-
-      when(mockCorrelationIdGenerator.generateCorrelationId).thenReturn(correlationId)
 
       val errorCode = INTERNAL_SERVER_ERROR
 
@@ -110,5 +101,27 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
           code shouldEqual errorCode
         case _                                             => fail("expected UpstreamErrorResponse when an error is received from DMS")
       }
+  }
+
+  "retry 3 times when a 5xx UpstreamErrorResponse is returned from post to DMS queue" in forAll {
+    (
+      eclReturnSubmission: EclReturnSubmission
+    ) =>
+      val errorCode    = INTERNAL_SERVER_ERROR
+      val errorMessage = s"Upstream error code $errorCode"
+      when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(errorCode, errorMessage)))
+
+      Try(await(connector.submitEclReturn(eclRegistrationReference, eclReturnSubmission))) match {
+        case Failure(UpstreamErrorResponse(msg, _, _, _)) =>
+          msg shouldEqual errorMessage
+        case _                                            => fail("expected UpstreamErrorResponse when an error is received from DMS")
+      }
+
+      verify(mockRequestBuilder, times(4))
+        .execute(any(), any())
   }
 }

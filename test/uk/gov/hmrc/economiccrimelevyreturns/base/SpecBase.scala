@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.base
 
+import akka.actor.ActorSystem
+import com.typesafe.config.Config
 import org.mockito.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
@@ -76,8 +78,10 @@ trait SpecBase
   val emptyReturn: EclReturn                           = EclReturn.empty(internalId)
   val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
   val appConfig: AppConfig                             = app.injector.instanceOf[AppConfig]
+  val config: Config                                   = app.injector.instanceOf[Config]
   val bodyParsers: PlayBodyParsers                     = app.injector.instanceOf[PlayBodyParsers]
   val fakeAuthorisedAction                             = new FakeAuthorisedAction(bodyParsers)
+  val actorSystem                                      = ActorSystem("actor")
 
   def fakeRequestWithJsonBody(json: JsValue): FakeRequest[JsValue] = FakeRequest("", "/", FakeHeaders(), json)
 

@@ -58,7 +58,7 @@ class ReturnsController @Inject() (
     implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
       deletedReturn <- returnsService.delete(id).asResponseError
-    } yield deletedReturn).convertToResult(OK)
+    } yield deletedReturn).convertToResult(NO_CONTENT)
   }
 
 }
