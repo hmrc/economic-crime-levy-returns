@@ -28,19 +28,19 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn, Firs
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataRetrievalError, DataValidationError, DataValidationErrorList, DmsSubmissionError, NrsSubmissionError, ResponseError, ReturnsSubmissionError}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsSubmissionResponse
-import uk.gov.hmrc.economiccrimelevyreturns.services.{AuditService, ReturnsService, DmsService, NrsService, IntegrationFrameworkService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.services.{AuditService, DmsService, IntegrationFrameworkService, NrsService, ReturnValidationService, ReturnsService}
 
 import scala.concurrent.Future
 
 class ReturnSubmissionControllerSpec extends SpecBase {
 
   val mockReturnValidationService: ReturnValidationService = mock[ReturnValidationService]
-  val mockReturnService: IntegrationFrameworkService                     = mock[IntegrationFrameworkService]
+  val mockReturnService: IntegrationFrameworkService       = mock[IntegrationFrameworkService]
   val mockNrsService: NrsService                           = mock[NrsService]
   val mockDmsService: DmsService                           = mock[DmsService]
   val mockAuditService: AuditService                       = mock[AuditService]
   val mockAppConfig: AppConfig                             = mock[AppConfig]
-  val mockDataRetrievalService: ReturnsService       = mock[ReturnsService]
+  val mockDataRetrievalService: ReturnsService             = mock[ReturnsService]
 
   val controller = new ReturnSubmissionController(
     cc,

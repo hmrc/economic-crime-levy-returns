@@ -94,10 +94,10 @@ trait ErrorHandler extends Logging {
       }
     }
 
-  implicit val dataValidationErrorConverter: Converter[DataValidationErrorList] =
-    new Converter[DataValidationErrorList] {
-      override def convert(value: DataValidationErrorList): ResponseError = {
-        val errorMessage = value.errors.map {
+  implicit val dataValidationErrorConverter: Converter[DataValidationError] =
+    new Converter[DataValidationError] {
+      override def convert(value: DataValidationError): ResponseError = {
+        val errorMessage = value match {
           case DataValidationError.SchemaValidationError(cause) =>
             s"""
              |Schema validation error: $cause
@@ -106,10 +106,13 @@ trait ErrorHandler extends Logging {
             s"""
              |Data missing: $cause
              |""".stripMargin
-        }.mkString
+          case DataValidationError.DataInvalid(cause)           =>
+            s"""
+               |Data invalid: $cause
+               |""".stripMargin
+        }
 
         ResponseError.badRequestError(errorMessage)
       }
-
     }
 }

@@ -17,7 +17,6 @@
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import cats.data.EitherT
-import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.libs.json.{JsObject, JsString}
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.NrsConnector

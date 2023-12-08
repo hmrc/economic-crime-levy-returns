@@ -30,7 +30,6 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsIdentityData
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendHeaderCarrierProvider
 
-import java.lang
 import scala.concurrent.{ExecutionContext, Future}
 
 trait AuthorisedAction
@@ -66,7 +65,7 @@ class BaseAuthorisedAction @Inject() (
     )
   }
 
-  private def convertToAuthorisationError: PartialFunction[Throwable, Either[ResponseError, _]] = {
+  private def convertToAuthorisationError[T]: PartialFunction[Throwable, Either[ResponseError, T]] = {
     case e: AuthorisationException =>
       Left(ResponseError.unauthorisedError(e.reason))
     case e                         => Left(ResponseError.internalServiceError(cause = Some(e)))
@@ -87,7 +86,7 @@ class BaseAuthorisedAction @Inject() (
           }
         }(hc(request), executionContext)
         .recover {
-          convertToAuthorisationError
+          convertToAuthorisationError[String]
         }
     }
 
@@ -102,7 +101,7 @@ class BaseAuthorisedAction @Inject() (
           case None             => Future.successful(Left(ResponseError.internalServiceError(cause = None)))
         }(hc(request), executionContext)
         .recover {
-          convertToAuthorisationError
+          convertToAuthorisationError[String]
         }
     }
 
@@ -146,7 +145,7 @@ class BaseAuthorisedAction @Inject() (
             )
         }(hc(request), executionContext)
         .recover {
-          convertToAuthorisationError
+          convertToAuthorisationError[NrsIdentityData]
         }
     }
 

@@ -26,14 +26,14 @@ import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataRetrievalError, DataValidationError, DataValidationErrorList, ResponseError}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.EclReturnSubmission
-import uk.gov.hmrc.economiccrimelevyreturns.services.{ReturnsService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.services.{ReturnValidationService, ReturnsService}
 
 import scala.concurrent.Future
 
 class ReturnValidationControllerSpec extends SpecBase {
 
   val mockReturnValidationService: ReturnValidationService = mock[ReturnValidationService]
-  val mockDataRetrievalService: ReturnsService       = mock[ReturnsService]
+  val mockDataRetrievalService: ReturnsService             = mock[ReturnsService]
 
   val controller = new ReturnValidationController(
     cc,

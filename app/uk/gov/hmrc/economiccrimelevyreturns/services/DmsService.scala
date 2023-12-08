@@ -54,8 +54,6 @@ class DmsService @Inject() (
       result <- submitPdfToDms(date, pdf, now)
     } yield result
 
-
-
   private def generatePdf(
     base64EncodedNrsSubmissionHtml: String
   ): EitherT[Future, DmsSubmissionError, ByteArrayOutputStream] =
