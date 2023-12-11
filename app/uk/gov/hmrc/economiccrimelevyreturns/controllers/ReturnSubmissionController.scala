@@ -35,15 +35,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ReturnSubmissionController @Inject() (
-                                             cc: ControllerComponents,
-                                             authorise: AuthorisedAction,
-                                             returnValidationService: ReturnValidationService,
-                                             integrationFrameworkService: IntegrationFrameworkService,
-                                             nrsService: NrsService,
-                                             dmsService: DmsService,
-                                             auditService: AuditService,
-                                             appConfig: AppConfig,
-                                             returnsService: ReturnsService
+  cc: ControllerComponents,
+  authorise: AuthorisedAction,
+  returnValidationService: ReturnValidationService,
+  integrationFrameworkService: IntegrationFrameworkService,
+  nrsService: NrsService,
+  dmsService: DmsService,
+  auditService: AuditService,
+  appConfig: AppConfig,
+  returnsService: ReturnsService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with BaseController
