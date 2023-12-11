@@ -35,15 +35,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ReturnSubmissionController @Inject() (
-  cc: ControllerComponents,
-  authorise: AuthorisedAction,
-  returnValidationService: ReturnValidationService,
-  returnService: IntegrationFrameworkService,
-  nrsService: NrsService,
-  dmsService: DmsService,
-  auditService: AuditService,
-  appConfig: AppConfig,
-  dataRetrievalService: ReturnsService
+                                             cc: ControllerComponents,
+                                             authorise: AuthorisedAction,
+                                             returnValidationService: ReturnValidationService,
+                                             integrationFrameworkService: IntegrationFrameworkService,
+                                             nrsService: NrsService,
+                                             dmsService: DmsService,
+                                             auditService: AuditService,
+                                             appConfig: AppConfig,
+                                             returnsService: ReturnsService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with BaseController
@@ -52,7 +52,7 @@ class ReturnSubmissionController @Inject() (
   def submitReturn(id: String): Action[AnyContent] = authorise.async { implicit request =>
     implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
-      eclReturn           <- dataRetrievalService.get(id).asResponseError
+      eclReturn           <- returnsService.get(id).asResponseError
       eclReturnSubmission <- returnValidationService.validateReturn(eclReturn).asResponseError
       eclReturnResponse   <- routeReturnSubmission(eclReturn, eclReturnSubmission)
     } yield eclReturnResponse).convertToResult(OK)
@@ -86,7 +86,7 @@ class ReturnSubmissionController @Inject() (
     for {
       base64EncodedNrsSubmissionHtml <- checkOptionalValueExists[String](eclReturn.base64EncodedNrsSubmissionHtml)
       submitEclReturnResponse        <-
-        returnService.submitEclReturn(eclReference, eclReturnSubmission).asResponseError
+        integrationFrameworkService.submitEclReturn(eclReference, eclReturnSubmission).asResponseError
       _                              <- nrsService.submitToNrs(base64EncodedNrsSubmissionHtml, eclReference, eventName).asResponseError
       _                               = auditService.sendReturnSubmittedEvent(eclReturn, eclReference, submitEclReturnResponse.chargeReference)
 

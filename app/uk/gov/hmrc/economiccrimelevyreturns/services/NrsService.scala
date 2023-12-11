@@ -87,7 +87,7 @@ class NrsService @Inject() (nrsConnector: NrsConnector, clock: Clock)(implicit
 
   private def getAuthorizationHeader(implicit
     request: AuthorisedRequest[_]
-  ): EitherT[Future, NrsSubmissionError, String] = // TO DO - should this be unauthorized
+  ): EitherT[Future, NrsSubmissionError, String] =
     EitherT {
       request.headers.get(HeaderNames.AUTHORIZATION) match {
         case Some(value) => Future.successful(Right(value))
