@@ -81,7 +81,7 @@ trait SpecBase
   val config: Config                                   = app.injector.instanceOf[Config]
   val bodyParsers: PlayBodyParsers                     = app.injector.instanceOf[PlayBodyParsers]
   val fakeAuthorisedAction                             = new FakeAuthorisedAction(bodyParsers)
-  val actorSystem                                      = ActorSystem("actor")
+  val actorSystem: ActorSystem                         = ActorSystem("actor")
 
   def fakeRequestWithJsonBody(json: JsValue): FakeRequest[JsValue] = FakeRequest("", "/", FakeHeaders(), json)
 

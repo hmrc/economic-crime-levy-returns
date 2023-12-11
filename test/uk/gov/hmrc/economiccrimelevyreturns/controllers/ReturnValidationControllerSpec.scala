@@ -71,7 +71,7 @@ class ReturnValidationControllerSpec extends SpecBase {
 
         status(result)        shouldBe BAD_REQUEST
         contentAsJson(result) shouldBe Json.toJson(ResponseError.badRequestError(s"""
-             |Data missing: $errorMessage
+             |Data invalid: $errorMessage
              |""".stripMargin))
     }
 

@@ -43,7 +43,7 @@ class ReturnsRepositorySpec
       val setResult     = repository.upsert(eclReturn).futureValue
       val updatedRecord = find(Filters.equal("internalId", eclReturn.internalId)).futureValue.headOption.value
 
-      setResult     shouldEqual true
+      setResult     shouldEqual ()
       updatedRecord shouldEqual expectedResult
     }
 
@@ -55,7 +55,7 @@ class ReturnsRepositorySpec
       val setResult     = repository.upsert(eclReturn).futureValue
       val updatedRecord = find(Filters.equal("internalId", eclReturn.internalId)).futureValue.headOption.value
 
-      setResult     shouldEqual true
+      setResult     shouldEqual ()
       updatedRecord shouldEqual expectedResult
     }
   }
@@ -79,16 +79,16 @@ class ReturnsRepositorySpec
     "remove a record" in {
       insert(eclReturn).futureValue
 
-      val result = repository.clear(eclReturn.internalId).futureValue
+      val result = repository.delete(eclReturn.internalId).futureValue
 
-      result                                      shouldEqual true
+      result                                      shouldEqual ()
       repository.get(eclReturn.internalId).futureValue should not be defined
     }
 
     "return true when there is no record to remove" in {
-      val result = repository.clear("id that does not exist").futureValue
+      val result = repository.delete("id that does not exist").futureValue
 
-      result shouldEqual true
+      result shouldEqual ()
     }
   }
 
