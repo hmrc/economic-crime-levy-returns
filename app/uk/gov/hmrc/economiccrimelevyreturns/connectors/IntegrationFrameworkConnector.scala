@@ -57,7 +57,7 @@ class IntegrationFrameworkConnector @Inject() (
         id
     }
 
-    retryFor[SubmitEclReturnResponse]("DES - obligation data")(retryCondition) {
+    retryFor[SubmitEclReturnResponse]("Integration framework - ECL return")(retryCondition) {
       httpClient
         .post(url"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference")
         .setHeader(integrationFrameworkHeaders(correlationId): _*)
