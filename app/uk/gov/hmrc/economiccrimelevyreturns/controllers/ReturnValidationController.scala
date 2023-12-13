@@ -37,8 +37,7 @@ class ReturnValidationController @Inject() (
     with BaseController
     with ErrorHandler {
 
-  def getValidationErrors(id: String): Action[AnyContent] = authorise.async { request =>
-    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
+  def getValidationErrors(id: String): Action[AnyContent] = authorise.async { _ =>
     (for {
       eclReturn <- returnsService.get(id).asResponseError
       _         <- returnValidationService.validateReturn(eclReturn).asResponseError

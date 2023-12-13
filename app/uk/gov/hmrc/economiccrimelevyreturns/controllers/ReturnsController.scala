@@ -39,7 +39,6 @@ class ReturnsController @Inject() (
     with ErrorHandler {
 
   def upsertReturn: Action[JsValue] = authorise(parse.json).async { implicit request =>
-    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     withJsonBody[EclReturn] { eclReturn =>
       (for {
         result <- returnsService.upsert(eclReturn).asResponseError
@@ -48,14 +47,12 @@ class ReturnsController @Inject() (
   }
 
   def getReturn(id: String): Action[AnyContent] = authorise.async { request =>
-    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
       eclReturn <- returnsService.get(id).asResponseError
     } yield eclReturn).convertToResult(OK)
   }
 
   def deleteReturn(id: String): Action[AnyContent] = authorise.async { request =>
-    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
       deletedReturn <- returnsService.delete(id).asResponseError
     } yield deletedReturn).convertToResult(NO_CONTENT)

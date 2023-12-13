@@ -39,7 +39,6 @@ class SessionController @Inject() (
     with ErrorHandler {
 
   def upsert: Action[JsValue] = authorise(parse.json).async { implicit request =>
-    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     withJsonBody[SessionData] { sessionData =>
       (for {
         unit <- sessionService.upsert(sessionData).asResponseError
@@ -47,15 +46,13 @@ class SessionController @Inject() (
     }
   }
 
-  def get(id: String): Action[AnyContent] = authorise.async { request =>
-    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
+  def get(id: String): Action[AnyContent] = authorise.async { _ =>
     (for {
       sessionData <- sessionService.get(id).asResponseError
     } yield sessionData).convertToResult(OK)
   }
 
-  def delete(id: String): Action[AnyContent] = authorise.async { request =>
-    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
+  def delete(id: String): Action[AnyContent] = authorise.async { _ =>
     (for {
       unit <- sessionService.delete(id).asResponseError
     } yield unit).convertToResult(NO_CONTENT)

@@ -59,7 +59,8 @@ class ReturnSubmissionController @Inject() (
   }
 
   private def routeReturnSubmission(eclReturn: EclReturn, eclReturnSubmission: EclReturnSubmission)(implicit
-    request: AuthorisedRequest[_]
+    request: AuthorisedRequest[_],
+    hc: HeaderCarrier
   ): EitherT[Future, ResponseError, SubmitEclReturnResponse] =
     eclReturn.returnType match {
       case Some(FirstTimeReturn) =>

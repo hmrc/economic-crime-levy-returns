@@ -28,8 +28,6 @@ import javax.inject.Inject
 
 class SchemaValidator @Inject() () {
 
-  type ValidationResult[A] = ValidatedNel[DataValidationError, A]
-
   def validateAgainstJsonSchema[T](validationObject: T, schema: Schema)(implicit
     format: OFormat[T]
   ): Either[DataValidationError, Unit] = {

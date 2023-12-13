@@ -36,12 +36,14 @@ class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaVa
     EitherT {
       transformToEclReturnSubmission(eclReturn) match {
         case Right(eclReturnSubmission) =>
-          val validationResult = schemaValidator
-            .validateAgainstJsonSchema(
-              eclReturnSubmission,
-              SchemaLoader.loadSchema("create-ecl-return-request.json")
-            )
-          Future.successful(Right(eclReturnSubmission))
+          Future.successful(
+            schemaValidator
+              .validateAgainstJsonSchema(
+                eclReturnSubmission,
+                SchemaLoader.loadSchema("create-ecl-return-request.json")
+              )
+              .map(_ => eclReturnSubmission)
+          )
         case Left(dataValidationError)  => Future.successful(Left(dataValidationError))
       }
     }
