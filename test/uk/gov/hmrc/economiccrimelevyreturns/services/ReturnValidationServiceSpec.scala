@@ -19,13 +19,13 @@ package uk.gov.hmrc.economiccrimelevyreturns.services
 import cats.implicits.catsSyntaxValidatedId
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
-import org.scalacheck.Gen
+import org.scalacheck.{Arbitrary, Gen}
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.ValidEclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band._
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrorList}
-import uk.gov.hmrc.economiccrimelevyreturns.models.{Band, EclReturn}
+import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, Band, EclReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.utils.SchemaValidator
 
 import java.time.{Clock, Instant, ZoneId}
@@ -127,6 +127,24 @@ class ReturnValidationServiceSpec extends SpecBase {
             )
           )
         )
+    }
+
+    "return an error if if no amend reason for an amendment" in forAll { (validEclReturn: ValidEclReturn) =>
+      val invalidEclReturn =
+        validEclReturn.eclReturn
+          .copy(returnType = Some(AmendReturn), amendReason = None)
+
+      val result = await(service.validateReturn(invalidEclReturn).value)
+
+      result shouldBe Left(
+        DataValidationErrorList(
+          List(
+            DataValidationError.DataMissing(
+              "Amend reason is missing"
+            )
+          )
+        )
+      )
     }
   }
 }
