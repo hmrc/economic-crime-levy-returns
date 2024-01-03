@@ -20,7 +20,7 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.data.{EitherT, ValidatedNel}
 import cats.implicits._
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band.Small
-import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
+import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
 import uk.gov.hmrc.economiccrimelevyreturns.utils.{SchemaLoader, SchemaValidator}
@@ -55,6 +55,11 @@ class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaVa
 
   private def transformToEclReturnSubmission(eclReturn: EclReturn): ValidationResult[EclReturnSubmission] =
     (
+      validateConditionalOptExists(
+        eclReturn.amendReason,
+        eclReturn.returnType.contains(AmendReturn),
+        "Amend reason"
+      ),
       validateOptExists(eclReturn.relevantAp12Months, "Relevant AP 12 months choice"),
       validateConditionalOptExists(
         eclReturn.relevantApLength,
@@ -80,6 +85,7 @@ class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaVa
       validateOptExists(eclReturn.obligationDetails, "Obligation details")
     ).mapN(
       (
+        _,
         _,
         relevantApLength,
         relevantApRevenue,
