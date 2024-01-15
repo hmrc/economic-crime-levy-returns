@@ -18,7 +18,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import cats.data.EitherT
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band.Small
-import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
+import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
 import uk.gov.hmrc.economiccrimelevyreturns.utils.{SchemaLoader, SchemaValidator}
@@ -52,6 +52,11 @@ class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaVa
     eclReturn: EclReturn
   ): Either[DataValidationError, EclReturnSubmission] =
     for {
+      _                                       <- validateConditionalOptExists(
+                                                   eclReturn.amendReason,
+                                                   eclReturn.returnType.contains(AmendReturn),
+                                                   "Amend reason"
+                                                 )
       _                                       <- validateOptExists(eclReturn.relevantAp12Months, "Relevant AP 12 months choice")
       relevantApLength                        <- validateConditionalOptExists(
                                                    eclReturn.relevantApLength,

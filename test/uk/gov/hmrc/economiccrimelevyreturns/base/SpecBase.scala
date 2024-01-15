@@ -64,7 +64,8 @@ trait SpecBase
   val additionalAppConfig: Map[String, Any] = Map(
     "create-internal-auth-token-on-start" -> false,
     "metrics.enabled"                     -> false,
-    "auditing.enabled"                    -> false
+    "auditing.enabled"                    -> false,
+    "http-verbs.retries.intervals"        -> List("1ms", "1ms", "1ms")
   ) ++ configOverrides
 
   override def fakeApplication(): Application =
