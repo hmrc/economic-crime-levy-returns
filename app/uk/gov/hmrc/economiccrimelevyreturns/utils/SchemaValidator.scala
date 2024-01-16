@@ -55,7 +55,9 @@ class SchemaValidator @Inject() () {
       case Valid(_)   => Right(())
       case Invalid(e) =>
         Left(
-          DataValidationError.SchemaValidationError(message = s"Schema validation error: ${e.toList.mkString(", ")}")
+          DataValidationError.SchemaValidationError(errorMessage =
+            s"Schema validation error: ${e.toList.mkString(", ")}"
+          )
         )
     }
 

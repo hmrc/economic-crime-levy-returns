@@ -47,7 +47,7 @@ class ReturnValidationController @Inject() (
         returnValidationService
           .validateReturn(eclReturn)
           .fold(
-            validationError => Ok(Json.toJson(validationError)),
+            validationError => NoContent,
             _ => Ok
           )
     )
