@@ -41,8 +41,8 @@ class ReturnsController @Inject() (
   def upsertReturn: Action[JsValue] = authorise(parse.json).async { implicit request =>
     withJsonBody[EclReturn] { eclReturn =>
       (for {
-        result <- returnsService.upsert(eclReturn).asResponseError
-      } yield result).convertToResult(OK)
+        unit <- returnsService.upsert(eclReturn).asResponseError
+      } yield unit).convertToResult(NO_CONTENT)
     }
   }
 
