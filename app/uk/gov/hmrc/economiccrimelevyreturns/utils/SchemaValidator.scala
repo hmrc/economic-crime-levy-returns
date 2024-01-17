@@ -17,7 +17,6 @@
 package uk.gov.hmrc.economiccrimelevyreturns.utils
 
 import cats.data.Validated.{Invalid, Valid}
-import cats.data.ValidatedNel
 import io.circe.parser.{parse => circeParse}
 import io.circe.schema.Schema
 import play.api.libs.json.{Json, OFormat}

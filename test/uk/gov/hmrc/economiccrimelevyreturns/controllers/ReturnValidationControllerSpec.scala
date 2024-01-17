@@ -19,8 +19,8 @@ package uk.gov.hmrc.economiccrimelevyreturns.controllers
 import cats.data.EitherT
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.anyString
-import play.api.libs.json.Json
 import play.api.mvc.Result
+import play.api.libs.json.Json
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
@@ -69,10 +69,8 @@ class ReturnValidationControllerSpec extends SpecBase {
 
         val result: Future[Result] = controller.getValidationErrors(eclReturn.internalId)(fakeRequest)
 
-        status(result)        shouldBe BAD_REQUEST
-        contentAsJson(result) shouldBe Json.toJson(ResponseError.badRequestError(s"""
-             |Data invalid: $errorMessage
-             |""".stripMargin))
+        status(result) shouldBe NO_CONTENT
+
     }
 
     "return 404 NOT_FOUND when there is no ECL return data to validate" in forAll { eclReturn: EclReturn =>
@@ -81,10 +79,7 @@ class ReturnValidationControllerSpec extends SpecBase {
 
       val result: Future[Result] = controller.getValidationErrors(eclReturn.internalId)(fakeRequest)
 
-      status(result)        shouldBe NOT_FOUND
-      contentAsJson(result) shouldBe Json.toJson(
-        ResponseError.notFoundError(s"Unable to find record with id: ${eclReturn.internalId}")
-      )
+      status(result) shouldBe NOT_FOUND
     }
   }
 

@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
-import cats.data.EitherT
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import play.api.http.Status._

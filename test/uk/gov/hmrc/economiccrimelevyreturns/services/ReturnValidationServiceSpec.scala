@@ -23,7 +23,7 @@ import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.ValidEclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band._
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, DataValidationErrorList}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, Band, EclReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.utils.SchemaValidator
 

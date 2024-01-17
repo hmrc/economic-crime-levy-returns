@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
-import play.api.libs.json.Json
-
 trait DataValidationError
 
 object DataValidationError {

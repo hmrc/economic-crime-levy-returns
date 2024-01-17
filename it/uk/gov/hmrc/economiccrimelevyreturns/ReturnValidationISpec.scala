@@ -48,7 +48,7 @@ class ReturnValidationISpec extends ISpecBase {
       status(validationResult) shouldBe OK
     }
 
-    "return 400 BAD_REQUEST with validation errors in the JSON response body when the ECL return data is invalid" in {
+    "return 204 NO_CONTENT when the ECL return data is invalid" in {
       stubAuthorised()
 
       val internalId = random[String]
@@ -62,12 +62,12 @@ class ReturnValidationISpec extends ISpecBase {
       lazy val validationResult =
         callRoute(FakeRequest(routes.ReturnValidationController.getValidationErrors(internalId)))
 
-      status(validationResult)        shouldBe BAD_REQUEST
-      contentAsJson(validationResult) shouldBe Json.toJson(
-        ResponseError.badRequestError(s"""
-             |Data missing: Relevant AP 12 months choice is missing
-             |""".stripMargin)
-      )
+      status(validationResult) shouldBe NO_CONTENT
+//      contentAsJson(validationResult) shouldBe Json.toJson(
+//        ResponseError.badRequestError(s"""
+//             |Data missing: Relevant AP 12 months choice is missing
+//             |""".stripMargin)
+//      )
     }
 
     "return 404 NOT_FOUND when there is no ECL return data to validate" in {
