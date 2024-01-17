@@ -40,13 +40,13 @@ class ReturnValidationController @Inject() (
     (for {
       eclReturn <- returnsService.get(id).asResponseError
     } yield eclReturn).foldF(
-      err => Future.successful(Status(err.code.statusCode)),
+      err => Future.successful(Status(err.code.statusCode)(Json.toJson(err))),
       eclReturn =>
         returnValidationService
           .validateReturn(eclReturn)
           .fold(
             validationError => Ok(Json.toJson(validationError.errorMessage)),
-            _ => Ok
+            _ => Ok(Json.toJson(None))
           )
     )
   }
