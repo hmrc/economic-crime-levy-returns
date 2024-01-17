@@ -16,10 +16,13 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
-trait DataValidationError
+trait DataValidationError {
+  def errorMessage: String
+}
 
 object DataValidationError {
   case class SchemaValidationError(errorMessage: String) extends DataValidationError
   case class DataMissing(errorMessage: String) extends DataValidationError
   case class DataInvalid(errorMessage: String) extends DataValidationError
+
 }
