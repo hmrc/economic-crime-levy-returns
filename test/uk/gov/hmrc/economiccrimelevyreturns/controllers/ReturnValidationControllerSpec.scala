@@ -19,8 +19,8 @@ package uk.gov.hmrc.economiccrimelevyreturns.controllers
 import cats.data.EitherT
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.anyString
-import play.api.mvc.Result
 import play.api.libs.json.Json
+import play.api.mvc.Result
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
@@ -56,7 +56,7 @@ class ReturnValidationControllerSpec extends SpecBase {
         status(result) shouldBe OK
     }
 
-    "return 400 BAD_REQUEST with validation errors in the JSON response body when the ECL return data is invalid" in forAll {
+    "return 200 OK with validation errors in the JSON response body when the ECL return data is invalid" in forAll {
       eclReturn: EclReturn =>
         when(mockDataRetrievalService.get(anyString()))
           .thenReturn(EitherT.rightT[Future, DataRetrievalError](eclReturn))
@@ -69,8 +69,8 @@ class ReturnValidationControllerSpec extends SpecBase {
 
         val result: Future[Result] = controller.getValidationErrors(eclReturn.internalId)(fakeRequest)
 
-        status(result) shouldBe NO_CONTENT
-
+        status(result)        shouldBe OK
+        contentAsJson(result) shouldBe Json.toJson(errorMessage)
     }
 
     "return 404 NOT_FOUND when there is no ECL return data to validate" in forAll { eclReturn: EclReturn =>
