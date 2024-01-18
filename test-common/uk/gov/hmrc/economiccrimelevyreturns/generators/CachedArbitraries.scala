@@ -23,21 +23,21 @@ import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
 import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, SessionData}
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationStatus
 import uk.gov.hmrc.economiccrimelevyreturns.models.dms.DmsNotification
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, GetEclReturnResponse, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, GetEclReturnSubmissionResponse, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
 
 object CachedArbitraries extends EclTestData with Generators {
 
   private def mkArb[T](implicit mkArb: MkArbitrary[T]): Arbitrary[T] = MkArbitrary[T].arbitrary
 
-  implicit lazy val arbObligationStatus: Arbitrary[ObligationStatus]               = mkArb
-  implicit lazy val arbCalculatedLiability: Arbitrary[CalculatedLiability]         = mkArb
-  implicit lazy val arbSubmitEclReturnResponse: Arbitrary[SubmitEclReturnResponse] = mkArb
-  implicit lazy val arbEclReturnSubmission: Arbitrary[EclReturnSubmission]         = mkArb
-  implicit lazy val arbNrsIdentityData: Arbitrary[NrsIdentityData]                 = mkArb
-  implicit lazy val arbNrsSubmission: Arbitrary[NrsSubmission]                     = mkArb
-  implicit lazy val arbNrsSubmissionResponse: Arbitrary[NrsSubmissionResponse]     = mkArb
-  implicit lazy val arbDmsNotification: Arbitrary[DmsNotification]                 = mkArb
-  implicit lazy val arbGetEclReturnResponse: Arbitrary[GetEclReturnResponse]       = mkArb
+  implicit lazy val arbObligationStatus: Arbitrary[ObligationStatus]                   = mkArb
+  implicit lazy val arbCalculatedLiability: Arbitrary[CalculatedLiability]             = mkArb
+  implicit lazy val arbSubmitEclReturnResponse: Arbitrary[SubmitEclReturnResponse]     = mkArb
+  implicit lazy val arbEclReturnSubmission: Arbitrary[EclReturnSubmission]             = mkArb
+  implicit lazy val arbNrsIdentityData: Arbitrary[NrsIdentityData]                     = mkArb
+  implicit lazy val arbNrsSubmission: Arbitrary[NrsSubmission]                         = mkArb
+  implicit lazy val arbNrsSubmissionResponse: Arbitrary[NrsSubmissionResponse]         = mkArb
+  implicit lazy val arbDmsNotification: Arbitrary[DmsNotification]                     = mkArb
+  implicit lazy val arbGetEclReturnResponse: Arbitrary[GetEclReturnSubmissionResponse] = mkArb
 
 }

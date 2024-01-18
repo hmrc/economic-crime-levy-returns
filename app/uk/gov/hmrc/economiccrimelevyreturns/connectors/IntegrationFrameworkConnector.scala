@@ -56,14 +56,14 @@ class IntegrationFrameworkConnector @Inject() (
     )
   }
 
-  def getEclReturn(eclRegistrationReference: String, periodKey: String)(implicit
+  def getEclReturnSubmission(eclRegistrationReference: String, periodKey: String)(implicit
     hc: HeaderCarrier
-  ): Future[GetEclReturnResponse] =
-    retryFor[GetEclReturnResponse]("Integration framework - Get ECL return")(retryCondition) {
+  ): Future[GetEclReturnSubmissionResponse] =
+    retryFor[GetEclReturnSubmissionResponse]("Integration framework - Get ECL return")(retryCondition) {
       httpClient
         .get(url"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$periodKey/$eclRegistrationReference")
         .setHeader(integrationFrameworkHeaders(appConfig.integrationFrameworkGetReturnSubmissisonBearerToken): _*)
-        .executeAndDeserialise[GetEclReturnResponse]
+        .executeAndDeserialise[GetEclReturnSubmissionResponse]
     }
 
   def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit

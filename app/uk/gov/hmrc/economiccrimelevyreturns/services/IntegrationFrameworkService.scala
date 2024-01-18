@@ -19,7 +19,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.services
 import cats.data.EitherT
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ReturnsSubmissionError
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, GetEclReturnResponse, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, GetEclReturnSubmissionResponse, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import javax.inject.Inject
@@ -50,14 +50,14 @@ class IntegrationFrameworkService @Inject() (
         }
     }
 
-  def getEclReturn(periodKey: String, eclReference: String)(implicit
+  def getEclReturnSubmission(periodKey: String, eclReference: String)(implicit
     hc: HeaderCarrier
-  ): EitherT[Future, ReturnsSubmissionError, GetEclReturnResponse] =
+  ): EitherT[Future, ReturnsSubmissionError, GetEclReturnSubmissionResponse] =
     EitherT {
       integrationFrameworkConnector
-        .getEclReturn(periodKey, eclReference)
-        .map { getEclReturnResponse =>
-          Right(getEclReturnResponse)
+        .getEclReturnSubmission(periodKey, eclReference)
+        .map { getEclReturnSubmissionResponse =>
+          Right(getEclReturnSubmissionResponse)
         }
         .recover {
           case error @ UpstreamErrorResponse(message, code, _, _)

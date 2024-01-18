@@ -14,4 +14,4 @@ GET           /session/:id                          uk.gov.hmrc.economiccrimelev
 PUT           /session                              uk.gov.hmrc.economiccrimelevyreturns.controllers.SessionController.upsert
 DELETE        /session/:id                          uk.gov.hmrc.economiccrimelevyreturns.controllers.SessionController.delete(id)
 
-GET           /submission/:periodKey/:eclReference  uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnSubmissionController.getSubmission(periodKey, eclReference)
+GET           /submission/:periodKey/:id            uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnSubmissionController.getSubmission(periodKey, id)

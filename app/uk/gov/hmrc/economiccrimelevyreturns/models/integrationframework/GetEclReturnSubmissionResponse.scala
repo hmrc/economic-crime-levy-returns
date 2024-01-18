@@ -19,17 +19,17 @@ package uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band
 
-final case class GetEclReturnResponse(
+final case class GetEclReturnSubmissionResponse(
   chargeDetails: GetEclReturnChargeDetails,
   declarationDetails: GetEclReturnDeclarationDetails,
   eclReference: String,
   processingDateTime: String,
   returnDetails: GetEclReturnDetails,
-  submissionId: Option[String],
+  submissionId: Option[String]
 )
 
-object GetEclReturnResponse {
-  implicit val format: OFormat[GetEclReturnResponse] = Json.format[GetEclReturnResponse]
+object GetEclReturnSubmissionResponse {
+  implicit val format: OFormat[GetEclReturnSubmissionResponse] = Json.format[GetEclReturnSubmissionResponse]
 }
 
 final case class GetEclReturnChargeDetails(

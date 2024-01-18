@@ -49,10 +49,10 @@ class ReturnSubmissionController @Inject() (
     with BaseController
     with ErrorHandler {
 
-  def getSubmission(periodKey: String, eclReference: String): Action[AnyContent] = authorise.async { implicit request =>
+  def getSubmission(periodKey: String, id: String): Action[AnyContent] = authorise.async { implicit request =>
     implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
-      eclReturn <- integrationFrameworkService.getEclReturn(periodKey, eclReference).asResponseError
+      eclReturn <- integrationFrameworkService.getEclReturnSubmission(periodKey, id).asResponseError
     } yield eclReturn).convertToResult(OK)
   }
 
