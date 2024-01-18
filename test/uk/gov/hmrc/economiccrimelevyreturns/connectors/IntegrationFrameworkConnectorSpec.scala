@@ -21,7 +21,7 @@ import play.api.libs.json.Json
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, GetEclReturnResponse, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
 import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
 
@@ -37,6 +37,25 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
   override def beforeEach(): Unit = {
     reset(mockHttpClient)
     reset(mockRequestBuilder)
+  }
+
+  "getEclReturn" should {
+    "return submit return response when call to integration framework succeeds" in forAll {
+      (
+        getEclReturnResponse: GetEclReturnResponse
+      ) =>
+        beforeEach()
+
+        when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+          .thenReturn(Future.successful(HttpResponse.apply(OK, Json.stringify(Json.toJson(getEclReturnResponse)))))
+
+        val result = await(connector.getEclReturn(periodKey, eclRegistrationReference))
+
+        result shouldBe getEclReturnResponse
+    }
   }
 
   "submitEclReturn" should {
@@ -57,52 +76,50 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
 
         result shouldBe submitEclReturnResponse
     }
+
+    "return 4xx UpstreamErrorResponse when call to integration framework returns an error" in forAll {
+      (
+        eclReturnSubmission: EclReturnSubmission
+      ) =>
+        beforeEach()
+
+        val errorCode = UNAUTHORIZED
+
+        when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+          .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Failed authorization")))
+
+        Try(await(connector.submitEclReturn(eclRegistrationReference, eclReturnSubmission))) match {
+          case Failure(UpstreamErrorResponse(_, code, _, _)) =>
+            code shouldEqual errorCode
+          case _                                             => fail("expected UpstreamErrorResponse when an error is received from DMS")
+        }
+    }
+
+    "return 5xx UpstreamErrorResponse when call to integration framework returns an error and executes retry" in forAll {
+      (
+        eclReturnSubmission: EclReturnSubmission
+      ) =>
+        beforeEach()
+
+        val errorCode = INTERNAL_SERVER_ERROR
+
+        when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+          .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Internal server error")))
+
+        Try(await(connector.submitEclReturn(eclRegistrationReference, eclReturnSubmission))) match {
+          case Failure(UpstreamErrorResponse(_, code, _, _)) =>
+            code shouldEqual errorCode
+          case _                                             => fail("expected UpstreamErrorResponse when an error is received from DMS")
+        }
+
+        verify(mockRequestBuilder, times(4))
+          .execute(any(), any())
+    }
   }
-
-  "return 4xx UpstreamErrorResponse when call to integration framework returns an error" in forAll {
-    (
-      eclReturnSubmission: EclReturnSubmission,
-      correlationId: String
-    ) =>
-      beforeEach()
-
-      val errorCode = UNAUTHORIZED
-
-      when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
-        .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Failed authorization")))
-
-      Try(await(connector.submitEclReturn(eclRegistrationReference, eclReturnSubmission))) match {
-        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-          code shouldEqual errorCode
-        case _                                             => fail("expected UpstreamErrorResponse when an error is received from DMS")
-      }
-  }
-
-  "return 5xx UpstreamErrorResponse when call to integration framework returns an error and executes retry" in forAll {
-    (
-      eclReturnSubmission: EclReturnSubmission
-    ) =>
-      beforeEach()
-
-      val errorCode = INTERNAL_SERVER_ERROR
-
-      when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
-        .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Internal server error")))
-
-      Try(await(connector.submitEclReturn(eclRegistrationReference, eclReturnSubmission))) match {
-        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-          code shouldEqual errorCode
-        case _                                             => fail("expected UpstreamErrorResponse when an error is received from DMS")
-      }
-
-      verify(mockRequestBuilder, times(4))
-        .execute(any(), any())
-  }
-
 }

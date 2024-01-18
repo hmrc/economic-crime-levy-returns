@@ -19,7 +19,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.services
 import cats.data.EitherT
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ReturnsSubmissionError
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, GetEclReturnResponse, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import javax.inject.Inject
@@ -50,4 +50,23 @@ class IntegrationFrameworkService @Inject() (
         }
     }
 
+  def getEclReturn(periodKey: String, eclReference: String)(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, ReturnsSubmissionError, GetEclReturnResponse] =
+    EitherT {
+      integrationFrameworkConnector
+        .getEclReturn(periodKey, eclReference)
+        .map { getEclReturnResponse =>
+          Right(getEclReturnResponse)
+        }
+        .recover {
+          case error @ UpstreamErrorResponse(message, code, _, _)
+              if UpstreamErrorResponse.Upstream5xxResponse
+                .unapply(error)
+                .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
+            Left(ReturnsSubmissionError.BadGateway(reason = message, code = code))
+
+          case NonFatal(thr) => Left(ReturnsSubmissionError.InternalUnexpectedError(Some(thr)))
+        }
+    }
 }

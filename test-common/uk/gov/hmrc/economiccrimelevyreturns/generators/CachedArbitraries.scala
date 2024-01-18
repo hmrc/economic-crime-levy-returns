@@ -23,7 +23,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
 import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, SessionData}
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationStatus
 import uk.gov.hmrc.economiccrimelevyreturns.models.dms.DmsNotification
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, GetEclReturnResponse, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
 
 object CachedArbitraries extends EclTestData with Generators {
@@ -38,5 +38,6 @@ object CachedArbitraries extends EclTestData with Generators {
   implicit lazy val arbNrsSubmission: Arbitrary[NrsSubmission]                     = mkArb
   implicit lazy val arbNrsSubmissionResponse: Arbitrary[NrsSubmissionResponse]     = mkArb
   implicit lazy val arbDmsNotification: Arbitrary[DmsNotification]                 = mkArb
+  implicit lazy val arbGetEclReturnResponse: Arbitrary[GetEclReturnResponse]       = mkArb
 
 }

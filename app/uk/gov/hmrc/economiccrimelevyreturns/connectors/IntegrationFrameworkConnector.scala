@@ -41,15 +41,7 @@ class IntegrationFrameworkConnector @Inject() (
     extends Retries
     with BaseConnector {
 
-  private def integrationFrameworkHeaders(correlationId: String): Seq[(String, String)] = Seq(
-    (HeaderNames.AUTHORIZATION, s"Bearer ${appConfig.integrationFrameworkBearerToken}"),
-    (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
-    (CustomHeaderNames.CorrelationId, correlationId)
-  )
-
-  def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit
-    hc: HeaderCarrier
-  ): Future[SubmitEclReturnResponse] = {
+  private def integrationFrameworkHeaders(bearerToken: String)(implicit hc: HeaderCarrier): Seq[(String, String)] = {
     val correlationId = hc.headers(scala.Seq(HEADER_X_CORRELATION_ID)) match {
       case Nil          =>
         UUID.randomUUID().toString
@@ -57,12 +49,31 @@ class IntegrationFrameworkConnector @Inject() (
         id
     }
 
-    retryFor[SubmitEclReturnResponse]("Integration framework - ECL return")(retryCondition) {
+    Seq(
+      (HeaderNames.AUTHORIZATION, s"Bearer $bearerToken"),
+      (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
+      (CustomHeaderNames.CorrelationId, correlationId)
+    )
+  }
+
+  def getEclReturn(eclRegistrationReference: String, periodKey: String)(implicit
+    hc: HeaderCarrier
+  ): Future[GetEclReturnResponse] =
+    retryFor[GetEclReturnResponse]("Integration framework - Get ECL return")(retryCondition) {
+      httpClient
+        .get(url"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$periodKey/$eclRegistrationReference")
+        .setHeader(integrationFrameworkHeaders(appConfig.integrationFrameworkGetReturnSubmissisonBearerToken): _*)
+        .executeAndDeserialise[GetEclReturnResponse]
+    }
+
+  def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit
+    hc: HeaderCarrier
+  ): Future[SubmitEclReturnResponse] =
+    retryFor[SubmitEclReturnResponse]("Integration framework - Submit ECL return")(retryCondition) {
       httpClient
         .post(url"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference")
-        .setHeader(integrationFrameworkHeaders(correlationId): _*)
+        .setHeader(integrationFrameworkHeaders(appConfig.integrationFrameworkBearerToken): _*)
         .withBody(Json.toJson(eclReturnSubmission))
         .executeAndDeserialise[SubmitEclReturnResponse]
     }
-  }
 }
