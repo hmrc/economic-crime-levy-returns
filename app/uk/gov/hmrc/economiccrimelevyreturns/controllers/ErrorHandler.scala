@@ -18,7 +18,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
 import cats.data.EitherT
 import play.api.Logging
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{BadGateway, DataRetrievalError, DataValidationError, DataValidationErrorList, DmsSubmissionError, InternalServiceError, NrsSubmissionError, ResponseError, ReturnsSubmissionError}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{BadGateway, DataRetrievalError, DataValidationError, DmsSubmissionError, InternalServiceError, NrsSubmissionError, ResponseError, ReturnsSubmissionError}
 
 import scala.concurrent.{ExecutionContext, Future}
 

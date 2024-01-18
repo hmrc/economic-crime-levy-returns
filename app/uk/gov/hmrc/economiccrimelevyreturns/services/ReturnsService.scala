@@ -34,8 +34,10 @@ class ReturnsService @Inject() (
       returnsRepository
         .get(id)
         .map {
-          case Some(value) => Right(value)
-          case None        => Left(DataRetrievalError.NotFound(id))
+          case Some(value) =>
+            Right(value)
+          case None        =>
+            Left(DataRetrievalError.NotFound(id))
         }
         .recover { case e =>
           Left(DataRetrievalError.InternalUnexpectedError(Some(e)))

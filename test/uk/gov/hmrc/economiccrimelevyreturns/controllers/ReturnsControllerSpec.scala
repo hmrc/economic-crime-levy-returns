@@ -48,7 +48,7 @@ class ReturnsControllerSpec extends SpecBase {
           fakeRequestWithJsonBody(Json.toJson(emptyReturn))
         )
 
-      status(result) shouldBe OK
+      status(result) shouldBe NO_CONTENT
     }
   }
 

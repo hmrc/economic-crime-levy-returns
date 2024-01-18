@@ -79,9 +79,9 @@ trait SpecBase
   val emptyReturn: EclReturn                           = EclReturn.empty(internalId)
   val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
   val appConfig: AppConfig                             = app.injector.instanceOf[AppConfig]
-  val config: Config                                   = app.injector.instanceOf[Config]
   val bodyParsers: PlayBodyParsers                     = app.injector.instanceOf[PlayBodyParsers]
   val fakeAuthorisedAction                             = new FakeAuthorisedAction(bodyParsers)
+  val config: Config                                   = app.injector.instanceOf[Config]
   val actorSystem: ActorSystem                         = ActorSystem("actor")
   val periodKey: String                                = "22XY"
 

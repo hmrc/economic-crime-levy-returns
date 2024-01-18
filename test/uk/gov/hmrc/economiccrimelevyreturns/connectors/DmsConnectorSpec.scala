@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
-import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
-import com.typesafe.config.Config
 import org.mockito.ArgumentMatchers.any
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
