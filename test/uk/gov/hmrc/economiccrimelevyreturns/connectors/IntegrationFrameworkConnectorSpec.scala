@@ -19,9 +19,10 @@ package uk.gov.hmrc.economiccrimelevyreturns.connectors
 import org.mockito.ArgumentMatchers.any
 import play.api.libs.json.Json
 import play.api.test.Helpers.await
+import uk.gov.hmrc.economiccrimelevyreturns.ValidGetEclReturnSubmissionResponse
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, GetEclReturnSubmissionResponse, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
 import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
 
@@ -30,7 +31,7 @@ import scala.util.{Failure, Try}
 
 class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
 
-  val retryAmount = 4
+  val retryAmount                        = 4
   val mockHttpClient: HttpClientV2       = mock[HttpClientV2]
   val mockRequestBuilder: RequestBuilder = mock[RequestBuilder]
 
@@ -44,7 +45,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
   "getEclReturnSubmission" should {
     "return submit return response when call to integration framework succeeds" in forAll {
       (
-        getEclReturnSubmissionResponse: GetEclReturnSubmissionResponse
+        validResponse: ValidGetEclReturnSubmissionResponse
       ) =>
         beforeEach()
 
@@ -53,12 +54,14 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
         when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(
-            Future.successful(HttpResponse.apply(OK, Json.stringify(Json.toJson(getEclReturnSubmissionResponse))))
+            Future.successful(
+              HttpResponse.apply(OK, Json.stringify(Json.toJson(validResponse.response)))
+            )
           )
 
         val result = await(connector.getEclReturnSubmission(periodKey, eclRegistrationReference))
 
-        result shouldBe getEclReturnSubmissionResponse
+        result shouldBe validResponse.response
     }
 
     "return 4xx UpstreamErrorResponse when call to integration framework returns an error" in forAll {
@@ -82,7 +85,8 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
         }
     }
 
-    "return 5xx UpstreamErrorResponse when call to integration framework returns an error and executes retry" in forAll {
+    "return 5xx UpstreamErrorResponse when call to integration framework returns an error and executes retry" in forAll(
+    ) {
       (
         _: String
       ) =>

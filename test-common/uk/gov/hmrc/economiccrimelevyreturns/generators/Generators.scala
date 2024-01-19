@@ -23,6 +23,7 @@ import play.api.http.Status._
 import wolfendale.scalacheck.regexp.RegexpGen
 
 import java.time.{Instant, LocalDate, ZoneOffset}
+import scala.math.BigDecimal.RoundingMode
 
 trait Generators {
 
@@ -140,4 +141,6 @@ trait Generators {
     c <- Gen.oneOf(a, b)
   } yield c
 
+  def bigDecimalInRange(min: Double, max: Double): Gen[BigDecimal] =
+    Gen.chooseNum[Double](min, max).map(BigDecimal.apply(_).setScale(2, RoundingMode.DOWN))
 }
