@@ -17,7 +17,8 @@ import java.time.{Instant, LocalDate}
 
 class ReturnSubmissionISpec extends ISpecBase {
 
-  private val returnDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+  private val expectedCallsOnRetry = 4
+  private val returnDate           = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
 
   s"GET ${routes.ReturnSubmissionController.getSubmission(":periodKey", ":id").url}" should {
     "return 200 OK with an ECL return submission in the JSON response body when the ECL return data is valid" in {
@@ -38,6 +39,48 @@ class ReturnSubmissionISpec extends ISpecBase {
 
       eventually {
         verify(1, getRequestedFor(urlEqualTo(s"/economic-crime-levy/return/$periodKey/$eclRegistrationReference")))
+      }
+    }
+
+    "retry the get submission call 3 times after the initial attempt if it fails with a 500 INTERNAL_SERVER_ERROR response" in {
+      stubAuthorised()
+
+      stubGetSubmissionError(periodKey, eclRegistrationReference, INTERNAL_SERVER_ERROR, "Internal server error")
+
+      val result = callRoute(
+        FakeRequest(
+          routes.ReturnSubmissionController.getSubmission(periodKey, eclRegistrationReference)
+        )
+      )
+
+      status(result) shouldBe BAD_GATEWAY
+
+      eventually {
+        verify(
+          expectedCallsOnRetry,
+          getRequestedFor(urlEqualTo(s"/economic-crime-levy/return/$periodKey/$eclRegistrationReference"))
+        )
+      }
+    }
+
+    "retry the get submission call 3 times after the initial attempt if it fails with a 502 BAD_GATEWAY response" in {
+      stubAuthorised()
+
+      stubGetSubmissionError(periodKey, eclRegistrationReference, BAD_GATEWAY, "Bad Gateway")
+
+      val result = callRoute(
+        FakeRequest(
+          routes.ReturnSubmissionController.getSubmission(periodKey, eclRegistrationReference)
+        )
+      )
+
+      status(result) shouldBe BAD_GATEWAY
+
+      eventually {
+        verify(
+          expectedCallsOnRetry,
+          getRequestedFor(urlEqualTo(s"/economic-crime-levy/return/$periodKey/$eclRegistrationReference"))
+        )
       }
     }
   }
@@ -126,7 +169,7 @@ class ReturnSubmissionISpec extends ISpecBase {
       status(result) shouldBe BAD_GATEWAY
 
       eventually {
-        verify(4, postRequestedFor(urlEqualTo("/submission")))
+        verify(expectedCallsOnRetry, postRequestedFor(urlEqualTo("/submission")))
       }
     }
   }

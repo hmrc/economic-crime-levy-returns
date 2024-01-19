@@ -20,7 +20,6 @@ import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitr
 import org.scalacheck.Arbitrary
 import org.scalacheck.derive.MkArbitrary
 import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
-import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, SessionData}
 import uk.gov.hmrc.economiccrimelevyreturns.models.CalculatedLiability
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationStatus
 import uk.gov.hmrc.economiccrimelevyreturns.models.dms.DmsNotification
