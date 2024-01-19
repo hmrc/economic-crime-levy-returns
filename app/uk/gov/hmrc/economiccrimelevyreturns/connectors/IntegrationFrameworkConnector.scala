@@ -56,7 +56,7 @@ class IntegrationFrameworkConnector @Inject() (
     )
   }
 
-  def getEclReturnSubmission(eclRegistrationReference: String, periodKey: String)(implicit
+  def getEclReturnSubmission(periodKey: String, eclRegistrationReference: String)(implicit
     hc: HeaderCarrier
   ): Future[GetEclReturnSubmissionResponse] =
     retryFor[GetEclReturnSubmissionResponse]("Integration framework - Get ECL return")(retryCondition) {

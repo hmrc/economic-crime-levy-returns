@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
-import akka.actor.ActorSystem
-import com.typesafe.config.Config
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import play.api.libs.json.Json
@@ -25,8 +23,8 @@ import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.{NrsSubmission, NrsSubmissionResponse}
-import uk.gov.hmrc.http.{HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
+import uk.gov.hmrc.http.{HttpResponse, StringContextOps, UpstreamErrorResponse}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Try}

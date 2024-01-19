@@ -22,7 +22,6 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.economiccrimelevyreturns.base.ISpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.routes
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ResponseError
 
 class ReturnValidationISpec extends ISpecBase {
 

@@ -1,7 +1,7 @@
 package uk.gov.hmrc.economiccrimelevyreturns
 
 import com.danielasfregola.randomdatagenerator.RandomDataGenerator.random
-import com.github.tomakehurst.wiremock.client.WireMock.{postRequestedFor, urlEqualTo, verify}
+import com.github.tomakehurst.wiremock.client.WireMock.{getRequestedFor, postRequestedFor, urlEqualTo, verify}
 import org.scalatest.concurrent.Eventually.eventually
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
@@ -19,7 +19,30 @@ class ReturnSubmissionISpec extends ISpecBase {
 
   private val returnDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
 
-  s"POST ${routes.ReturnSubmissionController.submitReturn(":id").url}" should {
+  s"GET ${routes.ReturnSubmissionController.getSubmission(":periodKey", ":id").url}" should {
+    "return 200 OK with an ECL return submission in the JSON response body when the ECL return data is valid" in {
+      stubAuthorised()
+
+      val validResponse = random[ValidGetEclReturnSubmissionResponse]
+
+      stubGetSubmission(periodKey, eclRegistrationReference, validResponse.response)
+
+      val result = callRoute(
+        FakeRequest(
+          routes.ReturnSubmissionController.getSubmission(periodKey, eclRegistrationReference)
+        )
+      )
+
+      status(result)        shouldBe OK
+      contentAsJson(result) shouldBe Json.toJson(validResponse.response)
+
+      eventually {
+        verify(1, getRequestedFor(urlEqualTo(s"/economic-crime-levy/return/$periodKey/$eclRegistrationReference")))
+      }
+    }
+  }
+
+  s"POST ${routes.ReturnSubmissionController.submitReturn(":id").url}"               should {
     "return 200 OK with an ECL return reference number in the JSON response body when the ECL return data is valid" in {
       stubAuthorised()
 
