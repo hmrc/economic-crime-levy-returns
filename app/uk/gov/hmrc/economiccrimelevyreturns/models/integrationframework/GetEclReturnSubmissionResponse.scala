@@ -19,6 +19,8 @@ package uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band
 
+import java.time.LocalDate
+
 final case class GetEclReturnSubmissionResponse(
   chargeDetails: GetEclReturnChargeDetails,
   declarationDetails: GetEclReturnDeclarationDetails,
@@ -35,7 +37,7 @@ object GetEclReturnSubmissionResponse {
 final case class GetEclReturnChargeDetails(
   chargeReference: Option[String],
   periodKey: String,
-  receiptDate: String,
+  receiptDate: LocalDate,
   returnType: String
 )
 

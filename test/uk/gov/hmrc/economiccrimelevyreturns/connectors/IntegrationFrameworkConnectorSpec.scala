@@ -64,19 +64,19 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
         result shouldBe validResponse.response
     }
 
-    "return 4xx UpstreamErrorResponse when call to integration framework returns an error" in forAll {
+    "return 400 UpstreamErrorResponse when call to integration framework returns an error" in forAll {
       (
         _: String
       ) =>
         beforeEach()
 
-        val errorCode = UNAUTHORIZED
+        val errorCode = BAD_REQUEST
 
         when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.execute[HttpResponse](any(), any()))
-          .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Failed authorization")))
+          .thenReturn(Future.successful(HttpResponse.apply(errorCode, "BAD_REQUEST")))
 
         Try(await(connector.getEclReturnSubmission(periodKey, eclRegistrationReference))) match {
           case Failure(UpstreamErrorResponse(_, code, _, _)) =>
@@ -85,7 +85,28 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
         }
     }
 
-    "return 5xx UpstreamErrorResponse when call to integration framework returns an error and executes retry" in forAll(
+    "return 422 UpstreamErrorResponse when call to integration framework returns an error" in forAll {
+      (
+        _: String
+      ) =>
+        beforeEach()
+
+        val errorCode = UNPROCESSABLE_ENTITY
+
+        when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+          .thenReturn(Future.successful(HttpResponse.apply(errorCode, "UNPROCESSABLE_ENTITY")))
+
+        Try(await(connector.getEclReturnSubmission(periodKey, eclRegistrationReference))) match {
+          case Failure(UpstreamErrorResponse(_, code, _, _)) =>
+            code shouldEqual errorCode
+          case _                                             => fail("expected UpstreamErrorResponse when error is received")
+        }
+    }
+
+    "return 500 UpstreamErrorResponse when call to integration framework returns an error and executes retry" in forAll(
     ) {
       (
         _: String
@@ -99,6 +120,31 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
         when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Internal server error")))
+
+        Try(await(connector.getEclReturnSubmission(periodKey, eclRegistrationReference))) match {
+          case Failure(UpstreamErrorResponse(_, code, _, _)) =>
+            code shouldEqual errorCode
+          case _                                             => fail("expected UpstreamErrorResponse when an error is received")
+        }
+
+        verify(mockRequestBuilder, times(retryAmount))
+          .execute(any(), any())
+    }
+
+    "return 503 UpstreamErrorResponse when call to integration framework returns an error and executes retry" in forAll(
+    ) {
+      (
+        _: String
+      ) =>
+        beforeEach()
+
+        val errorCode = SERVICE_UNAVAILABLE
+
+        when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+          .thenReturn(Future.successful(HttpResponse.apply(errorCode, "SERVICE_UNAVAILABLE")))
 
         Try(await(connector.getEclReturnSubmission(periodKey, eclRegistrationReference))) match {
           case Failure(UpstreamErrorResponse(_, code, _, _)) =>
