@@ -64,10 +64,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
         result shouldBe validResponse.response
     }
 
-    "return 400 UpstreamErrorResponse when call to integration framework returns an error" in forAll {
-      (
-        _: String
-      ) =>
+    "return 400 UpstreamErrorResponse when call to integration framework returns an error" in {
         beforeEach()
 
         val errorCode = BAD_REQUEST
@@ -85,10 +82,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
         }
     }
 
-    "return 422 UpstreamErrorResponse when call to integration framework returns an error" in forAll {
-      (
-        _: String
-      ) =>
+    "return 422 UpstreamErrorResponse when call to integration framework returns an error" in {
         beforeEach()
 
         val errorCode = UNPROCESSABLE_ENTITY
@@ -106,11 +100,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
         }
     }
 
-    "return 500 UpstreamErrorResponse when call to integration framework returns an error and executes retry" in forAll(
-    ) {
-      (
-        _: String
-      ) =>
+    "return 500 UpstreamErrorResponse when call to integration framework returns an error and executes retry" in {
         beforeEach()
 
         val errorCode = INTERNAL_SERVER_ERROR
@@ -131,11 +121,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
           .execute(any(), any())
     }
 
-    "return 503 UpstreamErrorResponse when call to integration framework returns an error and executes retry" in forAll(
-    ) {
-      (
-        _: String
-      ) =>
+    "return 503 UpstreamErrorResponse when call to integration framework returns an error and executes retry" in {
         beforeEach()
 
         val errorCode = SERVICE_UNAVAILABLE
