@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
-import akka.actor.ActorSystem
-import com.typesafe.config.Config
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import play.api.libs.json.Json
