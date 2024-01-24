@@ -16,16 +16,26 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
+import akka.actor.ActorSystem
+import com.typesafe.config.Config
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import play.api.http.Status._
 import play.api.libs.json.JsResult
 import play.api.libs.json.Reads
 import uk.gov.hmrc.http.client.RequestBuilder
-import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HttpResponse, Retries, UpstreamErrorResponse}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
-trait BaseConnector {
+trait BaseConnector extends Retries {
+
+  override def actorSystem: ActorSystem
+  override def configuration: Config
+
+  def retryCondition: PartialFunction[Exception, Boolean] = {
+    case e: UpstreamErrorResponse if UpstreamErrorResponse.Upstream5xxResponse.unapply(e).isDefined => true
+  }
 
   def retryCondition: PartialFunction[Exception, Boolean] = {
     case e: UpstreamErrorResponse if UpstreamErrorResponse.Upstream5xxResponse.unapply(e).isDefined => true

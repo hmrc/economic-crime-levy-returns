@@ -23,7 +23,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.{NrsSubmission, NrsSubmissionResponse}
-import uk.gov.hmrc.http.{HeaderCarrier, Retries, StringContextOps}
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import uk.gov.hmrc.http.client.HttpClientV2
 
 import javax.inject.{Inject, Singleton}
@@ -37,8 +37,7 @@ class NrsConnector @Inject() (
   override val actorSystem: ActorSystem
 )(implicit
   ec: ExecutionContext
-) extends Retries
-    with BaseConnector {
+) extends BaseConnector {
 
   private val nrsSubmissionUrl: String = s"${appConfig.nrsBaseUrl}/submission"
 
