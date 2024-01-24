@@ -25,22 +25,22 @@ import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn, FirstTimeReturn}
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataRetrievalError, DataValidationError, DataValidationErrorList, DmsSubmissionError, NrsSubmissionError, ResponseError, ReturnsSubmissionError}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataRetrievalError, DataValidationError, DmsSubmissionError, NrsSubmissionError, ResponseError, ReturnsSubmissionError}
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsSubmissionResponse
-import uk.gov.hmrc.economiccrimelevyreturns.services.{AuditService, DataRetrievalService, DmsService, NrsService, ReturnService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.services.{AuditService, DmsService, IntegrationFrameworkService, NrsService, ReturnValidationService, ReturnsService}
 
 import scala.concurrent.Future
 
 class ReturnSubmissionControllerSpec extends SpecBase {
 
   val mockReturnValidationService: ReturnValidationService = mock[ReturnValidationService]
-  val mockReturnService: ReturnService                     = mock[ReturnService]
+  val mockReturnService: IntegrationFrameworkService       = mock[IntegrationFrameworkService]
   val mockNrsService: NrsService                           = mock[NrsService]
   val mockDmsService: DmsService                           = mock[DmsService]
   val mockAuditService: AuditService                       = mock[AuditService]
   val mockAppConfig: AppConfig                             = mock[AppConfig]
-  val mockDataRetrievalService: DataRetrievalService       = mock[DataRetrievalService]
+  val mockDataRetrievalService: ReturnsService             = mock[ReturnsService]
 
   val controller = new ReturnSubmissionController(
     cc,
@@ -76,7 +76,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         val validEclReturn =
           eclReturn.copy(returnType = Some(FirstTimeReturn), base64EncodedNrsSubmissionHtml = Some("aHRtbE5ycw=="))
 
-        when(mockDataRetrievalService.get(anyString())(any()))
+        when(mockDataRetrievalService.get(anyString()))
           .thenReturn(EitherT.rightT[Future, DataRetrievalError](validEclReturn))
 
         when(
@@ -87,7 +87,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](returnResponse))
 
         when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(validEclReturn)))
-          .thenReturn(EitherT.rightT[Future, DataValidationErrorList](eclReturnSubmission))
+          .thenReturn(EitherT.rightT[Future, DataValidationError](eclReturnSubmission))
 
         when(mockDmsService.submitToDms(anyString(), any())(any()))
           .thenReturn(EitherT.rightT[Future, DmsSubmissionError](returnResponse))
@@ -120,11 +120,11 @@ class ReturnSubmissionControllerSpec extends SpecBase {
           base64EncodedNrsSubmissionHtml = Some("aHRtbE5ycw==")
         )
 
-        when(mockDataRetrievalService.get(anyString())(any()))
+        when(mockDataRetrievalService.get(anyString()))
           .thenReturn(EitherT.rightT[Future, DataRetrievalError](validEclReturn))
 
         when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(validEclReturn)))
-          .thenReturn(EitherT.rightT[Future, DataValidationErrorList](eclReturnSubmission))
+          .thenReturn(EitherT.rightT[Future, DataValidationError](eclReturnSubmission))
 
         when(
           mockReturnService.submitEclReturn(
@@ -151,7 +151,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
 
     "return 500 BAD_REQUEST with validation errors in the JSON response body when the ECL return data is invalid" in forAll {
       (eclReturn: EclReturn, eclReturnSubmission: EclReturnSubmission, returnResponse: SubmitEclReturnResponse) =>
-        when(mockDataRetrievalService.get(anyString())(any()))
+        when(mockDataRetrievalService.get(anyString()))
           .thenReturn(EitherT.rightT[Future, DataRetrievalError](eclReturn))
 
         when(
@@ -165,7 +165,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(eclReturn)))
           .thenReturn(
             EitherT.leftT[Future, EclReturnSubmission](
-              DataValidationErrorList(List(DataValidationError.DataMissing(validationErrorCause)))
+              DataValidationError.DataMissing(validationErrorCause)
             )
           )
 
@@ -196,11 +196,11 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         when(mockAppConfig.amendReturnsNrsEnabled)
           .thenReturn(true)
 
-        when(mockDataRetrievalService.get(anyString())(any()))
+        when(mockDataRetrievalService.get(anyString()))
           .thenReturn(EitherT.rightT[Future, DataRetrievalError](validEclReturn))
 
         when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(validEclReturn)))
-          .thenReturn(EitherT.rightT[Future, DataValidationErrorList](eclReturnSubmission))
+          .thenReturn(EitherT.rightT[Future, DataValidationError](eclReturnSubmission))
 
         when(
           mockReturnService.submitEclReturn(
@@ -246,11 +246,11 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         when(mockAppConfig.amendReturnsNrsEnabled)
           .thenReturn(false)
 
-        when(mockDataRetrievalService.get(anyString())(any()))
+        when(mockDataRetrievalService.get(anyString()))
           .thenReturn(EitherT.rightT[Future, DataRetrievalError](validEclReturn))
 
         when(mockReturnValidationService.validateReturn(ArgumentMatchers.eq(validEclReturn)))
-          .thenReturn(EitherT.rightT[Future, DataValidationErrorList](eclReturnSubmission))
+          .thenReturn(EitherT.rightT[Future, DataValidationError](eclReturnSubmission))
 
         when(
           mockReturnService.submitEclReturn(

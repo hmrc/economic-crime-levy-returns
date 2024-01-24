@@ -16,18 +16,19 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
-import uk.gov.hmrc.economiccrimelevyreturns.services.{DataRetrievalService, ReturnValidationService}
+import uk.gov.hmrc.economiccrimelevyreturns.services.{ReturnValidationService, ReturnsService}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
 class ReturnValidationController @Inject() (
   cc: ControllerComponents,
-  dataRetrievalService: DataRetrievalService,
+  returnsService: ReturnsService,
   authorise: AuthorisedAction,
   returnValidationService: ReturnValidationService
 )(implicit ec: ExecutionContext)
@@ -37,9 +38,17 @@ class ReturnValidationController @Inject() (
 
   def getValidationErrors(id: String): Action[AnyContent] = authorise.async { _ =>
     (for {
-      eclReturn <- dataRetrievalService.get(id).asResponseError
-      _         <- returnValidationService.validateReturn(eclReturn).asResponseError
-    } yield ()).convertToResult
+      eclReturn <- returnsService.get(id).asResponseError
+    } yield eclReturn).foldF(
+      err => Future.successful(Status(err.code.statusCode)(Json.toJson(err))),
+      eclReturn =>
+        returnValidationService
+          .validateReturn(eclReturn)
+          .fold(
+            validationError => Ok(Json.toJson(validationError.errorMessage)),
+            _ => Ok(Json.toJson(None))
+          )
+    )
   }
 
 }

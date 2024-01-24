@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.base
 
+import akka.actor.ActorSystem
+import com.typesafe.config.Config
 import org.mockito.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
@@ -62,7 +64,8 @@ trait SpecBase
   val additionalAppConfig: Map[String, Any] = Map(
     "create-internal-auth-token-on-start" -> false,
     "metrics.enabled"                     -> false,
-    "auditing.enabled"                    -> false
+    "auditing.enabled"                    -> false,
+    "http-verbs.retries.intervals"        -> List("1ms", "1ms", "1ms")
   ) ++ configOverrides
 
   override def fakeApplication(): Application =
@@ -78,6 +81,8 @@ trait SpecBase
   val appConfig: AppConfig                             = app.injector.instanceOf[AppConfig]
   val bodyParsers: PlayBodyParsers                     = app.injector.instanceOf[PlayBodyParsers]
   val fakeAuthorisedAction                             = new FakeAuthorisedAction(bodyParsers)
+  val config: Config                                   = app.injector.instanceOf[Config]
+  val actorSystem: ActorSystem                         = ActorSystem("actor")
 
   def fakeRequestWithJsonBody(json: JsValue): FakeRequest[JsValue] = FakeRequest("", "/", FakeHeaders(), json)
 

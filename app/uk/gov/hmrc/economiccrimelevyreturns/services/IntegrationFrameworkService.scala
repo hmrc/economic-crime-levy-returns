@@ -26,7 +26,7 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
-class ReturnService @Inject() (
+class IntegrationFrameworkService @Inject() (
   integrationFrameworkConnector: IntegrationFrameworkConnector
 )(implicit ec: ExecutionContext) {
 
@@ -46,7 +46,7 @@ class ReturnService @Inject() (
                 .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
             Left(ReturnsSubmissionError.BadGateway(reason = message, code = code))
 
-          case NonFatal(thr) => Left(ReturnsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr)))
+          case NonFatal(thr) => Left(ReturnsSubmissionError.InternalUnexpectedError(Some(thr)))
         }
     }
 

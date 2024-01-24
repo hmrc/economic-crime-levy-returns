@@ -17,7 +17,6 @@
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import cats.data.EitherT
-import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.libs.json.{JsObject, JsString}
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.NrsConnector
@@ -38,7 +37,7 @@ import scala.util.control.NonFatal
 @Singleton
 class NrsService @Inject() (nrsConnector: NrsConnector, clock: Clock)(implicit
   ec: ExecutionContext
-) extends Logging {
+) {
 
   def submitToNrs(
     base64EncodedNrsSubmissionHtml: String,
@@ -82,7 +81,7 @@ class NrsService @Inject() (nrsConnector: NrsConnector, clock: Clock)(implicit
                 .unapply(error)
                 .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
             Left(NrsSubmissionError.BadGateway(reason = message, code = code))
-          case NonFatal(thr) => Left(NrsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr)))
+          case NonFatal(thr) => Left(NrsSubmissionError.InternalUnexpectedError(Some(thr)))
         }
     }
 
@@ -94,7 +93,7 @@ class NrsService @Inject() (nrsConnector: NrsConnector, clock: Clock)(implicit
         case Some(value) => Future.successful(Right(value))
         case None        =>
           Future.successful(
-            Left(NrsSubmissionError.InternalUnexpectedError("User auth token missing from header", None))
+            Left(NrsSubmissionError.InternalUnexpectedError(None))
           )
       }
     }
@@ -114,7 +113,7 @@ class NrsService @Inject() (nrsConnector: NrsConnector, clock: Clock)(implicit
       } match {
         case Success(html) => Future.successful(Right(html))
         case Failure(thr)  =>
-          Future.successful(Left(NrsSubmissionError.InternalUnexpectedError(thr.getMessage, Some(thr))))
+          Future.successful(Left(NrsSubmissionError.InternalUnexpectedError(Some(thr))))
       }
     }
 

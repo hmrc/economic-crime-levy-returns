@@ -17,38 +17,47 @@
 package uk.gov.hmrc.economiccrimelevyreturns.utils
 
 import cats.data.Validated.{Invalid, Valid}
-import cats.data.ValidatedNel
 import io.circe.parser.{parse => circeParse}
 import io.circe.schema.Schema
 import play.api.libs.json.{Json, OFormat}
+import io.circe.{Json => circeJson}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 
 import javax.inject.Inject
 
 class SchemaValidator @Inject() () {
 
-  type ValidationResult[A] = ValidatedNel[DataValidationError, A]
-
-  def validateAgainstJsonSchema[T](o: T, schema: Schema)(implicit
+  def validateAgainstJsonSchema[T](validationObject: T, schema: Schema)(implicit
     format: OFormat[T]
-  ): ValidationResult[T] = {
-    val jsonString = Json.toJson(o).toString()
-    val json       = circeParse(jsonString).getOrElse(
-      throw new Exception("Could not transform play JSON into circe JSON for schema validation")
-    )
+  ): Either[DataValidationError, Unit] = {
+    val jsonString = Json.stringify(Json.toJson(validationObject))
+    for {
+      parsedValue   <- parseJson(jsonString)
+      validatedJson <- validateJson(parsedValue, schema)
+    } yield validatedJson
+  }
 
-    schema
-      .validate(json) match {
-      case Valid(_)   => Valid(o)
+  private def parseJson(jsonString: String): Either[DataValidationError, circeJson] =
+    circeParse(jsonString) match {
+      case Left(error)  =>
+        Left(
+          DataValidationError.DataInvalid(errorMessage =
+            "Could not transform play JSON into circe JSON for schema validation." +
+              s" Error returned: ${error.getMessage()}"
+          )
+        )
+      case Right(value) => Right(value)
+    }
+
+  private def validateJson(json: circeJson, schema: Schema): Either[DataValidationError, Unit] =
+    schema.validate(json) match {
+      case Valid(_)   => Right(())
       case Invalid(e) =>
-        Invalid(
-          e.map(e =>
-            DataValidationError.SchemaValidationError(
-              s"Schema validation error for field: ${e.location} (${Option(e.keyword).getOrElse("unknown")})"
-            )
+        Left(
+          DataValidationError.SchemaValidationError(errorMessage =
+            s"Schema validation error: ${e.toList.mkString(", ")}"
           )
         )
     }
-  }
 
 }

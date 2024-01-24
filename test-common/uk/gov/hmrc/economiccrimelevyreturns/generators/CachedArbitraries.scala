@@ -16,15 +16,15 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.generators
 
-import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.derive.MkArbitrary
 import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
-import uk.gov.hmrc.economiccrimelevyreturns.models.{CalculatedLiability, SessionData}
+import uk.gov.hmrc.economiccrimelevyreturns.models.CalculatedLiability
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationStatus
 import uk.gov.hmrc.economiccrimelevyreturns.models.dms.DmsNotification
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
+import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitrary
 
 object CachedArbitraries extends EclTestData with Generators {
 

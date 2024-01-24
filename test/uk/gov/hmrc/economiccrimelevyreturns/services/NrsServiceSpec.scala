@@ -98,7 +98,7 @@ class NrsServiceSpec extends SpecBase {
             .value
         )
 
-      result shouldBe Left(NrsSubmissionError.InternalUnexpectedError("User auth token missing from header", None))
+      result shouldBe Left(NrsSubmissionError.InternalUnexpectedError(None))
     }
 
     "return NrsSubmissionError.InternalUnexpectedError when an exception is thrown while decoding due to invalid base 64 string" in forAll(

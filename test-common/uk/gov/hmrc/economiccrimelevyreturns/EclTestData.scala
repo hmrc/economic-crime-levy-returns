@@ -207,39 +207,38 @@ trait EclTestData { self: Generators =>
   }
 
   type AuthRetrievals =
-    Option[String] ~ Enrolments ~ Option[String] ~ ConfidenceLevel ~ Option[String] ~ Option[String] ~
+    Option[String] ~ ConfidenceLevel ~ Option[String] ~ Option[String] ~
       Option[MdtpInformation] ~ Option[String] ~ LoginTimes ~
       Option[Credentials] ~ Option[Name] ~ Option[LocalDate] ~ Option[String] ~
       Option[AffinityGroup] ~ Option[String] ~ AgentInformation ~ Option[CredentialRole] ~ Option[String] ~
       Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress]
 
-  def arbAuthRetrievals(internalId: Option[String], enrolmentsWithEcl: Boolean): Arbitrary[AuthRetrievals] = Arbitrary {
-    for {
-      enrolments         <-
-        Arbitrary.arbitrary[EnrolmentsWithEcl].map(e => if (enrolmentsWithEcl) e.enrolments else Enrolments(Set.empty))
-      confidenceLevel    <- Arbitrary.arbitrary[ConfidenceLevel]
-      externalId         <- Arbitrary.arbitrary[Option[String]]
-      nino               <- Arbitrary.arbitrary[Option[String]]
-      saUtr              <- Arbitrary.arbitrary[Option[String]]
-      mdtpInformation    <- Arbitrary.arbitrary[Option[MdtpInformation]]
-      credentialStrength <- Arbitrary.arbitrary[Option[String]]
-      loginTimes         <- Arbitrary.arbitrary[LoginTimes]
-      credentials        <- Arbitrary.arbitrary[Option[Credentials]]
-      name               <- Arbitrary.arbitrary[Option[Name]]
-      dateOfBirth        <- Arbitrary.arbitrary[Option[LocalDate]]
-      email              <- Arbitrary.arbitrary[Option[String]]
-      affinityGroup      <- Arbitrary.arbitrary[Option[AffinityGroup]]
-      agentInformation   <- Arbitrary.arbitrary[AgentInformation]
-      credentialRole     <- Arbitrary.arbitrary[Option[CredentialRole]]
-      groupIdentifier    <- Arbitrary.arbitrary[Option[String]]
-      itmpName           <- Arbitrary.arbitrary[Option[ItmpName]]
-      itmpAddress        <- Arbitrary.arbitrary[Option[ItmpAddress]]
-    } yield internalId and enrolments and externalId and confidenceLevel and nino and saUtr and
-      mdtpInformation and credentialStrength and loginTimes and
-      credentials and name and dateOfBirth and email and
-      affinityGroup and agentInformation.agentCode and agentInformation and credentialRole and
-      groupIdentifier and itmpName and dateOfBirth and itmpAddress
-  }
+  def arbAuthNrsDataRetrievals(internalId: Option[String], enrolmentsWithEcl: Boolean): Arbitrary[AuthRetrievals] =
+    Arbitrary {
+      for {
+        confidenceLevel    <- Arbitrary.arbitrary[ConfidenceLevel]
+        externalId         <- Arbitrary.arbitrary[Option[String]]
+        nino               <- Arbitrary.arbitrary[Option[String]]
+        saUtr              <- Arbitrary.arbitrary[Option[String]]
+        mdtpInformation    <- Arbitrary.arbitrary[Option[MdtpInformation]]
+        credentialStrength <- Arbitrary.arbitrary[Option[String]]
+        loginTimes         <- Arbitrary.arbitrary[LoginTimes]
+        credentials        <- Arbitrary.arbitrary[Option[Credentials]]
+        name               <- Arbitrary.arbitrary[Option[Name]]
+        dateOfBirth        <- Arbitrary.arbitrary[Option[LocalDate]]
+        email              <- Arbitrary.arbitrary[Option[String]]
+        affinityGroup      <- Arbitrary.arbitrary[Option[AffinityGroup]]
+        agentInformation   <- Arbitrary.arbitrary[AgentInformation]
+        credentialRole     <- Arbitrary.arbitrary[Option[CredentialRole]]
+        groupIdentifier    <- Arbitrary.arbitrary[Option[String]]
+        itmpName           <- Arbitrary.arbitrary[Option[ItmpName]]
+        itmpAddress        <- Arbitrary.arbitrary[Option[ItmpAddress]]
+      } yield externalId and confidenceLevel and nino and saUtr and
+        mdtpInformation and credentialStrength and loginTimes and
+        credentials and name and dateOfBirth and email and
+        affinityGroup and agentInformation.agentCode and agentInformation and credentialRole and
+        groupIdentifier and itmpName and dateOfBirth and itmpAddress
+    }
 
   def arbValidNrsSubmission(request: FakeRequest[AnyContentAsEmpty.type], clock: Clock): Arbitrary[ValidNrsSubmission] =
     Arbitrary {

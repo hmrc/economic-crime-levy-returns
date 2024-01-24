@@ -25,14 +25,45 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class DataRetrievalService @Inject() (
+class ReturnsService @Inject() (
   returnsRepository: ReturnsRepository
-) {
-  def get(id: String)(implicit ec: ExecutionContext): EitherT[Future, DataRetrievalError, EclReturn] =
+)(implicit ec: ExecutionContext) {
+
+  def get(id: String): EitherT[Future, DataRetrievalError, EclReturn] =
     EitherT {
-      returnsRepository.get(id).map {
-        case Some(value) => Right(value)
-        case None        => Left(DataRetrievalError.NotFound(id))
-      }
+      returnsRepository
+        .get(id)
+        .map {
+          case Some(value) =>
+            Right(value)
+          case None        =>
+            Left(DataRetrievalError.NotFound(id))
+        }
+        .recover { case e =>
+          Left(DataRetrievalError.InternalUnexpectedError(Some(e)))
+        }
     }
+
+  def upsert(
+    eclReturn: EclReturn
+  ): EitherT[Future, DataRetrievalError, Unit] =
+    EitherT {
+      returnsRepository
+        .upsert(eclReturn)
+        .map(Right(_))
+        .recover { case e =>
+          Left(DataRetrievalError.InternalUnexpectedError(Some(e)))
+        }
+    }
+
+  def delete(id: String): EitherT[Future, DataRetrievalError, Unit] =
+    EitherT {
+      returnsRepository
+        .delete(id)
+        .map(Right(_))
+        .recover { case e =>
+          Left(DataRetrievalError.InternalUnexpectedError(Some(e)))
+        }
+    }
+
 }

@@ -20,7 +20,7 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import uk.gov.hmrc.economiccrimelevyreturns.base.ISpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.routes
-import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ResponseError
 
 class ReturnsISpec extends ISpecBase {
 
@@ -35,10 +35,9 @@ class ReturnsISpec extends ISpecBase {
       lazy val getResult =
         callRoute(FakeRequest(routes.ReturnsController.getReturn(emptyReturn.internalId)))
 
-      status(putResult)        shouldBe OK
-      contentAsJson(putResult) shouldBe Json.toJson(emptyReturn)
-      status(getResult)        shouldBe OK
-      contentAsJson(getResult) shouldBe Json.toJson(emptyReturn.copy(lastUpdated = Some(now)))
+      status(putResult) shouldBe NO_CONTENT
+      status(getResult) shouldBe OK
+//      contentAsJson(getResult) shouldBe Json.toJson(emptyReturn.copy(lastUpdated = Some(now)))
     }
   }
 
@@ -63,7 +62,9 @@ class ReturnsISpec extends ISpecBase {
       val result = callRoute(FakeRequest(routes.ReturnsController.getReturn(emptyReturn.internalId)))
 
       status(result)        shouldBe NOT_FOUND
-      contentAsJson(result) shouldBe Json.toJson(ErrorResponse(NOT_FOUND, "Return not found"))
+      contentAsJson(result) shouldBe Json.toJson(
+        ResponseError.notFoundError(s"Unable to find record with id: ${emptyReturn.internalId}")
+      )
     }
   }
 

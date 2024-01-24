@@ -16,19 +16,19 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.controllers.actions
 
+import cats.data.EitherT
 import com.google.inject.Inject
-import play.api.http.Status.UNAUTHORIZED
 import play.api.libs.json.Json
-import play.api.mvc.Results.Unauthorized
+import play.api.mvc.Results.Status
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.economiccrimelevyreturns.models.eacd.EclEnrolment
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ResponseError
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsIdentityData
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendHeaderCarrierProvider
-import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -45,66 +45,108 @@ class BaseAuthorisedAction @Inject() (
     with BackendHeaderCarrierProvider
     with AuthorisedFunctions {
 
-  override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] =
-    authorised(Enrolment(EclEnrolment.ServiceName)).retrieve(
-      Retrievals.internalId and Retrievals.authorisedEnrolments and Retrievals.externalId and Retrievals.confidenceLevel and
-        Retrievals.nino and Retrievals.saUtr and Retrievals.mdtpInformation and Retrievals.credentialStrength and
-        Retrievals.loginTimes and Retrievals.credentials and Retrievals.name and Retrievals.dateOfBirth and Retrievals.email and
-        Retrievals.affinityGroup and Retrievals.agentCode and Retrievals.agentInformation and Retrievals.credentialRole and
-        Retrievals.groupIdentifier and Retrievals.itmpName and Retrievals.itmpDateOfBirth and Retrievals.itmpAddress
-    ) {
-      case optInternalId ~ enrolments ~ optExternalId ~ confidenceLevel ~ optNino ~ optSaUtr ~
-          optMdtpInformation ~ optCredentialStrength ~ loginTimes ~ optCredentials ~ optName ~ optDateOfBirth ~
-          optEmail ~ optAffinityGroup ~ optAgentCode ~ agentInformation ~ optCredentialRole ~ optGroupIdentifier ~
-          optItmpName ~ optItmpDateOfBirth ~ optItmpAddress =>
-        val internalId = optInternalId.getOrElseFail("Unable to retrieve internalId")
+  private val nrsIdentityDataRetrievals = Retrievals.externalId and Retrievals.confidenceLevel and
+    Retrievals.nino and Retrievals.saUtr and Retrievals.mdtpInformation and Retrievals.credentialStrength and
+    Retrievals.loginTimes and Retrievals.credentials and Retrievals.name and Retrievals.dateOfBirth and Retrievals.email and
+    Retrievals.affinityGroup and Retrievals.agentCode and Retrievals.agentInformation and Retrievals.credentialRole and
+    Retrievals.groupIdentifier and Retrievals.itmpName and Retrievals.itmpDateOfBirth and Retrievals.itmpAddress
 
-        val eclRegistrationReference =
+  override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
+    val authorisedFunction = authorised(Enrolment(EclEnrolment.ServiceName))
+
+    (for {
+      eclReference     <- getEclRegistrationReference(authorisedFunction, request)
+      internalId       <- getInternalId(authorisedFunction, request)
+      nrsIdentityData  <- generateNrsIdentityData(internalId, authorisedFunction, request)
+      authorisedRequest = AuthorisedRequest(request, internalId, eclReference, nrsIdentityData)
+    } yield authorisedRequest).foldF(
+      err => Future.successful(Status(err.code.statusCode)(Json.toJson(err))),
+      response => block(response)
+    )
+  }
+
+  private def convertToAuthorisationError[T]: PartialFunction[Throwable, Either[ResponseError, T]] = {
+    case e: AuthorisationException =>
+      Left(ResponseError.unauthorisedError(e.reason))
+    case e                         => Left(ResponseError.internalServiceError(cause = Some(e)))
+  }
+
+  private def getEclRegistrationReference(
+    authorisedFunction: AuthorisedFunction,
+    request: Request[_]
+  ): EitherT[Future, ResponseError, String] =
+    EitherT {
+      authorisedFunction
+        .retrieve(Retrievals.authorisedEnrolments) { case enrolments =>
           enrolments
             .getEnrolment(EclEnrolment.ServiceName)
-            .flatMap(_.getIdentifier(EclEnrolment.IdentifierKey))
-            .getOrElseFail(
-              s"Unable to retrieve enrolment with key ${EclEnrolment.ServiceName} and identifier ${EclEnrolment.IdentifierKey}"
-            )
-            .value
-
-        val nrsIdentityData = NrsIdentityData(
-          internalId = internalId,
-          externalId = optExternalId,
-          agentCode = optAgentCode,
-          credentials = optCredentials,
-          confidenceLevel = confidenceLevel.level,
-          nino = optNino,
-          saUtr = optSaUtr,
-          name = optName,
-          dateOfBirth = optDateOfBirth,
-          email = optEmail,
-          agentInformation = agentInformation,
-          groupIdentifier = optGroupIdentifier,
-          credentialRole = optCredentialRole,
-          mdtpInformation = optMdtpInformation,
-          itmpName = optItmpName,
-          itmpDateOfBirth = optItmpDateOfBirth,
-          itmpAddress = optItmpAddress,
-          affinityGroup = optAffinityGroup,
-          credentialStrength = optCredentialStrength,
-          loginTimes = loginTimes
-        )
-
-        block(AuthorisedRequest(request, internalId, eclRegistrationReference, nrsIdentityData))
-    }(hc(request), executionContext) recover { case e: AuthorisationException =>
-      Unauthorized(
-        Json.toJson(
-          ErrorResponse(
-            UNAUTHORIZED,
-            e.reason
-          )
-        )
-      )
+            .flatMap(_.getIdentifier(EclEnrolment.IdentifierKey)) match {
+            case Some(eclReference) => Future.successful(Right(eclReference.value))
+            case None               => Future.successful(Left(ResponseError.internalServiceError(cause = None)))
+          }
+        }(hc(request), executionContext)
+        .recover {
+          convertToAuthorisationError[String]
+        }
     }
 
-  implicit class OptionOps[T](o: Option[T]) {
-    def getOrElseFail(failureMessage: String): T = o.getOrElse(throw new IllegalStateException(failureMessage))
-  }
+  private def getInternalId(
+    authorisedFunction: AuthorisedFunction,
+    request: Request[_]
+  ): EitherT[Future, ResponseError, String] =
+    EitherT {
+      authorisedFunction
+        .retrieve(Retrievals.internalId) {
+          case Some(internalId) => Future.successful(Right(internalId))
+          case None             => Future.successful(Left(ResponseError.internalServiceError(cause = None)))
+        }(hc(request), executionContext)
+        .recover {
+          convertToAuthorisationError[String]
+        }
+    }
+
+  private def generateNrsIdentityData(
+    internalId: String,
+    authorisedFunction: AuthorisedFunction,
+    request: Request[_]
+  ): EitherT[Future, ResponseError, NrsIdentityData] =
+    EitherT {
+      authorisedFunction
+        .retrieve(nrsIdentityDataRetrievals) {
+          case optExternalId ~ confidenceLevel ~ optNino ~ optSaUtr ~
+              optMdtpInformation ~ optCredentialStrength ~ loginTimes ~ optCredentials ~ optName ~ optDateOfBirth ~
+              optEmail ~ optAffinityGroup ~ optAgentCode ~ agentInformation ~ optCredentialRole ~ optGroupIdentifier ~
+              optItmpName ~ optItmpDateOfBirth ~ optItmpAddress =>
+            Future.successful(
+              Right(
+                NrsIdentityData(
+                  internalId,
+                  optExternalId,
+                  optAgentCode,
+                  optCredentials,
+                  confidenceLevel.level,
+                  optNino,
+                  optSaUtr,
+                  optName,
+                  optDateOfBirth,
+                  optEmail,
+                  agentInformation,
+                  optGroupIdentifier,
+                  optCredentialRole,
+                  optMdtpInformation,
+                  optItmpName,
+                  optItmpDateOfBirth,
+                  optItmpAddress,
+                  optAffinityGroup,
+                  optCredentialStrength,
+                  loginTimes
+                )
+              )
+            )
+        }(hc(request), executionContext)
+        .recover {
+          convertToAuthorisationError[NrsIdentityData]
+        }
+    }
 
 }

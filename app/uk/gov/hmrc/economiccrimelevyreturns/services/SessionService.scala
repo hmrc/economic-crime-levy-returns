@@ -31,10 +31,15 @@ class SessionService @Inject() (
 
   def get(id: String): EitherT[Future, DataRetrievalError, SessionData] =
     EitherT {
-      sessionRepository.get(id).map {
-        case Some(value) => Right(value)
-        case None        => Left(DataRetrievalError.NotFound(id))
-      }
+      sessionRepository
+        .get(id)
+        .map {
+          case Some(value) => Right(value)
+          case None        => Left(DataRetrievalError.NotFound(id))
+        }
+        .recover { case e =>
+          Left(DataRetrievalError.InternalUnexpectedError(Some(e)))
+        }
     }
 
   def upsert(
@@ -42,7 +47,7 @@ class SessionService @Inject() (
   ): EitherT[Future, DataRetrievalError, Unit] =
     EitherT {
       sessionRepository.upsert(sessionData).map(Right(_)).recover { case e =>
-        Left(DataRetrievalError.InternalUnexpectedError(e.getMessage, Some(e)))
+        Left(DataRetrievalError.InternalUnexpectedError(Some(e)))
       }
     }
 
@@ -51,7 +56,7 @@ class SessionService @Inject() (
   ): EitherT[Future, DataRetrievalError, Unit] =
     EitherT {
       sessionRepository.deleteRecord(id).map(Right(_)).recover { case e =>
-        Left(DataRetrievalError.InternalUnexpectedError(e.getMessage, Some(e)))
+        Left(DataRetrievalError.InternalUnexpectedError(Some(e)))
       }
     }
 

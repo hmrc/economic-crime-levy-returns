@@ -16,42 +16,46 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
-import org.mockito.ArgumentMatchers.any
+import cats.data.EitherT
+import org.mockito.ArgumentMatchers.{any, anyString}
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
-import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
+import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataRetrievalError, ResponseError}
+import uk.gov.hmrc.economiccrimelevyreturns.services.ReturnsService
 import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 
 import scala.concurrent.Future
 
 class ReturnsControllerSpec extends SpecBase {
 
-  val mockReturnsRepository: ReturnsRepository = mock[ReturnsRepository]
+  val mockReturnsService: ReturnsService = mock[ReturnsService]
 
   val controller = new ReturnsController(
     cc,
-    mockReturnsRepository,
+    mockReturnsService,
     fakeAuthorisedAction
   )
 
   "upsertReturn" should {
     "return 200 OK with the return that was upserted" in {
-      when(mockReturnsRepository.upsert(any())).thenReturn(Future.successful(true))
+      when(mockReturnsService.upsert(any()))
+        .thenReturn(EitherT.rightT[Future, DataRetrievalError](()))
 
       val result: Future[Result] =
         controller.upsertReturn()(
           fakeRequestWithJsonBody(Json.toJson(emptyReturn))
         )
 
-      status(result)        shouldBe OK
-      contentAsJson(result) shouldBe Json.toJson(emptyReturn)
+      status(result) shouldBe NO_CONTENT
     }
   }
 
   "getReturn" should {
     "return 200 OK with an existing return when there is one for the id" in {
-      when(mockReturnsRepository.get(any())).thenReturn(Future.successful(Some(emptyReturn)))
+      when(mockReturnsService.get(any()))
+        .thenReturn(EitherT.rightT[Future, DataRetrievalError](emptyReturn))
 
       val result: Future[Result] =
         controller.getReturn("id")(fakeRequest)
@@ -61,19 +65,21 @@ class ReturnsControllerSpec extends SpecBase {
     }
 
     "return 404 NOT_FOUND when there is no return for the id" in {
-      when(mockReturnsRepository.get(any())).thenReturn(Future.successful(None))
+      when(mockReturnsService.get(any()))
+        .thenReturn(EitherT.leftT[Future, EclReturn](DataRetrievalError.NotFound("id")))
 
       val result: Future[Result] =
         controller.getReturn("id")(fakeRequest)
 
       status(result)        shouldBe NOT_FOUND
-      contentAsJson(result) shouldBe Json.toJson(ErrorResponse(NOT_FOUND, "Return not found"))
+      contentAsJson(result) shouldBe Json.toJson(ResponseError.notFoundError("Unable to find record with id: id"))
     }
   }
 
   "deleteReturn" should {
     "return 204 NO_CONTENT when a return is deleted" in {
-      when(mockReturnsRepository.clear(any())).thenReturn(Future.successful(true))
+      when(mockReturnsService.delete(anyString()))
+        .thenReturn(EitherT.rightT[Future, DataRetrievalError](()))
 
       val result: Future[Result] =
         controller.deleteReturn("id")(fakeRequest)

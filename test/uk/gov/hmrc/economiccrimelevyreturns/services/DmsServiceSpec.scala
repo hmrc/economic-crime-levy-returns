@@ -70,7 +70,7 @@ class DmsServiceSpec extends SpecBase {
 
       val result = await(service.submitToDms(encoded, now).value)
 
-      result shouldBe Left(DmsSubmissionError.InternalUnexpectedError(exception.getMessage, Some(exception)))
+      result shouldBe Left(DmsSubmissionError.InternalUnexpectedError(Some(exception)))
     }
   }
 }

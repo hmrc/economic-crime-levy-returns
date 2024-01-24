@@ -16,15 +16,18 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
+import akka.actor.ActorSystem
+import com.typesafe.config.Config
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
-import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdGenerator
+import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdHelper.HEADER_X_CORRELATION_ID
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -32,22 +35,33 @@ import scala.concurrent.{ExecutionContext, Future}
 class IntegrationFrameworkConnector @Inject() (
   appConfig: AppConfig,
   httpClient: HttpClientV2,
-  correlationIdGenerator: CorrelationIdGenerator
+  override val configuration: Config,
+  override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
     extends BaseConnector {
 
-  private def integrationFrameworkHeaders: Seq[(String, String)] = Seq(
+  private def integrationFrameworkHeaders(correlationId: String): Seq[(String, String)] = Seq(
     (HeaderNames.AUTHORIZATION, s"Bearer ${appConfig.integrationFrameworkBearerToken}"),
     (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
-    (CustomHeaderNames.CorrelationId, correlationIdGenerator.generateCorrelationId)
+    (CustomHeaderNames.CorrelationId, correlationId)
   )
 
   def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit
     hc: HeaderCarrier
-  ): Future[SubmitEclReturnResponse] =
-    httpClient
-      .post(url"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference")
-      .setHeader(integrationFrameworkHeaders: _*)
-      .withBody(Json.toJson(eclReturnSubmission))
-      .executeAndDeserialise[SubmitEclReturnResponse]
+  ): Future[SubmitEclReturnResponse] = {
+    val correlationId = hc.headers(scala.Seq(HEADER_X_CORRELATION_ID)) match {
+      case Nil          =>
+        UUID.randomUUID().toString
+      case Seq((_, id)) =>
+        id
+    }
+
+    retryFor[SubmitEclReturnResponse]("Integration framework - ECL return")(retryCondition) {
+      httpClient
+        .post(url"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference")
+        .setHeader(integrationFrameworkHeaders(correlationId): _*)
+        .withBody(Json.toJson(eclReturnSubmission))
+        .executeAndDeserialise[SubmitEclReturnResponse]
+    }
+  }
 }

@@ -67,7 +67,7 @@ class SessionControllerSpec extends SpecBase {
 
     "return 500 INTERNAL_SERVER_ERROR when SessionData retrieval fails" in forAll { sessionData: SessionData =>
       when(mockSessionService.upsert(ArgumentMatchers.eq(sessionData)))
-        .thenReturn(EitherT.leftT[Future, Unit](DataRetrievalError.InternalUnexpectedError("error", None)))
+        .thenReturn(EitherT.leftT[Future, Unit](DataRetrievalError.InternalUnexpectedError(None)))
 
       val result: Future[Result] =
         controller.upsert()(fakeRequestWithJsonBody(Json.toJson(sessionData)))
@@ -103,7 +103,7 @@ class SessionControllerSpec extends SpecBase {
 
     "return 500 INTERNAL_SERVER_ERROR when SessionData retrieval fails" in { sessionData: SessionData =>
       when(mockSessionService.get(ArgumentMatchers.eq(sessionData.internalId)))
-        .thenReturn(EitherT.leftT[Future, SessionData](DataRetrievalError.InternalUnexpectedError("error", None)))
+        .thenReturn(EitherT.leftT[Future, SessionData](DataRetrievalError.InternalUnexpectedError(None)))
 
       val result: Future[Result] =
         controller.get(sessionData.internalId)(fakeRequest)
@@ -138,7 +138,7 @@ class SessionControllerSpec extends SpecBase {
 
     "return 500 INTERNAL_SERVER_ERROR when SessionData deletion fails" in { sessionData: SessionData =>
       when(mockSessionService.delete(ArgumentMatchers.eq(sessionData.internalId)))
-        .thenReturn(EitherT.leftT[Future, Unit](DataRetrievalError.InternalUnexpectedError("error", None)))
+        .thenReturn(EitherT.leftT[Future, Unit](DataRetrievalError.InternalUnexpectedError(None)))
 
       val result: Future[Result] =
         controller.delete(sessionData.internalId)(fakeRequest)

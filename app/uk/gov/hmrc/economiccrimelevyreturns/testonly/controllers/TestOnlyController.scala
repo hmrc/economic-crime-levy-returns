@@ -37,7 +37,7 @@ class TestOnlyController @Inject() (
   }
 
   def clearCurrentData: Action[AnyContent] = authorise.async { implicit request =>
-    returnsRepository.clear(request.internalId).map(_ => Ok("Current user data cleared"))
+    returnsRepository.delete(request.internalId).map(_ => Ok("Current user data cleared"))
   }
 
 }

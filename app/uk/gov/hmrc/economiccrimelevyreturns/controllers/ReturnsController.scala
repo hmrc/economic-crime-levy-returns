@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.JsValue
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.AuthorisedAction
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
-import uk.gov.hmrc.economiccrimelevyreturns.repositories.ReturnsRepository
+import uk.gov.hmrc.economiccrimelevyreturns.services.ReturnsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
@@ -30,26 +29,31 @@ import scala.concurrent.ExecutionContext
 @Singleton()
 class ReturnsController @Inject() (
   cc: ControllerComponents,
-  returnsRepository: ReturnsRepository,
+  returnsService: ReturnsService,
   authorise: AuthorisedAction
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+    extends BackendController(cc)
+    with BaseController
+    with ErrorHandler {
 
   def upsertReturn: Action[JsValue] = authorise(parse.json).async { implicit request =>
     withJsonBody[EclReturn] { eclReturn =>
-      returnsRepository.upsert(eclReturn).map(_ => Ok(Json.toJson(eclReturn)))
+      (for {
+        unit <- returnsService.upsert(eclReturn).asResponseError
+      } yield unit).convertToResult(NO_CONTENT)
     }
   }
 
-  def getReturn(id: String): Action[AnyContent] = authorise.async { _ =>
-    returnsRepository.get(id).map {
-      case Some(eclReturn) => Ok(Json.toJson(eclReturn))
-      case None            => NotFound(Json.toJson(ErrorResponse(NOT_FOUND, "Return not found")))
-    }
+  def getReturn(id: String): Action[AnyContent] = authorise.async { request =>
+    (for {
+      eclReturn <- returnsService.get(id).asResponseError
+    } yield eclReturn).convertToResult(OK)
   }
 
-  def deleteReturn(id: String): Action[AnyContent] = authorise.async { _ =>
-    returnsRepository.clear(id).map(_ => NoContent)
+  def deleteReturn(id: String): Action[AnyContent] = authorise.async { request =>
+    (for {
+      deletedReturn <- returnsService.delete(id).asResponseError
+    } yield deletedReturn).convertToResult(NO_CONTENT)
   }
 
 }

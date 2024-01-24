@@ -102,7 +102,7 @@ class SessionISpec extends ISpecBase {
         callRoute(FakeRequest(routes.SessionController.get(sessionData.internalId)))
 
       status(getResultBeforeDelete) shouldBe OK
-      status(deleteResult)          shouldBe OK
+      status(deleteResult)          shouldBe NO_CONTENT
       status(getResultAfterDelete)  shouldBe NOT_FOUND
     }
   }

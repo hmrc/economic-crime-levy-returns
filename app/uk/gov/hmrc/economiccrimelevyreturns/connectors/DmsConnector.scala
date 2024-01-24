@@ -21,13 +21,12 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.typesafe.config.Config
-import play.api.Logging
 import play.api.http.HeaderNames.AUTHORIZATION
 import play.api.http.Status.ACCEPTED
 import play.api.mvc.MultipartFormData
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, Retries, StringContextOps, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -38,16 +37,10 @@ class DmsConnector @Inject() (
   override val configuration: Config,
   override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
-    extends Retries
-    with Logging
-    with BaseConnector {
-
-  private def retryCondition: PartialFunction[Exception, Boolean] = {
-    case e: UpstreamErrorResponse if UpstreamErrorResponse.Upstream5xxResponse.unapply(e).isDefined => true
-  }
+    extends BaseConnector {
 
   def sendPdf(
-    body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]] with Product with Serializable, NotUsed]
+    body: Source[MultipartFormData.Part[Source[ByteString, _]], NotUsed]
   )(implicit hc: HeaderCarrier): Future[Unit] =
     retryFor[Unit]("DMS submission")(retryCondition) {
       httpClient

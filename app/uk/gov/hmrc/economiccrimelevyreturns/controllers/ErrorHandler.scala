@@ -18,7 +18,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
 import cats.data.EitherT
 import play.api.Logging
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{BadGateway, DataRetrievalError, DataValidationError, DataValidationErrorList, DmsSubmissionError, InternalServiceError, NrsSubmissionError, ResponseError, ReturnsSubmissionError}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{BadGateway, DataRetrievalError, DataValidationError, DmsSubmissionError, InternalServiceError, NrsSubmissionError, ResponseError, ReturnsSubmissionError}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -61,43 +61,43 @@ trait ErrorHandler extends Logging {
 
   implicit val nrsSubmissionErrorConverter: Converter[NrsSubmissionError] = new Converter[NrsSubmissionError] {
     def convert(error: NrsSubmissionError): ResponseError = error match {
-      case NrsSubmissionError.BadGateway(cause, statusCode)           => ResponseError.badGateway(cause, statusCode)
-      case NrsSubmissionError.InternalUnexpectedError(message, cause) =>
-        ResponseError.internalServiceError(message = message, cause = cause)
+      case NrsSubmissionError.BadGateway(cause, statusCode)  => ResponseError.badGateway(cause, statusCode)
+      case NrsSubmissionError.InternalUnexpectedError(cause) =>
+        ResponseError.internalServiceError(cause = cause)
     }
   }
 
   implicit val returnsSubmissionErrorConverter: Converter[ReturnsSubmissionError] =
     new Converter[ReturnsSubmissionError] {
       override def convert(error: ReturnsSubmissionError): ResponseError = error match {
-        case ReturnsSubmissionError.BadGateway(cause, statusCode)           => ResponseError.badGateway(cause, statusCode)
-        case ReturnsSubmissionError.InternalUnexpectedError(message, cause) =>
-          ResponseError.internalServiceError(message = message, cause = cause)
+        case ReturnsSubmissionError.BadGateway(cause, statusCode)  => ResponseError.badGateway(cause, statusCode)
+        case ReturnsSubmissionError.InternalUnexpectedError(cause) =>
+          ResponseError.internalServiceError(cause = cause)
       }
     }
 
   implicit val dmsSubmissionErrorConverter: Converter[DmsSubmissionError] =
     new Converter[DmsSubmissionError] {
       override def convert(error: DmsSubmissionError): ResponseError = error match {
-        case DmsSubmissionError.BadGateway(cause, statusCode)           => ResponseError.badGateway(cause, statusCode)
-        case DmsSubmissionError.InternalUnexpectedError(message, cause) =>
-          ResponseError.internalServiceError(message = message, cause = cause)
+        case DmsSubmissionError.BadGateway(cause, statusCode)  => ResponseError.badGateway(cause, statusCode)
+        case DmsSubmissionError.InternalUnexpectedError(cause) =>
+          ResponseError.internalServiceError(cause = cause)
       }
     }
 
   implicit val dataRetrievalErrorConverter: Converter[DataRetrievalError] =
     new Converter[DataRetrievalError] {
       override def convert(error: DataRetrievalError): ResponseError = error match {
-        case DataRetrievalError.NotFound(id)                            => ResponseError.notFoundError(s"Unable to find record with id: $id")
-        case DataRetrievalError.InternalUnexpectedError(message, cause) =>
-          ResponseError.internalServiceError(message = message, cause = cause)
+        case DataRetrievalError.NotFound(id)                   => ResponseError.notFoundError(s"Unable to find record with id: $id")
+        case DataRetrievalError.InternalUnexpectedError(cause) =>
+          ResponseError.internalServiceError(cause = cause)
       }
     }
 
-  implicit val dataValidationErrorConverter: Converter[DataValidationErrorList] =
-    new Converter[DataValidationErrorList] {
-      override def convert(value: DataValidationErrorList): ResponseError = {
-        val errorMessage = value.errors.map {
+  implicit val dataValidationErrorConverter: Converter[DataValidationError] =
+    new Converter[DataValidationError] {
+      override def convert(value: DataValidationError): ResponseError = {
+        val errorMessage = value match {
           case DataValidationError.SchemaValidationError(cause) =>
             s"""
              |Schema validation error: $cause
@@ -106,10 +106,13 @@ trait ErrorHandler extends Logging {
             s"""
              |Data missing: $cause
              |""".stripMargin
-        }.mkString
+          case DataValidationError.DataInvalid(cause)           =>
+            s"""
+               |Data invalid: $cause
+               |""".stripMargin
+        }
 
         ResponseError.badRequestError(errorMessage)
       }
-
     }
 }

@@ -19,8 +19,8 @@ package uk.gov.hmrc.economiccrimelevyreturns.controllers
 import cats.data.EitherT
 import play.api.libs.json.Json
 import play.api.mvc.Result
-import play.api.mvc.Results.{Ok, Status}
-import uk.gov.hmrc.economiccrimelevyreturns.models.SessionData
+import play.api.mvc.Results.Status
+import uk.gov.hmrc.economiccrimelevyreturns.models.{EclReturn, SessionData}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ResponseError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.SubmitEclReturnResponse
 
@@ -39,12 +39,6 @@ trait BaseController {
 
   implicit class ResponseHandler[R](value: EitherT[Future, ResponseError, R]) {
 
-    def convertToResult(implicit c: Converter[R], ec: ExecutionContext): Future[Result] =
-      value.fold(
-        err => Status(err.code.statusCode)(Json.toJson(err)),
-        response => c.getResponse(response)
-      )
-
     def convertToResult(responseCode: Int)(implicit c: Converter[R], ec: ExecutionContext): Future[Result] =
       value.fold(
         err => Status(err.code.statusCode)(Json.toJson(err)),
@@ -53,31 +47,29 @@ trait BaseController {
   }
 
   trait Converter[R] {
-    def getResponse(response: R): Result
-
     def getResponseWithCode(response: R, responseCode: Int): Result
   }
 
+  implicit val submitEclReturn: Converter[EclReturn] =
+    new Converter[EclReturn] {
+      override def getResponseWithCode(response: EclReturn, responseCode: Int): Result =
+        Status(responseCode)(Json.toJson(response))
+    }
+
   implicit val submitEclReturnResponse: Converter[SubmitEclReturnResponse] =
     new Converter[SubmitEclReturnResponse] {
-      override def getResponse(response: SubmitEclReturnResponse) = Ok(Json.toJson(response))
-
       override def getResponseWithCode(response: SubmitEclReturnResponse, responseCode: Int): Result =
         Status(responseCode)(Json.toJson(response))
     }
 
   implicit val unitResponse: Converter[Unit] =
     new Converter[Unit] {
-      override def getResponse(response: Unit) = Ok
-
       override def getResponseWithCode(response: Unit, responseCode: Int): Result =
-        Ok
+        Status(responseCode)
     }
 
   implicit val sessionDataResponse: Converter[SessionData] =
     new Converter[SessionData] {
-      override def getResponse(response: SessionData): Result = Ok(Json.toJson(response))
-
       override def getResponseWithCode(response: SessionData, responseCode: Int): Result =
         Status(responseCode)(Json.toJson(response))
     }

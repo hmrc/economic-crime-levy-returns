@@ -25,6 +25,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclRetu
 import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn, FirstTimeReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.services._
+import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdHelper
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -37,27 +38,29 @@ class ReturnSubmissionController @Inject() (
   cc: ControllerComponents,
   authorise: AuthorisedAction,
   returnValidationService: ReturnValidationService,
-  returnService: ReturnService,
+  integrationFrameworkService: IntegrationFrameworkService,
   nrsService: NrsService,
   dmsService: DmsService,
   auditService: AuditService,
   appConfig: AppConfig,
-  dataRetrievalService: DataRetrievalService
+  returnsService: ReturnsService
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with BaseController
     with ErrorHandler {
 
   def submitReturn(id: String): Action[AnyContent] = authorise.async { implicit request =>
+    implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
-      eclReturn           <- dataRetrievalService.get(id).asResponseError
+      eclReturn           <- returnsService.get(id).asResponseError
       eclReturnSubmission <- returnValidationService.validateReturn(eclReturn).asResponseError
       eclReturnResponse   <- routeReturnSubmission(eclReturn, eclReturnSubmission)
-    } yield eclReturnResponse).convertToResult
+    } yield eclReturnResponse).convertToResult(OK)
   }
 
   private def routeReturnSubmission(eclReturn: EclReturn, eclReturnSubmission: EclReturnSubmission)(implicit
-    request: AuthorisedRequest[_]
+    request: AuthorisedRequest[_],
+    hc: HeaderCarrier
   ): EitherT[Future, ResponseError, SubmitEclReturnResponse] =
     eclReturn.returnType match {
       case Some(FirstTimeReturn) =>
@@ -71,7 +74,7 @@ class ReturnSubmissionController @Inject() (
         amendSubmission(eclReturn, request.eclRegistrationReference)
       case None                  =>
         EitherT.left[SubmitEclReturnResponse](
-          Future.successful(ResponseError.internalServiceError(message = "Return type is missing"))
+          Future.successful(ResponseError.internalServiceError(cause = None))
         )
     }
 
@@ -84,7 +87,7 @@ class ReturnSubmissionController @Inject() (
     for {
       base64EncodedNrsSubmissionHtml <- checkOptionalValueExists[String](eclReturn.base64EncodedNrsSubmissionHtml)
       submitEclReturnResponse        <-
-        returnService.submitEclReturn(eclReference, eclReturnSubmission).asResponseError
+        integrationFrameworkService.submitEclReturn(eclReference, eclReturnSubmission).asResponseError
       _                              <- nrsService.submitToNrs(base64EncodedNrsSubmissionHtml, eclReference, eventName).asResponseError
       _                               = auditService.sendReturnSubmittedEvent(eclReturn, eclReference, submitEclReturnResponse.chargeReference)
 

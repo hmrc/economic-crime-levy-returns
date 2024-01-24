@@ -22,7 +22,6 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.economiccrimelevyreturns.base.ISpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.controllers.routes
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataValidationError, ResponseError}
 
 class ReturnValidationISpec extends ISpecBase {
 
@@ -48,7 +47,7 @@ class ReturnValidationISpec extends ISpecBase {
       status(validationResult) shouldBe OK
     }
 
-    "return 400 BAD_REQUEST with validation errors in the JSON response body when the ECL return data is invalid" in {
+    "return 200 OK when the ECL return data is invalid" in {
       stubAuthorised()
 
       val internalId = random[String]
@@ -62,25 +61,8 @@ class ReturnValidationISpec extends ISpecBase {
       lazy val validationResult =
         callRoute(FakeRequest(routes.ReturnValidationController.getValidationErrors(internalId)))
 
-      val expectedErrors = Seq(
-        DataValidationError.DataMissing("Relevant AP 12 months choice is missing"),
-        DataValidationError.DataMissing("Relevant AP revenue is missing"),
-        DataValidationError.DataMissing("Calculated liability is missing"),
-        DataValidationError.DataMissing("Contact name is missing"),
-        DataValidationError.DataMissing("Contact role is missing"),
-        DataValidationError.DataMissing("Contact email address is missing"),
-        DataValidationError.DataMissing("Contact telephone number is missing"),
-        DataValidationError.DataMissing("Obligation details is missing")
-      )
-
-      status(validationResult) shouldBe BAD_REQUEST
-      val errorMessage = expectedErrors.map { case DataValidationError.DataMissing(cause) =>
-        s"""
-             |Data missing: $cause
-             |""".stripMargin
-      }.mkString
-
-      contentAsJson(validationResult) shouldBe Json.toJson(ResponseError.badRequestError(errorMessage))
+      status(validationResult)        shouldBe OK
+      contentAsJson(validationResult) shouldBe Json.toJson("Relevant AP 12 months choice is missing")
     }
 
     "return 404 NOT_FOUND when there is no ECL return data to validate" in {

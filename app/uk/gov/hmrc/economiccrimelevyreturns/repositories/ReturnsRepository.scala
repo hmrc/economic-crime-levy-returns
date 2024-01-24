@@ -70,7 +70,7 @@ class ReturnsRepository @Inject() (
         .headOption()
     }
 
-  def upsert(eclReturn: EclReturn): Future[Boolean] = {
+  def upsert(eclReturn: EclReturn): Future[Unit] = {
     val updatedReturn = eclReturn.copy(lastUpdated = Some(Instant.now(clock)))
 
     collection
@@ -80,14 +80,14 @@ class ReturnsRepository @Inject() (
         options = ReplaceOptions().upsert(true)
       )
       .toFuture()
-      .map(_ => true)
+      .map(_ => ())
   }
 
-  def clear(id: String): Future[Boolean] =
+  def delete(id: String): Future[Unit] =
     collection
       .deleteOne(byId(id))
       .toFuture()
-      .map(_ => true)
+      .map(_ => ())
 }
 
 object ReturnsRepository {

@@ -57,7 +57,7 @@ class AuditService @Inject() (auditConnector: AuditConnector)(implicit ec: Execu
             Left(AuditError.BadGateway(reason = "Audit is disabled for the audit connector", code = BAD_GATEWAY))
         }
         .recover { case NonFatal(e) =>
-          Left(AuditError.InternalUnexpectedError(e.getMessage, Some(e)))
+          Left(AuditError.InternalUnexpectedError(Some(e)))
         }
     }
 
