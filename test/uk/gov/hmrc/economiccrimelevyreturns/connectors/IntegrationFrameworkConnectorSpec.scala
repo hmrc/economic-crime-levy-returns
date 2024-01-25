@@ -29,7 +29,7 @@ import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
 import scala.concurrent.Future
 import scala.util.{Failure, Try}
 
-class IntegrationFrameworkConnectorSpec extends SpecBase with BaseConnector {
+class IntegrationFrameworkConnectorSpec extends SpecBase {
 
   val retryAmount                        = 4
   val mockHttpClient: HttpClientV2       = mock[HttpClientV2]
