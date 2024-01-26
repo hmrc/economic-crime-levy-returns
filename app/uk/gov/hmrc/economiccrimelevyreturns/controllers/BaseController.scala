@@ -22,7 +22,7 @@ import play.api.mvc.Result
 import play.api.mvc.Results.Status
 import uk.gov.hmrc.economiccrimelevyreturns.models.{EclReturn, SessionData}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ResponseError
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.SubmitEclReturnResponse
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{GetEclReturnSubmissionResponse, SubmitEclReturnResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -71,6 +71,12 @@ trait BaseController {
   implicit val sessionDataResponse: Converter[SessionData] =
     new Converter[SessionData] {
       override def getResponseWithCode(response: SessionData, responseCode: Int): Result =
+        Status(responseCode)(Json.toJson(response))
+    }
+
+  implicit val getEclReturnResponse: Converter[GetEclReturnSubmissionResponse] =
+    new Converter[GetEclReturnSubmissionResponse] {
+      override def getResponseWithCode(response: GetEclReturnSubmissionResponse, responseCode: Int): Result =
         Status(responseCode)(Json.toJson(response))
     }
 }

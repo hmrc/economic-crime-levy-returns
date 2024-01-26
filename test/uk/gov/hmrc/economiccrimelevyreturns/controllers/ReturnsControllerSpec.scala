@@ -24,7 +24,6 @@ import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataRetrievalError, ResponseError}
 import uk.gov.hmrc.economiccrimelevyreturns.services.ReturnsService
-import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 
 import scala.concurrent.Future
 

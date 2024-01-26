@@ -66,6 +66,10 @@ final case class ValidNrsSubmission(
   nrsSubmission: NrsSubmission
 )
 
+final case class ValidGetEclReturnSubmissionResponse(
+  response: GetEclReturnSubmissionResponse
+)
+
 trait EclTestData { self: Generators =>
 
   private val base64EncodedNrsSubmissionHtml  = "PGh0bWw+PHRpdGxlPkhlbGxvIFdvcmxkITwvdGl0bGU+PC9odG1sPg=="
@@ -283,4 +287,27 @@ trait EclTestData { self: Generators =>
         values <- Arbitrary.arbitrary[Map[String, String]]
       } yield SessionData(id.toString, values, None)
     }
+
+  implicit val arbValidGetEclReturnSubmissionResponse: Arbitrary[ValidGetEclReturnSubmissionResponse] = Arbitrary {
+    for {
+      accountingPeriodRevenue <- bigDecimalInRange(MinRevenue, MaxRevenue)
+      amountOfEclDutyLiable   <- bigDecimalInRange(MinAmountDue, MaxAmountDue)
+      chargeDetails           <- Arbitrary.arbitrary[GetEclReturnChargeDetails]
+      declarationDetails      <- Arbitrary.arbitrary[GetEclReturnDeclarationDetails]
+      eclReference            <- Arbitrary.arbitrary[String]
+      processingDateTime      <- Arbitrary.arbitrary[String]
+      returnDetails           <- Arbitrary.arbitrary[GetEclReturnDetails]
+      submissionId            <- Arbitrary.arbitrary[String]
+    } yield ValidGetEclReturnSubmissionResponse(
+      GetEclReturnSubmissionResponse(
+        chargeDetails = chargeDetails,
+        declarationDetails = declarationDetails,
+        eclReference = eclReference,
+        processingDateTime = processingDateTime,
+        returnDetails = returnDetails
+          .copy(accountingPeriodRevenue = accountingPeriodRevenue, amountOfEclDutyLiable = amountOfEclDutyLiable),
+        submissionId = Some(submissionId)
+      )
+    )
+  }
 }

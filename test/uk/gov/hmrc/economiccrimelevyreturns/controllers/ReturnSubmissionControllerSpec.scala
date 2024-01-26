@@ -21,14 +21,15 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.{any, anyString}
 import play.api.libs.json.Json
 import play.api.mvc.Result
+import uk.gov.hmrc.economiccrimelevyreturns.ValidGetEclReturnSubmissionResponse
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
-import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn, FirstTimeReturn}
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{DataRetrievalError, DataValidationError, DmsSubmissionError, NrsSubmissionError, ResponseError, ReturnsSubmissionError}
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors._
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsSubmissionResponse
-import uk.gov.hmrc.economiccrimelevyreturns.services.{AuditService, DmsService, IntegrationFrameworkService, NrsService, ReturnValidationService, ReturnsService}
+import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn, FirstTimeReturn}
+import uk.gov.hmrc.economiccrimelevyreturns.services._
 
 import scala.concurrent.Future
 
@@ -54,13 +55,79 @@ class ReturnSubmissionControllerSpec extends SpecBase {
     mockDataRetrievalService
   )
 
-  override def beforeEach() = {
+  override def beforeEach(): Unit = {
     reset(mockReturnValidationService)
     reset(mockReturnService)
     reset(mockNrsService)
     reset(mockDmsService)
     reset(mockAuditService)
     reset(mockDataRetrievalService)
+  }
+
+  "getSubmission" should {
+    "return 200 OK with a subscription in the JSON response body when the ECL return data is valid" in forAll {
+      (
+        validResponse: ValidGetEclReturnSubmissionResponse
+      ) =>
+        beforeEach()
+
+        when(
+          mockReturnService.getEclReturnSubmission(
+            ArgumentMatchers.eq(periodKey),
+            ArgumentMatchers.eq(eclRegistrationReference)
+          )(any())
+        ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](validResponse.response))
+    }
+
+    "return 502 BAD_GATEWAY when the bad gateway" in {
+
+      val errorMessage: String = "BAD_GATEWAY"
+
+      when(
+        mockReturnService.getEclReturnSubmission(
+          ArgumentMatchers.eq(periodKey),
+          ArgumentMatchers.eq(eclRegistrationReference)
+        )(any())
+      ).thenReturn(
+        EitherT.leftT[Future, GetEclReturnSubmissionResponse](
+          ReturnsSubmissionError.BadGateway(errorMessage, BAD_GATEWAY)
+        )
+      )
+
+      val result: Future[Result] =
+        controller.getSubmission(periodKey, eclRegistrationReference)(fakeRequest)
+
+      status(result) shouldBe BAD_GATEWAY
+
+      val contentJson  = contentAsJson(result)
+      val expectedJson = Json.toJson(ResponseError.badRequestError(errorMessage))
+
+      contentJson shouldBe expectedJson
+    }
+
+    "return 500 INTERNAL_SERVER_ERROR when server error" in {
+
+      when(
+        mockReturnService.getEclReturnSubmission(
+          ArgumentMatchers.eq(periodKey),
+          ArgumentMatchers.eq(eclRegistrationReference)
+        )(any())
+      ).thenReturn(
+        EitherT.leftT[Future, GetEclReturnSubmissionResponse](
+          ReturnsSubmissionError.InternalUnexpectedError(None)
+        )
+      )
+
+      val result: Future[Result] =
+        controller.getSubmission(periodKey, eclRegistrationReference)(fakeRequest)
+
+      status(result) shouldBe INTERNAL_SERVER_ERROR
+
+      val contentJson  = contentAsJson(result)
+      val expectedJson = Json.toJson(ResponseError.internalServiceError(cause = None))
+
+      contentJson shouldBe expectedJson
+    }
   }
 
   "submitReturn" should {

@@ -83,6 +83,7 @@ trait SpecBase
   val fakeAuthorisedAction                             = new FakeAuthorisedAction(bodyParsers)
   val config: Config                                   = app.injector.instanceOf[Config]
   val actorSystem: ActorSystem                         = ActorSystem("actor")
+  val periodKey: String                                = "22XY"
 
   def fakeRequestWithJsonBody(json: JsValue): FakeRequest[JsValue] = FakeRequest("", "/", FakeHeaders(), json)
 
