@@ -65,6 +65,7 @@ abstract class ISpecBase
 
   val internalId: String               = "test-id"
   val eclRegistrationReference: String = "test-ecl-registration-reference"
+  val periodKey: String                = "22XY"
   val emptyReturn: EclReturn           = EclReturn.empty(internalId)
   val now: Instant                     = Instant.now.truncatedTo(ChronoUnit.MILLIS)
   private val stubClock: Clock         = Clock.fixed(now, ZoneId.systemDefault)

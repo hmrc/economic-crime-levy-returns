@@ -25,7 +25,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
 import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdHelper.HEADER_X_CORRELATION_ID
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
+import uk.gov.hmrc.http.{HeaderCarrier, Retries, StringContextOps}
 
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -38,17 +38,10 @@ class IntegrationFrameworkConnector @Inject() (
   override val configuration: Config,
   override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
-    extends BaseConnector {
+    extends Retries
+    with BaseConnector {
 
-  private def integrationFrameworkHeaders(correlationId: String): Seq[(String, String)] = Seq(
-    (HeaderNames.AUTHORIZATION, s"Bearer ${appConfig.integrationFrameworkBearerToken}"),
-    (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
-    (CustomHeaderNames.CorrelationId, correlationId)
-  )
-
-  def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit
-    hc: HeaderCarrier
-  ): Future[SubmitEclReturnResponse] = {
+  private def integrationFrameworkHeaders(bearerToken: String)(implicit hc: HeaderCarrier): Seq[(String, String)] = {
     val correlationId = hc.headers(scala.Seq(HEADER_X_CORRELATION_ID)) match {
       case Nil          =>
         UUID.randomUUID().toString
@@ -56,12 +49,31 @@ class IntegrationFrameworkConnector @Inject() (
         id
     }
 
-    retryFor[SubmitEclReturnResponse]("Integration framework - ECL return")(retryCondition) {
+    Seq(
+      (HeaderNames.AUTHORIZATION, s"Bearer $bearerToken"),
+      (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
+      (CustomHeaderNames.CorrelationId, correlationId)
+    )
+  }
+
+  def getEclReturnSubmission(periodKey: String, eclRegistrationReference: String)(implicit
+    hc: HeaderCarrier
+  ): Future[GetEclReturnSubmissionResponse] =
+    retryFor[GetEclReturnSubmissionResponse]("Integration framework - Get ECL return")(retryCondition) {
+      httpClient
+        .get(url"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$periodKey/$eclRegistrationReference")
+        .setHeader(integrationFrameworkHeaders(appConfig.integrationFrameworkGetReturnSubmissisonBearerToken): _*)
+        .executeAndDeserialise[GetEclReturnSubmissionResponse]
+    }
+
+  def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit
+    hc: HeaderCarrier
+  ): Future[SubmitEclReturnResponse] =
+    retryFor[SubmitEclReturnResponse]("Integration framework - Submit ECL return")(retryCondition) {
       httpClient
         .post(url"${appConfig.integrationFrameworkUrl}/economic-crime-levy/return/$eclRegistrationReference")
-        .setHeader(integrationFrameworkHeaders(correlationId): _*)
+        .setHeader(integrationFrameworkHeaders(appConfig.integrationFrameworkBearerToken): _*)
         .withBody(Json.toJson(eclReturnSubmission))
         .executeAndDeserialise[SubmitEclReturnResponse]
     }
-  }
 }

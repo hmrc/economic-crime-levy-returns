@@ -13,3 +13,5 @@ POST          /dms-returns-callback                 uk.gov.hmrc.economiccrimelev
 GET           /session/:id                          uk.gov.hmrc.economiccrimelevyreturns.controllers.SessionController.get(id)
 PUT           /session                              uk.gov.hmrc.economiccrimelevyreturns.controllers.SessionController.upsert
 DELETE        /session/:id                          uk.gov.hmrc.economiccrimelevyreturns.controllers.SessionController.delete(id)
+
+GET           /submission/:periodKey/:id            uk.gov.hmrc.economiccrimelevyreturns.controllers.ReturnSubmissionController.getSubmission(periodKey, id)
