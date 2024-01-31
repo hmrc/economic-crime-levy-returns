@@ -295,7 +295,7 @@ trait EclTestData { self: Generators =>
       chargeDetails           <- Arbitrary.arbitrary[GetEclReturnChargeDetails]
       declarationDetails      <- Arbitrary.arbitrary[GetEclReturnDeclarationDetails]
       eclReference            <- Arbitrary.arbitrary[String]
-      processingDateTime      <- Arbitrary.arbitrary[String]
+      processingDateTime      <- Arbitrary.arbitrary[Instant]
       returnDetails           <- Arbitrary.arbitrary[GetEclReturnDetails]
       submissionId            <- Arbitrary.arbitrary[String]
     } yield ValidGetEclReturnSubmissionResponse(
