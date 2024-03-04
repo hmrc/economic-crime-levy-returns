@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.typesafe.config.Config
 
 import scala.concurrent.ExecutionContext

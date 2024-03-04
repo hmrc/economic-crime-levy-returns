@@ -47,7 +47,7 @@ class NrsConnectorSpec extends SpecBase {
         beforeEach()
 
         when(mockHttpClient.post(ArgumentMatchers.eq(nrsSubmissionUrl))(any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(Future.successful(HttpResponse.apply(OK, Json.stringify(Json.toJson(nrsSubmissionResponse)))))
