@@ -50,7 +50,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
         beforeEach()
 
         when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(
@@ -70,7 +70,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
       val errorCode = BAD_REQUEST
 
       when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
       when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
       when(mockRequestBuilder.execute[HttpResponse](any(), any()))
         .thenReturn(Future.successful(HttpResponse.apply(errorCode, "BAD_REQUEST")))
@@ -88,7 +88,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
       val errorCode = UNPROCESSABLE_ENTITY
 
       when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
       when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
       when(mockRequestBuilder.execute[HttpResponse](any(), any()))
         .thenReturn(Future.successful(HttpResponse.apply(errorCode, "UNPROCESSABLE_ENTITY")))
@@ -106,7 +106,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
       val errorCode = INTERNAL_SERVER_ERROR
 
       when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
       when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
       when(mockRequestBuilder.execute[HttpResponse](any(), any()))
         .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Internal server error")))
@@ -127,7 +127,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
       val errorCode = SERVICE_UNAVAILABLE
 
       when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
       when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
       when(mockRequestBuilder.execute[HttpResponse](any(), any()))
         .thenReturn(Future.successful(HttpResponse.apply(errorCode, "SERVICE_UNAVAILABLE")))
@@ -152,7 +152,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
         beforeEach()
 
         when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(Future.successful(HttpResponse.apply(OK, Json.stringify(Json.toJson(submitEclReturnResponse)))))
@@ -171,7 +171,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
         val errorCode = UNAUTHORIZED
 
         when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Failed authorization")))
@@ -192,7 +192,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
         val errorCode = INTERNAL_SERVER_ERROR
 
         when(mockHttpClient.post(any())(any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
         when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Internal server error")))
