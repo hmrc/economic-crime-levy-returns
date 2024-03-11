@@ -48,7 +48,7 @@ class DmsNotificationController @Inject() (
     request.body.validate[DmsNotification] match {
       case JsSuccess(notification, _) if notification.status == SubmissionItemStatus.Failed =>
         logger.error(
-          s"DMS notification received for ${notification.id} failed with error: ${notification.failureReason
+          s"DMS notification error received for ${notification.id} with error: ${notification.failureReason
             .getOrElse("")}"
         )
         Ok
