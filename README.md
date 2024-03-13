@@ -14,7 +14,7 @@ The service provides APIs to be consumed by [economic-crime-levy-returns-fronten
 
 > `sbt run`
 
-The service runs on port `14001` by default.
+The service runs on port `14003` by default.
 
 ## Running dependencies
 
@@ -37,7 +37,7 @@ that they depend on.
 
 ### All tests
 
-This is an sbt command alias specific to this project. It will run a scala format
+This is a sbt command alias specific to this project. It will run a scala format
 check, run a scala style check, run unit tests, run integration tests and produce a coverage report.
 > `sbt runAllChecks`
 
