@@ -14,7 +14,7 @@ The service provides APIs to be consumed by [economic-crime-levy-returns-fronten
 
 > `sbt run`
 
-The service runs on port `14001` by default.
+The service runs on port `14003` by default.
 
 ## Running dependencies
 
