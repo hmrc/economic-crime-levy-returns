@@ -32,7 +32,7 @@ class DmsServiceSpec extends SpecBase {
 
   val mockDmsConnector: DmsConnector = mock[DmsConnector]
   val html                           = "<html><head></head><body></body></html>"
-  val now                            = Instant.now
+  val now: Instant                   = Instant.now
 
   val service = new DmsService(mockDmsConnector, appConfig)
 

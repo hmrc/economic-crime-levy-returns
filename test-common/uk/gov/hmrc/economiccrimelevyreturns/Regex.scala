@@ -18,8 +18,8 @@ package uk.gov.hmrc.economiccrimelevyreturns
 
 object Regex {
 
-  val TelephoneNumberRegex   = "^[0-9 )/(*#+-]+$"
-  val PositionInCompanyRegex = "^[A-Za-z0-9 ,.()/&''-]{1,160}$"
-  val NameRegex              = "^[A-Za-z0-9 ,.()/&''-]{1,160}$"
+  val telephoneNumberRegex   = "^[0-9 )/(*#+-]+$"
+  val positionInCompanyRegex = "^[A-Za-z0-9 ,.()/&''-]{1,160}$"
+  val nameRegex              = "^[A-Za-z0-9 ,.()/&''-]{1,160}$"
 
 }

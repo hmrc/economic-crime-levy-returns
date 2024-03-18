@@ -24,8 +24,9 @@ import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
-import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 
+import java.util.UUID
 import scala.concurrent.Future
 import scala.util.{Failure, Try}
 
@@ -62,6 +63,28 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
         val result = await(connector.getEclReturnSubmission(periodKey, eclRegistrationReference))
 
         result shouldBe validResponse.response
+    }
+
+    "return submit return response when call to integration framework succeeds with correlation id set" in forAll {
+      (
+        validResponse: ValidGetEclReturnSubmissionResponse
+      ) =>
+        beforeEach()
+
+        when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+          .thenReturn(
+            Future.successful(
+              HttpResponse.apply(OK, Json.stringify(Json.toJson(validResponse.response)))
+            )
+          )
+
+        val result = await(connector.getEclReturnSubmission(periodKey, eclRegistrationReference))
+
+        result shouldBe validResponse.response
+
     }
 
     "return 400 UpstreamErrorResponse when call to integration framework returns an error" in {

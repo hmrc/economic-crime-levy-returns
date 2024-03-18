@@ -41,8 +41,6 @@ object ErrorCode {
 
   case object Unauthorized extends ErrorCode("UNAUTHORIZED", UNAUTHORIZED)
 
-  case object Unproce extends ErrorCode("UNAUTHORIZED", UNAUTHORIZED)
-
   lazy val errorCodes: Seq[ErrorCode] = Seq(
     BadRequest,
     NotFound,

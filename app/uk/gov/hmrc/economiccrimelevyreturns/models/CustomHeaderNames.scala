@@ -17,7 +17,7 @@
 package uk.gov.hmrc.economiccrimelevyreturns.models
 
 object CustomHeaderNames {
-  val Environment   = "Environment"
-  val CorrelationId = "CorrelationId"
-  val ApiKey        = "X-API-Key"
+  val environment   = "Environment"
+  val correlationId = "CorrelationId"
+  val apiKey        = "X-API-Key"
 }

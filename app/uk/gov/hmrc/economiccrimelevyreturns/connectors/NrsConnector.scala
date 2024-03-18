@@ -43,7 +43,7 @@ class NrsConnector @Inject() (
 
   private def nrsHeaders: Seq[(String, String)] = Seq(
     (HeaderNames.CONTENT_TYPE, MimeTypes.JSON),
-    (CustomHeaderNames.ApiKey, appConfig.nrsApiKey)
+    (CustomHeaderNames.apiKey, appConfig.nrsApiKey)
   )
 
   def submitToNrs(nrsSubmission: NrsSubmission)(implicit
