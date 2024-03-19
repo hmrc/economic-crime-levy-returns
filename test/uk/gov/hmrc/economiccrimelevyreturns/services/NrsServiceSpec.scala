@@ -138,11 +138,12 @@ class NrsServiceSpec extends SpecBase {
         validNrsSubmission.nrsSubmission.metadata.identityData
       )
 
-      val errorCode = NOT_ACCEPTABLE
-      val message   = "Gateway Error"
+      val errorCode            = NOT_ACCEPTABLE
+      val upstreamErrorMessage = "Gateway Error"
+      val errorMessage         = s"NRS Submission Failed - $upstreamErrorMessage"
 
       when(mockNrsConnector.submitToNrs(ArgumentMatchers.eq(validNrsSubmission.nrsSubmission))(any[HeaderCarrier]()))
-        .thenReturn(Future.failed(UpstreamErrorResponse.apply(message, errorCode)))
+        .thenReturn(Future.failed(UpstreamErrorResponse.apply(upstreamErrorMessage, errorCode)))
 
       val result =
         await(
@@ -155,7 +156,7 @@ class NrsServiceSpec extends SpecBase {
             .value
         )
 
-      result shouldBe Left(NrsSubmissionError.BadGateway(message, errorCode))
+      result shouldBe Left(NrsSubmissionError.BadGateway(errorMessage, errorCode))
     }
   }
 

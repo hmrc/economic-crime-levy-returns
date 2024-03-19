@@ -100,7 +100,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
       status(result) shouldBe BAD_GATEWAY
 
       val contentJson  = contentAsJson(result)
-      val expectedJson = Json.toJson(ResponseError.badRequestError(errorMessage))
+      val expectedJson = Json.toJson(ResponseError.badGateway(errorMessage, BAD_GATEWAY))
 
       contentJson shouldBe expectedJson
     }
@@ -240,9 +240,9 @@ class ReturnSubmissionControllerSpec extends SpecBase {
           controller.submitReturn(eclReturn.internalId)(fakeRequest)
 
         status(result)        shouldBe BAD_REQUEST
-        contentAsJson(result) shouldBe Json.toJson(ResponseError.badRequestError(s"""
-               |Data missing: $validationErrorCause
-               |""".stripMargin))
+        contentAsJson(result) shouldBe Json.toJson(
+          ResponseError.badRequestError(s"Data missing: $validationErrorCause")
+        )
     }
 
     "return 200 OK when returnType is AmendReturn and amendReturnsNrsEnabled is ON" in forAll {

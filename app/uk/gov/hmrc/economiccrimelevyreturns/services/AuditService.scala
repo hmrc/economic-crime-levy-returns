@@ -52,7 +52,8 @@ class AuditService @Inject() (auditConnector: AuditConnector)(implicit ec: Execu
         .sendExtendedEvent(submittedAuditEvent)(hc, ec)
         .map {
           case AuditResult.Success            => Right(())
-          case AuditResult.Failure(reason, _) => Left(AuditError.BadGateway(reason = reason, code = BAD_GATEWAY))
+          case AuditResult.Failure(reason, _) =>
+            Left(AuditError.BadGateway(reason = s"Return Submitted Audit Failed - $reason", code = BAD_GATEWAY))
           case AuditResult.Disabled           =>
             Left(AuditError.BadGateway(reason = "Audit is disabled for the audit connector", code = BAD_GATEWAY))
         }

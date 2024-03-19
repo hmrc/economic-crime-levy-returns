@@ -17,6 +17,7 @@
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import cats.data.EitherT
+import play.api.Logging
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band.Small
 import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
@@ -28,7 +29,7 @@ import java.time.{Clock, Instant, ZoneOffset}
 import javax.inject.Inject
 import scala.concurrent.Future
 
-class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaValidator) {
+class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaValidator) extends Logging {
 
   private val YearInDays: Int = 365
 
@@ -101,7 +102,9 @@ class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaVa
   ): Either[DataValidationError, T] =
     data match {
       case Some(value) => Right(value)
-      case _           => Left(DataValidationError.DataMissing(missingErrorMessage(description)))
+      case _           =>
+        logger.info(s"Return Validation Failed - ${missingErrorMessage(description)}")
+        Left(DataValidationError.DataMissing(missingErrorMessage(description)))
     }
 
   private def validateConditionalOptExists[T](
@@ -112,7 +115,9 @@ class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaVa
     data match {
       case Some(value) if condition => Right(Some(value))
       case _ if !condition          => Right(None)
-      case _                        => Left(DataValidationError.DataMissing(missingErrorMessage(description)))
+      case _                        =>
+        logger.info(s"Return Validation Failed - ${missingErrorMessage(description)}")
+        Left(DataValidationError.DataMissing(missingErrorMessage(description)))
     }
 
   private def missingErrorMessage(missingDataDescription: String): String = s"$missingDataDescription is missing"

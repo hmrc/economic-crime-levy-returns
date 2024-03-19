@@ -80,7 +80,7 @@ class NrsService @Inject() (nrsConnector: NrsConnector, clock: Clock)(implicit
               if UpstreamErrorResponse.Upstream5xxResponse
                 .unapply(error)
                 .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
-            Left(NrsSubmissionError.BadGateway(reason = message, code = code))
+            Left(NrsSubmissionError.BadGateway(reason = s"NRS Submission Failed - $message", code = code))
           case NonFatal(thr) => Left(NrsSubmissionError.InternalUnexpectedError(Some(thr)))
         }
     }

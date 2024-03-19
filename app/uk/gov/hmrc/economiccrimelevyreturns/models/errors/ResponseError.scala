@@ -16,13 +16,8 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
-import play.api.libs.functional.syntax.unlift
-import uk.gov.hmrc.http.UpstreamErrorResponse
-
-import play.api.libs.json.OWrites
-import play.api.libs.json.Reads
-import play.api.libs.json.__
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.functional.syntax.{toFunctionalBuilderOps, unlift}
+import play.api.libs.json.{OWrites, Reads, __}
 
 sealed abstract class ResponseError extends Product with Serializable {
   def message: String
