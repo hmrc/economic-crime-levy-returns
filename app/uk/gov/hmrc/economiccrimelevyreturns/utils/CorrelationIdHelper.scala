@@ -22,7 +22,7 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import java.util.UUID
 
-object CorrelationIdGenerator {
+object CorrelationIdHelper {
 
   val HEADER_X_CORRELATION_ID: String = "X-Correlation-Id"
 

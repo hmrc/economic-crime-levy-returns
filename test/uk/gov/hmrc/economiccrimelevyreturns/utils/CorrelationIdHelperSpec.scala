@@ -20,14 +20,14 @@ import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 
 import java.util.UUID
 
-class CorrelationIdGeneratorSpec extends SpecBase {
+class CorrelationIdHelperSpec extends SpecBase {
 
   "headerCarrierWithCorrelationId" should {
     "return a correlation id when not present in request" in {
 
-      val correlationIdHeader = CorrelationIdGenerator.HEADER_X_CORRELATION_ID
+      val correlationIdHeader = CorrelationIdHelper.HEADER_X_CORRELATION_ID
 
-      val result = CorrelationIdGenerator.headerCarrierWithCorrelationId(fakeRequest)
+      val result = CorrelationIdHelper.headerCarrierWithCorrelationId(fakeRequest)
 
       val headerKeys: Seq[String] = result.extraHeaders.map(_._1)
 
@@ -36,13 +36,13 @@ class CorrelationIdGeneratorSpec extends SpecBase {
 
     "return existing correlation id when present in request" in {
 
-      val correlationIdHeader = CorrelationIdGenerator.HEADER_X_CORRELATION_ID
+      val correlationIdHeader = CorrelationIdHelper.HEADER_X_CORRELATION_ID
       val correlationId       = UUID.randomUUID().toString
 
       val requestWithCorrelationId = fakeRequest
         .withHeaders((correlationIdHeader, correlationId))
 
-      val result = CorrelationIdGenerator.headerCarrierWithCorrelationId(requestWithCorrelationId)
+      val result = CorrelationIdHelper.headerCarrierWithCorrelationId(requestWithCorrelationId)
 
       result.otherHeaders should contain atLeastOneElementOf Map(correlationIdHeader -> correlationId)
     }
