@@ -116,19 +116,20 @@ class ReturnsServiceSpec extends SpecBase {
       result shouldBe Right(())
     }
 
-    "return DataRetrievalError.InternalUnexpectedError when error" in forAll { (validEclReturn: ValidEclReturn, errorMessage: String) =>
-      reset(mockReturnsRepository)
+    "return DataRetrievalError.InternalUnexpectedError when error" in forAll {
+      (validEclReturn: ValidEclReturn, errorMessage: String) =>
+        reset(mockReturnsRepository)
 
-      val throwable = new Exception(errorMessage)
+        val throwable = new Exception(errorMessage)
 
-      when(mockReturnsRepository.upsert(validEclReturn.eclReturn))
-        .thenReturn(Future.failed(throwable))
+        when(mockReturnsRepository.upsert(validEclReturn.eclReturn))
+          .thenReturn(Future.failed(throwable))
 
-      val sut = new ReturnsService(mockReturnsRepository)
+        val sut = new ReturnsService(mockReturnsRepository)
 
-      val result: Either[DataRetrievalError, Unit] = await(sut.upsert(validEclReturn.eclReturn).value)
+        val result: Either[DataRetrievalError, Unit] = await(sut.upsert(validEclReturn.eclReturn).value)
 
-      result shouldBe Left(DataRetrievalError.InternalUnexpectedError(Some(throwable)))
+        result shouldBe Left(DataRetrievalError.InternalUnexpectedError(Some(throwable)))
     }
   }
 

@@ -115,19 +115,20 @@ class SessionServiceSpec extends SpecBase {
       result shouldBe Right(())
     }
 
-    "return DataRetrievalError.InternalUnexpectedError when error" in forAll { (sessionData: SessionData, errorMessage: String) =>
-      reset(mockSessionRepository)
+    "return DataRetrievalError.InternalUnexpectedError when error" in forAll {
+      (sessionData: SessionData, errorMessage: String) =>
+        reset(mockSessionRepository)
 
-      val throwable = new Exception(errorMessage)
+        val throwable = new Exception(errorMessage)
 
-      when(mockSessionRepository.upsert(sessionData))
-        .thenReturn(Future.failed(throwable))
+        when(mockSessionRepository.upsert(sessionData))
+          .thenReturn(Future.failed(throwable))
 
-      val sut = new SessionService(mockSessionRepository)
+        val sut = new SessionService(mockSessionRepository)
 
-      val result: Either[DataRetrievalError, Unit] = await(sut.upsert(sessionData).value)
+        val result: Either[DataRetrievalError, Unit] = await(sut.upsert(sessionData).value)
 
-      result shouldBe Left(DataRetrievalError.InternalUnexpectedError(Some(throwable)))
+        result shouldBe Left(DataRetrievalError.InternalUnexpectedError(Some(throwable)))
     }
   }
 }

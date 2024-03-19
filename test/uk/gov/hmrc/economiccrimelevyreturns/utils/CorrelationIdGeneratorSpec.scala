@@ -37,7 +37,7 @@ class CorrelationIdGeneratorSpec extends SpecBase {
     "return existing correlation id when present in request" in {
 
       val correlationIdHeader = CorrelationIdGenerator.HEADER_X_CORRELATION_ID
-      val correlationId = UUID.randomUUID().toString
+      val correlationId       = UUID.randomUUID().toString
 
       val requestWithCorrelationId = fakeRequest
         .withHeaders((correlationIdHeader, correlationId))

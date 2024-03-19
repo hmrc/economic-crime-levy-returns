@@ -22,13 +22,12 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.errors._
 class ErrorHandlerSpec extends SpecBase with ErrorHandler {
 
   "dataRetrievalErrorConverter" should {
-    "return ResponseError.badGateway when DataRetrievalError.NotFound is converted" in forAll {
-      (id: String) =>
-        val dataRetrievalError = DataRetrievalError.NotFound(id)
+    "return ResponseError.badGateway when DataRetrievalError.NotFound is converted" in forAll { (id: String) =>
+      val dataRetrievalError = DataRetrievalError.NotFound(id)
 
-        val result: ResponseError = dataRetrievalErrorConverter.convert(dataRetrievalError)
+      val result: ResponseError = dataRetrievalErrorConverter.convert(dataRetrievalError)
 
-        result shouldBe ResponseError.notFoundError(s"Unable to find record with id: $id")
+      result shouldBe ResponseError.notFoundError(s"Unable to find record with id: $id")
     }
 
     "return ResponseError.internalServiceError when DataRetrievalError.InternalUnexpectedError is converted" in {
@@ -72,19 +71,19 @@ class ErrorHandlerSpec extends SpecBase with ErrorHandler {
   "dmsSubmissionErrorConverter" should {
     "return ResponseError.badGateway when DmsSubmissionError.BadGateway is converted" in forAll {
       (errorMessage: String) =>
-      val dmsSubmissionError = DmsSubmissionError.BadGateway(errorMessage, BAD_GATEWAY)
-
-      val result: ResponseError = dmsSubmissionErrorConverter.convert(dmsSubmissionError)
-
-      result shouldBe ResponseError.badGateway(errorMessage, BAD_GATEWAY)
-    }
-
-    "return ResponseError.internalServiceError when DmsSubmissionError.InternalUnexpectedError is converted" in {
-        val dmsSubmissionError = DmsSubmissionError.InternalUnexpectedError(None)
+        val dmsSubmissionError = DmsSubmissionError.BadGateway(errorMessage, BAD_GATEWAY)
 
         val result: ResponseError = dmsSubmissionErrorConverter.convert(dmsSubmissionError)
 
-        result shouldBe ResponseError.internalServiceError(ErrorCode.InternalServerError)
+        result shouldBe ResponseError.badGateway(errorMessage, BAD_GATEWAY)
+    }
+
+    "return ResponseError.internalServiceError when DmsSubmissionError.InternalUnexpectedError is converted" in {
+      val dmsSubmissionError = DmsSubmissionError.InternalUnexpectedError(None)
+
+      val result: ResponseError = dmsSubmissionErrorConverter.convert(dmsSubmissionError)
+
+      result shouldBe ResponseError.internalServiceError(ErrorCode.InternalServerError)
     }
   }
 

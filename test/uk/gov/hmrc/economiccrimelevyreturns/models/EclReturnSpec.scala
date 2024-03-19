@@ -21,13 +21,12 @@ import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 
 class EclReturnSpec extends SpecBase {
-  
-  "reads" should {
-    "return the return type deserialized from its JSON representation" in forAll {
-      (returnType: ReturnType) =>
-        val json = Json.toJson(returnType)
 
-        json.as[ReturnType] shouldBe returnType
+  "reads" should {
+    "return the return type deserialized from its JSON representation" in forAll { (returnType: ReturnType) =>
+      val json = Json.toJson(returnType)
+
+      json.as[ReturnType] shouldBe returnType
     }
 
     "return a JsError when passed an invalid string value" in {

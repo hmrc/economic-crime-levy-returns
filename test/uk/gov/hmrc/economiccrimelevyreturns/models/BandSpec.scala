@@ -22,13 +22,11 @@ import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 
 class BandSpec extends SpecBase {
 
-
   "reads" should {
-    "return the band deserialized from its JSON representation" in forAll {
-      (band: Band) =>
-        val json = Json.toJson(band)
+    "return the band deserialized from its JSON representation" in forAll { (band: Band) =>
+      val json = Json.toJson(band)
 
-        json.as[Band] shouldBe band
+      json.as[Band] shouldBe band
     }
 
     "return a JsError when passed an invalid string value" in {

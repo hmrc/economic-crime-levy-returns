@@ -39,8 +39,11 @@ class AuditServiceSpec extends SpecBase {
 
         val sut = new AuditService(mockAuditConnector)
 
-        val result: Either[AuditError, Unit] = await(sut
-          .sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, Some(chargeReference)).value)
+        val result: Either[AuditError, Unit] = await(
+          sut
+            .sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, Some(chargeReference))
+            .value
+        )
 
         result shouldBe Right(())
     }
@@ -54,8 +57,11 @@ class AuditServiceSpec extends SpecBase {
 
         val sut = new AuditService(mockAuditConnector)
 
-        val result: Either[AuditError, Unit] = await(sut
-          .sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, Some(chargeReference)).value)
+        val result: Either[AuditError, Unit] = await(
+          sut
+            .sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, Some(chargeReference))
+            .value
+        )
 
         result shouldBe Left(AuditError.BadGateway(s"Return Submitted Audit Failed - $errorMessage", BAD_GATEWAY))
     }
@@ -69,8 +75,11 @@ class AuditServiceSpec extends SpecBase {
 
         val sut = new AuditService(mockAuditConnector)
 
-        val result: Either[AuditError, Unit] = await(sut
-          .sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, Some(chargeReference)).value)
+        val result: Either[AuditError, Unit] = await(
+          sut
+            .sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, Some(chargeReference))
+            .value
+        )
 
         result shouldBe Left(AuditError.BadGateway("Audit is disabled for the audit connector", BAD_GATEWAY))
     }
@@ -86,8 +95,11 @@ class AuditServiceSpec extends SpecBase {
 
         val sut = new AuditService(mockAuditConnector)
 
-        val result: Either[AuditError, Unit] = await(sut
-          .sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, Some(chargeReference)).value)
+        val result: Either[AuditError, Unit] = await(
+          sut
+            .sendReturnSubmittedEvent(eclReturn, eclRegistrationReference, Some(chargeReference))
+            .value
+        )
 
         result shouldBe Left(AuditError.InternalUnexpectedError(Some(throwable)))
     }

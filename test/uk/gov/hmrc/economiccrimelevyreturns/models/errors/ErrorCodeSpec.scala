@@ -23,11 +23,10 @@ import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 class ErrorCodeSpec extends SpecBase {
 
   "reads" should {
-    "return the error code deserialized from its JSON representation" in forAll {
-      (errorCode: ErrorCode) =>
-        val json = Json.toJson(errorCode)
+    "return the error code deserialized from its JSON representation" in forAll { (errorCode: ErrorCode) =>
+      val json = Json.toJson(errorCode)
 
-        json.as[ErrorCode] shouldBe errorCode
+      json.as[ErrorCode] shouldBe errorCode
     }
 
     "return a JsError when passed an invalid string value" in {
