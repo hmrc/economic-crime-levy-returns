@@ -35,9 +35,9 @@ class ReturnsISpec extends ISpecBase {
       lazy val getResult =
         callRoute(FakeRequest(routes.ReturnsController.getReturn(emptyReturn.internalId)))
 
-      status(putResult) shouldBe NO_CONTENT
-      status(getResult) shouldBe OK
-//      contentAsJson(getResult) shouldBe Json.toJson(emptyReturn.copy(lastUpdated = Some(now)))
+      status(putResult)        shouldBe NO_CONTENT
+      status(getResult)        shouldBe OK
+      contentAsJson(getResult) shouldBe Json.toJson(emptyReturn.copy(lastUpdated = Some(now)))
     }
   }
 
