@@ -19,18 +19,21 @@ package uk.gov.hmrc.economiccrimelevyreturns.generators
 import org.scalacheck.Arbitrary
 import org.scalacheck.derive.MkArbitrary
 import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
-import uk.gov.hmrc.economiccrimelevyreturns.models.CalculatedLiability
-import uk.gov.hmrc.economiccrimelevyreturns.models.des.ObligationStatus
+import uk.gov.hmrc.economiccrimelevyreturns.models.{Band, CalculatedLiability, ReturnType}
+import uk.gov.hmrc.economiccrimelevyreturns.models.des.{ObligationStatus => DesObligationStatus}
+import uk.gov.hmrc.economiccrimelevyreturns.models.ObligationStatus
 import uk.gov.hmrc.economiccrimelevyreturns.models.dms.DmsNotification
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
 import com.danielasfregola.randomdatagenerator.RandomDataGenerator.derivedArbitrary
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ErrorCode
 
 object CachedArbitraries extends EclTestData with Generators {
 
   private def mkArb[T](implicit mkArb: MkArbitrary[T]): Arbitrary[T] = MkArbitrary[T].arbitrary
 
   implicit lazy val arbObligationStatus: Arbitrary[ObligationStatus]               = mkArb
+  implicit lazy val arbDesObligationStatus: Arbitrary[DesObligationStatus]         = mkArb
   implicit lazy val arbCalculatedLiability: Arbitrary[CalculatedLiability]         = mkArb
   implicit lazy val arbSubmitEclReturnResponse: Arbitrary[SubmitEclReturnResponse] = mkArb
   implicit lazy val arbEclReturnSubmission: Arbitrary[EclReturnSubmission]         = mkArb
@@ -38,5 +41,8 @@ object CachedArbitraries extends EclTestData with Generators {
   implicit lazy val arbNrsSubmission: Arbitrary[NrsSubmission]                     = mkArb
   implicit lazy val arbNrsSubmissionResponse: Arbitrary[NrsSubmissionResponse]     = mkArb
   implicit lazy val arbDmsNotification: Arbitrary[DmsNotification]                 = mkArb
+  implicit lazy val arbErrorCode: Arbitrary[ErrorCode]                             = mkArb
+  implicit lazy val arbReturnType: Arbitrary[ReturnType]                           = mkArb
+  implicit lazy val arbBand: Arbitrary[Band]                                       = mkArb
 
 }

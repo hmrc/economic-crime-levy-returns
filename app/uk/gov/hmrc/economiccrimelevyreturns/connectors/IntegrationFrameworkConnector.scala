@@ -51,8 +51,8 @@ class IntegrationFrameworkConnector @Inject() (
 
     Seq(
       (HeaderNames.AUTHORIZATION, s"Bearer $bearerToken"),
-      (CustomHeaderNames.Environment, appConfig.integrationFrameworkEnvironment),
-      (CustomHeaderNames.CorrelationId, correlationId)
+      (CustomHeaderNames.environment, appConfig.integrationFrameworkEnvironment),
+      (CustomHeaderNames.correlationId, correlationId)
     )
   }
 

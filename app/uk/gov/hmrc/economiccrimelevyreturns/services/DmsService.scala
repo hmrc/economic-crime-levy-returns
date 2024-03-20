@@ -17,8 +17,10 @@
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import cats.data.EitherT
+import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
+import play.api.mvc.MultipartFormData
 import play.api.mvc.MultipartFormData.{DataPart, FilePart}
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.DmsConnector
@@ -78,12 +80,15 @@ class DmsService @Inject() (
             if UpstreamErrorResponse.Upstream5xxResponse
               .unapply(error)
               .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
-          Left(DmsSubmissionError.BadGateway(reason = message, code = code))
+          Left(DmsSubmissionError.BadGateway(reason = s"DMS Submission Failed - $message", code = code))
         case NonFatal(thr) => Left(DmsSubmissionError.InternalUnexpectedError(Some(thr)))
       }
     }
 
-  private def createBody(dateOfReceipt: String, pdf: ByteArrayOutputStream) =
+  private def createBody(
+    dateOfReceipt: String,
+    pdf: ByteArrayOutputStream
+  ): Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed] =
     Source(
       Seq(
         DataPart("callbackUrl", appConfig.dmsSubmissionCallbackUrl),

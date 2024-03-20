@@ -52,7 +52,7 @@ class BaseAuthorisedAction @Inject() (
     Retrievals.groupIdentifier and Retrievals.itmpName and Retrievals.itmpDateOfBirth and Retrievals.itmpAddress
 
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
-    val authorisedFunction = authorised(Enrolment(EclEnrolment.ServiceName))
+    val authorisedFunction = authorised(Enrolment(EclEnrolment.serviceName))
 
     (for {
       eclReference     <- getEclRegistrationReference(authorisedFunction, request)
@@ -79,8 +79,8 @@ class BaseAuthorisedAction @Inject() (
       authorisedFunction
         .retrieve(Retrievals.authorisedEnrolments) { case enrolments =>
           enrolments
-            .getEnrolment(EclEnrolment.ServiceName)
-            .flatMap(_.getIdentifier(EclEnrolment.IdentifierKey)) match {
+            .getEnrolment(EclEnrolment.serviceName)
+            .flatMap(_.getIdentifier(EclEnrolment.identifierKey)) match {
             case Some(eclReference) => Future.successful(Right(eclReference.value))
             case None               => Future.successful(Left(ResponseError.internalServiceError(cause = None)))
           }

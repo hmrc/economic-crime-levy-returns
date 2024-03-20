@@ -59,7 +59,8 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
       (
         errorCode: Int,
       ) =>
-        val message = "Gateway Error"
+        val message       = "Gateway Error"
+        val errorMessages = s"Get ECL Return Failed - $message"
 
         when(
           mockIntegrationFrameworkConnector
@@ -75,7 +76,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         val result =
           await(service.getEclReturnSubmission(periodKey, eclRegistrationReference).value)
 
-        result shouldBe Left(ReturnsSubmissionError.BadGateway(message, errorCode))
+        result shouldBe Left(ReturnsSubmissionError.BadGateway(errorMessages, errorCode))
     }
 
     "return ReturnsSubmissionError.InternalUnexpectedError when an exception while submitting return in the integration framework connector" in {
@@ -126,7 +127,8 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         errorCode: Int,
         eclReturn: ValidEclReturn
       ) =>
-        val message = "Gateway Error"
+        val message      = "Gateway Error"
+        val errorMessage = s"Submit ECL Return Failed - $message"
 
         when(
           mockIntegrationFrameworkConnector
@@ -142,7 +144,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         val result =
           await(service.submitEclReturn(eclRegistrationReference, eclReturn.expectedEclReturnSubmission).value)
 
-        result shouldBe Left(ReturnsSubmissionError.BadGateway(message, errorCode))
+        result shouldBe Left(ReturnsSubmissionError.BadGateway(errorMessage, errorCode))
     }
 
     "return ReturnsSubmissionError.InternalUnexpectedError when an exception while submitting return in the integration framework connector" in forAll {

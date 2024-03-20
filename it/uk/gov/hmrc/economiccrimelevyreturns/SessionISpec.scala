@@ -31,6 +31,7 @@ class SessionISpec extends ISpecBase {
       stubAuthorised()
 
       val sessionData = random[SessionData]
+        .copy(values = arbSessionData.arbitrary.sample.get.values)
 
       lazy val putResult = callRoute(
         FakeRequest(routes.SessionController.upsert)
@@ -51,6 +52,7 @@ class SessionISpec extends ISpecBase {
       stubAuthorised()
 
       val sessionData = random[SessionData]
+        .copy(values = arbSessionData.arbitrary.sample.get.values)
 
       callRoute(
         FakeRequest(routes.SessionController.upsert).withJsonBody(
@@ -83,6 +85,7 @@ class SessionISpec extends ISpecBase {
       stubAuthorised()
 
       val sessionData = random[SessionData]
+        .copy(values = arbSessionData.arbitrary.sample.get.values)
 
       callRoute(
         FakeRequest(routes.SessionController.upsert).withJsonBody(

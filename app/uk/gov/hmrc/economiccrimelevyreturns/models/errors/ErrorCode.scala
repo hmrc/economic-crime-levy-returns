@@ -17,17 +17,14 @@
 package uk.gov.hmrc.economiccrimelevyreturns.models.errors
 
 import play.api.http.Status._
-import play.api.libs.json.JsError
-import play.api.libs.json.JsString
-import play.api.libs.json.JsSuccess
-import play.api.libs.json.Reads
-import play.api.libs.json.Writes
+import play.api.libs.json.{JsError, JsString, JsSuccess, JsValue, Reads, Writes}
 
 sealed abstract class ErrorCode(val code: String, val statusCode: Int) extends Product with Serializable
 
 object ErrorCode {
   case object BadRequest extends ErrorCode("BAD_REQUEST", BAD_REQUEST)
-  case object BadGateway extends ErrorCode("BAD_REQUEST", BAD_GATEWAY)
+
+  case object BadGateway extends ErrorCode("BAD_GATEWAY", BAD_GATEWAY)
 
   case object NotFound extends ErrorCode("NOT_FOUND", NOT_FOUND)
 
@@ -41,10 +38,9 @@ object ErrorCode {
 
   case object Unauthorized extends ErrorCode("UNAUTHORIZED", UNAUTHORIZED)
 
-  case object Unproce extends ErrorCode("UNAUTHORIZED", UNAUTHORIZED)
-
   lazy val errorCodes: Seq[ErrorCode] = Seq(
     BadRequest,
+    BadGateway,
     NotFound,
     Forbidden,
     InternalServerError,
@@ -57,11 +53,11 @@ object ErrorCode {
     JsString(errorCode.code)
   }
 
-  implicit val errorCodeReads: Reads[ErrorCode] = Reads { errorCode =>
+  implicit val errorCodeReads: Reads[ErrorCode] = Reads { errorCode: JsValue =>
     errorCodes
       .find(value => value.code == errorCode.asInstanceOf[JsString].value)
       .map(errorCode => JsSuccess(errorCode))
-      .getOrElse(JsError())
+      .getOrElse(JsError(s"$errorCode is not a valid ErrorCode"))
   }
 
 }

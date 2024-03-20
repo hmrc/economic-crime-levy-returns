@@ -18,7 +18,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
 import cats.data.EitherT
 import play.api.Logging
-import uk.gov.hmrc.economiccrimelevyreturns.models.errors.{BadGateway, DataRetrievalError, DataValidationError, DmsSubmissionError, InternalServiceError, NrsSubmissionError, ResponseError, ReturnsSubmissionError}
+import uk.gov.hmrc.economiccrimelevyreturns.models.errors._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -98,17 +98,11 @@ trait ErrorHandler extends Logging {
       override def convert(value: DataValidationError): ResponseError = {
         val errorMessage = value match {
           case DataValidationError.SchemaValidationError(cause) =>
-            s"""
-             |Schema validation error: $cause
-             |""".stripMargin
+            s"Schema validation error: $cause"
           case DataValidationError.DataMissing(cause)           =>
-            s"""
-             |Data missing: $cause
-             |""".stripMargin
+            s"Data missing: $cause"
           case DataValidationError.DataInvalid(cause)           =>
-            s"""
-               |Data invalid: $cause
-               |""".stripMargin
+            s"Data invalid: $cause"
         }
 
         ResponseError.badRequestError(errorMessage)

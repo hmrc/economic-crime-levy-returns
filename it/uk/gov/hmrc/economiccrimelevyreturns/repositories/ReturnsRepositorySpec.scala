@@ -40,8 +40,8 @@ class ReturnsRepositorySpec
     "insert a new return with the last updated time set to `now`" in {
       val expectedResult = eclReturn.copy(lastUpdated = Some(now))
 
-      val setResult     = repository.upsert(eclReturn).futureValue
-      val updatedRecord = find(Filters.equal("internalId", eclReturn.internalId)).futureValue.headOption.value
+      val setResult: Unit = repository.upsert(eclReturn).futureValue
+      val updatedRecord   = find(Filters.equal("internalId", eclReturn.internalId)).futureValue.headOption.value
 
       setResult     shouldEqual ()
       updatedRecord shouldEqual expectedResult
@@ -52,8 +52,8 @@ class ReturnsRepositorySpec
 
       val expectedResult = eclReturn.copy(lastUpdated = Some(now))
 
-      val setResult     = repository.upsert(eclReturn).futureValue
-      val updatedRecord = find(Filters.equal("internalId", eclReturn.internalId)).futureValue.headOption.value
+      val setResult: Unit = repository.upsert(eclReturn).futureValue
+      val updatedRecord   = find(Filters.equal("internalId", eclReturn.internalId)).futureValue.headOption.value
 
       setResult     shouldEqual ()
       updatedRecord shouldEqual expectedResult
@@ -79,14 +79,14 @@ class ReturnsRepositorySpec
     "remove a record" in {
       insert(eclReturn).futureValue
 
-      val result = repository.delete(eclReturn.internalId).futureValue
+      val result: Unit = repository.delete(eclReturn.internalId).futureValue
 
       result                                      shouldEqual ()
       repository.get(eclReturn.internalId).futureValue should not be defined
     }
 
     "return true when there is no record to remove" in {
-      val result = repository.delete("id that does not exist").futureValue
+      val result: Unit = repository.delete("id that does not exist").futureValue
 
       result shouldEqual ()
     }

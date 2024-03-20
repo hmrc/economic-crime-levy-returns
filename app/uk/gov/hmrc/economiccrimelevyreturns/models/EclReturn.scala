@@ -33,6 +33,7 @@ object ReturnType {
         value match {
           case "FirstTimeReturn" => JsSuccess(FirstTimeReturn)
           case "AmendReturn"     => JsSuccess(AmendReturn)
+          case s                 => JsError(s"$s is not a valid ReturnType")
         }
       case e: JsError          => e
     }

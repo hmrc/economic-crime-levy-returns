@@ -32,7 +32,7 @@ class DmsServiceSpec extends SpecBase {
 
   val mockDmsConnector: DmsConnector = mock[DmsConnector]
   val html                           = "<html><head></head><body></body></html>"
-  val now                            = Instant.now
+  val now: Instant                   = Instant.now
 
   val service = new DmsService(mockDmsConnector, appConfig)
 
@@ -51,14 +51,15 @@ class DmsServiceSpec extends SpecBase {
     "return DmsSubmissionError.BadGateway if submission fails" in forAll(generateErrorCode) { errorCode: Int =>
       val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
-      val message = "Gateway Error"
+      val message      = "Gateway Error"
+      val errorMessage = s"DMS Submission Failed - $message"
 
       when(mockDmsConnector.sendPdf(any())(any()))
         .thenReturn(Future.failed(UpstreamErrorResponse.apply(message, errorCode)))
 
       val result = await(service.submitToDms(encoded, now).value)
 
-      result shouldBe Left(DmsSubmissionError.BadGateway(message, errorCode))
+      result shouldBe Left(DmsSubmissionError.BadGateway(errorMessage, errorCode))
     }
 
     "return DmsSubmissionError.InternalUnexpectedError if an exception is thrown in sendPdf" in {

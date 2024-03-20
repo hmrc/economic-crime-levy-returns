@@ -64,6 +64,28 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
         result shouldBe validResponse.response
     }
 
+    "return submit return response when call to integration framework succeeds with correlation id set" in forAll {
+      (
+        validResponse: ValidGetEclReturnSubmissionResponse
+      ) =>
+        beforeEach()
+
+        when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+          .thenReturn(
+            Future.successful(
+              HttpResponse.apply(OK, Json.stringify(Json.toJson(validResponse.response)))
+            )
+          )
+
+        val result = await(connector.getEclReturnSubmission(periodKey, eclRegistrationReference))
+
+        result shouldBe validResponse.response
+
+    }
+
     "return 400 UpstreamErrorResponse when call to integration framework returns an error" in {
       beforeEach()
 

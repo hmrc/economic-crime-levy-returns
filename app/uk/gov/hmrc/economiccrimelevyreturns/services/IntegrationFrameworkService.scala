@@ -44,7 +44,7 @@ class IntegrationFrameworkService @Inject() (
               if UpstreamErrorResponse.Upstream5xxResponse
                 .unapply(error)
                 .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
-            Left(ReturnsSubmissionError.BadGateway(reason = message, code = code))
+            Left(ReturnsSubmissionError.BadGateway(reason = s"Submit ECL Return Failed - $message", code = code))
 
           case NonFatal(thr) => Left(ReturnsSubmissionError.InternalUnexpectedError(Some(thr)))
         }
@@ -64,7 +64,7 @@ class IntegrationFrameworkService @Inject() (
               if UpstreamErrorResponse.Upstream5xxResponse
                 .unapply(error)
                 .isDefined || UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
-            Left(ReturnsSubmissionError.BadGateway(reason = message, code = code))
+            Left(ReturnsSubmissionError.BadGateway(reason = s"Get ECL Return Failed - $message", code = code))
 
           case NonFatal(thr) => Left(ReturnsSubmissionError.InternalUnexpectedError(Some(thr)))
         }
