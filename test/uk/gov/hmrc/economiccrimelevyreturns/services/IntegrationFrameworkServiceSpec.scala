@@ -42,13 +42,13 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
       ) =>
         when(
           mockIntegrationFrameworkConnector
-            .getEclReturnSubmission(ArgumentMatchers.eq(periodKey), ArgumentMatchers.eq(eclRegistrationReference))(
+            .getEclReturnSubmission(ArgumentMatchers.eq(periodKey), ArgumentMatchers.eq(testEclRegistrationReference))(
               any()
             )
         )
           .thenReturn(Future.successful(validResponse.response))
 
-        val result = await(service.getEclReturnSubmission(periodKey, eclRegistrationReference).value)
+        val result = await(service.getEclReturnSubmission(periodKey, testEclRegistrationReference).value)
 
         result shouldBe Right(validResponse.response)
     }
@@ -66,7 +66,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
           mockIntegrationFrameworkConnector
             .getEclReturnSubmission(
               ArgumentMatchers.eq(periodKey),
-              ArgumentMatchers.eq(eclRegistrationReference)
+              ArgumentMatchers.eq(testEclRegistrationReference)
             )(
               any()
             )
@@ -74,7 +74,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
           .thenReturn(Future.failed(UpstreamErrorResponse.apply(message, errorCode)))
 
         val result =
-          await(service.getEclReturnSubmission(periodKey, eclRegistrationReference).value)
+          await(service.getEclReturnSubmission(periodKey, testEclRegistrationReference).value)
 
         result shouldBe Left(ReturnsSubmissionError.BadGateway(errorMessages, errorCode))
     }
@@ -86,7 +86,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         mockIntegrationFrameworkConnector
           .getEclReturnSubmission(
             ArgumentMatchers.eq(periodKey),
-            ArgumentMatchers.eq(eclRegistrationReference)
+            ArgumentMatchers.eq(testEclRegistrationReference)
           )(
             any()
           )
@@ -94,7 +94,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         .thenReturn(Future.failed(exception))
 
       val result =
-        await(service.getEclReturnSubmission(periodKey, eclRegistrationReference).value)
+        await(service.getEclReturnSubmission(periodKey, testEclRegistrationReference).value)
 
       result shouldBe Left(ReturnsSubmissionError.InternalUnexpectedError(Some(exception)))
     }
@@ -108,13 +108,16 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
       ) =>
         when(
           mockIntegrationFrameworkConnector
-            .submitEclReturn(ArgumentMatchers.eq(eclRegistrationReference), ArgumentMatchers.eq(eclReturnSubmission))(
+            .submitEclReturn(
+              ArgumentMatchers.eq(testEclRegistrationReference),
+              ArgumentMatchers.eq(eclReturnSubmission)
+            )(
               any()
             )
         )
           .thenReturn(Future.successful(returnResponse))
 
-        val result = await(service.submitEclReturn(eclRegistrationReference, eclReturnSubmission).value)
+        val result = await(service.submitEclReturn(testEclRegistrationReference, eclReturnSubmission).value)
 
         result shouldBe Right(returnResponse)
     }
@@ -133,7 +136,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         when(
           mockIntegrationFrameworkConnector
             .submitEclReturn(
-              ArgumentMatchers.eq(eclRegistrationReference),
+              ArgumentMatchers.eq(testEclRegistrationReference),
               ArgumentMatchers.eq(eclReturn.expectedEclReturnSubmission)
             )(
               any()
@@ -142,7 +145,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
           .thenReturn(Future.failed(UpstreamErrorResponse.apply(message, errorCode)))
 
         val result =
-          await(service.submitEclReturn(eclRegistrationReference, eclReturn.expectedEclReturnSubmission).value)
+          await(service.submitEclReturn(testEclRegistrationReference, eclReturn.expectedEclReturnSubmission).value)
 
         result shouldBe Left(ReturnsSubmissionError.BadGateway(errorMessage, errorCode))
     }
@@ -156,7 +159,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         when(
           mockIntegrationFrameworkConnector
             .submitEclReturn(
-              ArgumentMatchers.eq(eclRegistrationReference),
+              ArgumentMatchers.eq(testEclRegistrationReference),
               ArgumentMatchers.eq(eclReturn.expectedEclReturnSubmission)
             )(
               any()
@@ -165,7 +168,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
           .thenReturn(Future.failed(exception))
 
         val result =
-          await(service.submitEclReturn(eclRegistrationReference, eclReturn.expectedEclReturnSubmission).value)
+          await(service.submitEclReturn(testEclRegistrationReference, eclReturn.expectedEclReturnSubmission).value)
 
         result shouldBe Left(ReturnsSubmissionError.InternalUnexpectedError(Some(exception)))
     }

@@ -72,8 +72,9 @@ final case class ValidGetEclReturnSubmissionResponse(
 
 trait EclTestData { self: Generators =>
 
-  private val base64EncodedNrsSubmissionHtml  = "PGh0bWw+PHRpdGxlPkhlbGxvIFdvcmxkITwvdGl0bGU+PC9odG1sPg=="
-  private val nrsSubmissionHtmlSha256Checksum = "38a8012d1af5587a9b37aef812810e31b2ddf7d405d20b5f1230a209d95c9d2b"
+  private val base64EncodedNrsSubmissionHtml: String  = "PGh0bWw+PHRpdGxlPkhlbGxvIFdvcmxkITwvdGl0bGU+PC9odG1sPg=="
+  private val nrsSubmissionHtmlSha256Checksum: String =
+    "38a8012d1af5587a9b37aef812810e31b2ddf7d405d20b5f1230a209d95c9d2b"
 
   private val minRevenue: Double = 0.00
   private val maxRevenue: Double = 99999999999.99
@@ -82,8 +83,11 @@ trait EclTestData { self: Generators =>
   private val minAmlDays: Int    = 0
   private val maxAmlDays: Int    = 365
   private val yearInDays: Int    = 365
-  private val minAmountDue       = 0
-  private val maxAmountDue       = 250000
+  private val minAmountDue: Int  = 0
+  private val maxAmountDue: Int  = 250000
+
+  val base64EncodedDmsSubmissionHtml: String = "PGh0bWw+PHRpdGxlPkhlbGxvIFdvcmxkITwvdGl0bGU+PC9odG1sPg=="
+  val uuidRegex: String                      = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 
   implicit val arbInstant: Arbitrary[Instant] = Arbitrary {
     Instant.now()
