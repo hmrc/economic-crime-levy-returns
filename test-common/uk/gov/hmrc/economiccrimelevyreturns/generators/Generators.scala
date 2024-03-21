@@ -49,13 +49,13 @@ trait Generators {
     genIntersperseString(numberGen, ",")
   }
 
-  def intsLargerThanMaxValue: Gen[BigInt] =
+  val intsLargerThanMaxValue: Gen[BigInt] =
     arbitrary[BigInt] suchThat (x => x > Int.MaxValue)
 
-  def intsSmallerThanMinValue: Gen[BigInt] =
+  val intsSmallerThanMinValue: Gen[BigInt] =
     arbitrary[BigInt] suchThat (x => x < Int.MinValue)
 
-  def nonNumerics: Gen[String] =
+  val nonNumerics: Gen[String] =
     alphaStr suchThat (_.size > 0)
 
   def intsBelowValue(value: Int): Gen[Int] =
@@ -67,13 +67,13 @@ trait Generators {
   def intsOutsideRange(min: Int, max: Int): Gen[Int] =
     arbitrary[Int] suchThat (x => x < min || x > max)
 
-  def nonBooleans: Gen[String] =
+  val nonBooleans: Gen[String] =
     arbitrary[String]
       .suchThat(_.nonEmpty)
       .suchThat(_ != "true")
       .suchThat(_ != "false")
 
-  def nonEmptyString: Gen[String] =
+  val nonEmptyString: Gen[String] =
     arbitrary[String] suchThat (_.nonEmpty)
 
   def stringsWithMaxLength(maxLength: Int): Gen[String] =
@@ -125,7 +125,6 @@ trait Generators {
     } yield s"$firstPart@$secondPart.$thirdPart".toLowerCase
   }
 
-  //TODO - update to vals as they are generators
   def stringFromRegex(maxLength: Int, regex: String): Gen[String] =
     RegexpGen.from(s"$regex").retryUntil(s => s.length <= maxLength && s.trim.nonEmpty)
 
@@ -135,7 +134,7 @@ trait Generators {
   val errorCode5xxList: Gen[Int] =
     Gen.oneOf(INTERNAL_SERVER_ERROR, BAD_GATEWAY, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT, NOT_IMPLEMENTED)
 
-  def generateErrorCode: Gen[Int] = for {
+  val generateErrorCode: Gen[Int] = for {
     a <- errorCode4xxList
     b <- errorCode5xxList
     c <- Gen.oneOf(a, b)

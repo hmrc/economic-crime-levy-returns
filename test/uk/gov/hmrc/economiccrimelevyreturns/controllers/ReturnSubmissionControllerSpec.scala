@@ -74,7 +74,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         when(
           mockReturnService.getEclReturnSubmission(
             ArgumentMatchers.eq(periodKey),
-            ArgumentMatchers.eq(eclRegistrationReference)
+            ArgumentMatchers.eq(testEclRegistrationReference)
           )(any())
         ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](validResponse.response))
     }
@@ -86,7 +86,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
       when(
         mockReturnService.getEclReturnSubmission(
           ArgumentMatchers.eq(periodKey),
-          ArgumentMatchers.eq(eclRegistrationReference)
+          ArgumentMatchers.eq(testEclRegistrationReference)
         )(any())
       ).thenReturn(
         EitherT.leftT[Future, GetEclReturnSubmissionResponse](
@@ -95,7 +95,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
       )
 
       val result: Future[Result] =
-        controller.getSubmission(periodKey, eclRegistrationReference)(fakeRequest)
+        controller.getSubmission(periodKey, testEclRegistrationReference)(fakeRequest)
 
       status(result) shouldBe BAD_GATEWAY
 
@@ -110,7 +110,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
       when(
         mockReturnService.getEclReturnSubmission(
           ArgumentMatchers.eq(periodKey),
-          ArgumentMatchers.eq(eclRegistrationReference)
+          ArgumentMatchers.eq(testEclRegistrationReference)
         )(any())
       ).thenReturn(
         EitherT.leftT[Future, GetEclReturnSubmissionResponse](
@@ -119,7 +119,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
       )
 
       val result: Future[Result] =
-        controller.getSubmission(periodKey, eclRegistrationReference)(fakeRequest)
+        controller.getSubmission(periodKey, testEclRegistrationReference)(fakeRequest)
 
       status(result) shouldBe INTERNAL_SERVER_ERROR
 
@@ -195,7 +195,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
 
         when(
           mockReturnService.submitEclReturn(
-            ArgumentMatchers.eq(eclRegistrationReference),
+            ArgumentMatchers.eq(testEclRegistrationReference),
             ArgumentMatchers.eq(eclReturnSubmission)
           )(any())
         ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](returnResponse))
@@ -223,7 +223,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
 
         when(
           mockReturnService.submitEclReturn(
-            ArgumentMatchers.eq(eclRegistrationReference),
+            ArgumentMatchers.eq(testEclRegistrationReference),
             ArgumentMatchers.eq(eclReturnSubmission)
           )(any())
         ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](returnResponse))
@@ -271,7 +271,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
 
         when(
           mockReturnService.submitEclReturn(
-            ArgumentMatchers.eq(eclRegistrationReference),
+            ArgumentMatchers.eq(testEclRegistrationReference),
             ArgumentMatchers.eq(eclReturnSubmission)
           )(any())
         ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](returnResponse))
@@ -321,7 +321,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
 
         when(
           mockReturnService.submitEclReturn(
-            ArgumentMatchers.eq(eclRegistrationReference),
+            ArgumentMatchers.eq(testEclRegistrationReference),
             ArgumentMatchers.eq(eclReturnSubmission)
           )(any())
         ).thenReturn(EitherT.rightT[Future, ReturnsSubmissionError](returnResponse))

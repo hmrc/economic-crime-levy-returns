@@ -21,6 +21,7 @@ import play.api.test._
 import play.api.{Application, Mode}
 import uk.gov.hmrc.economiccrimelevyreturns.EclTestData
 import uk.gov.hmrc.economiccrimelevyreturns.base.WireMockHelper._
+import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 
@@ -63,12 +64,11 @@ abstract class ISpecBase
   implicit lazy val materializer: Materializer = Materializer(system)
   implicit def ec: ExecutionContext            = global
 
-  val internalId: String               = "test-id"
-  val eclRegistrationReference: String = "test-ecl-registration-reference"
-  val periodKey: String                = "22XY"
-  val emptyReturn: EclReturn           = EclReturn.empty(internalId)
-  val now: Instant                     = Instant.now.truncatedTo(ChronoUnit.MILLIS)
-  private val stubClock: Clock         = Clock.fixed(now, ZoneId.systemDefault)
+  val internalId: String       = "test-id"
+  val periodKey: String        = "22XY"
+  val emptyReturn: EclReturn   = EclReturn.empty(internalId)
+  val now: Instant             = Instant.now.truncatedTo(ChronoUnit.MILLIS)
+  private val stubClock: Clock = Clock.fixed(now, ZoneId.systemDefault)
 
   val additionalAppConfig: Map[String, Any] = Map(
     "create-internal-auth-token-on-start" -> false,
@@ -83,6 +83,8 @@ abstract class ISpecBase
     "dms-submission",
     "internal-auth"
   )
+
+  lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   override def fakeApplication(): Application =
     GuiceApplicationBuilder()
