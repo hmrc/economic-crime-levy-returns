@@ -23,7 +23,6 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
-import uk.gov.hmrc.economiccrimelevyreturns.utils.CorrelationIdHelper.HEADER_X_CORRELATION_ID
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, Retries, StringContextOps}
 
@@ -42,11 +41,11 @@ class IntegrationFrameworkConnector @Inject() (
     with BaseConnector {
 
   private def integrationFrameworkHeaders(bearerToken: String)(implicit hc: HeaderCarrier): Seq[(String, String)] = {
-    val correlationId = hc.headers(scala.Seq(HEADER_X_CORRELATION_ID)) match {
-      case Nil          =>
-        UUID.randomUUID().toString
+    val correlationId = hc.headers(scala.Seq(CustomHeaderNames.xCorrelationId)) match {
       case Seq((_, id)) =>
         id
+      case _            =>
+        UUID.randomUUID().toString
     }
 
     Seq(

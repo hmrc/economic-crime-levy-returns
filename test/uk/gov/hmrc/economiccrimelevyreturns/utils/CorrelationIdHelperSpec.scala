@@ -17,6 +17,7 @@
 package uk.gov.hmrc.economiccrimelevyreturns.utils
 
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
+import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
 
 import java.util.UUID
 
@@ -25,7 +26,7 @@ class CorrelationIdHelperSpec extends SpecBase {
   "headerCarrierWithCorrelationId" should {
     "return a correlation id when not present in request" in {
 
-      val correlationIdHeader = CorrelationIdHelper.HEADER_X_CORRELATION_ID
+      val correlationIdHeader = CustomHeaderNames.xCorrelationId
 
       val result = CorrelationIdHelper.headerCarrierWithCorrelationId(fakeRequest)
 
@@ -36,7 +37,7 @@ class CorrelationIdHelperSpec extends SpecBase {
 
     "return existing correlation id when present in request" in {
 
-      val correlationIdHeader = CorrelationIdHelper.HEADER_X_CORRELATION_ID
+      val correlationIdHeader = CustomHeaderNames.xCorrelationId
       val correlationId       = UUID.randomUUID().toString
 
       val requestWithCorrelationId = fakeRequest

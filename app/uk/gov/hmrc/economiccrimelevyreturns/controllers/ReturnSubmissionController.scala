@@ -103,7 +103,7 @@ class ReturnSubmissionController @Inject() (
   private def amendSubmission(eclReturn: EclReturn, eclRegistrationReference: String)(implicit
     hc: HeaderCarrier,
     request: AuthorisedRequest[_]
-  ) =
+  ): EitherT[Future, ResponseError, SubmitEclReturnResponse] =
     for {
       base64EncodedDmsSubmissionHtml <- checkOptionalValueExists[String](eclReturn.base64EncodedDmsSubmissionHtml)
       base64EncodedNrsSubmissionHtml <- checkOptionalValueExists[String](eclReturn.base64EncodedNrsSubmissionHtml)
