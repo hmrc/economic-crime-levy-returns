@@ -11,6 +11,7 @@ object AppDependencies {
     "uk.gov.hmrc"       %% "bootstrap-backend-play-30"    % hmrcBootstrapVersion,
     "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-30"           % hmrcMongoVersion,
     "com.openhtmltopdf"  % "openhtmltopdf-pdfbox"         % openHtmlToPdfVersion,
+    "org.apache.pdfbox"  % "pdfbox"                       % "2.0.33",
     "org.typelevel"     %% "cats-core"                    % "2.10.0",
     "io.circe"          %% "circe-json-schema"            % "0.2.0",
     "org.json"          %  "json"                         % "20240303",
