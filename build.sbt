@@ -17,7 +17,7 @@ lazy val root = (project in file("."))
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources"
   )
   .settings(
-    scalaVersion := "2.13.12",
+    scalaVersion := "2.13.16",
     name := appName,
     RoutesKeys.routesImport ++= Seq(
       "uk.gov.hmrc.economiccrimelevyreturns.models._",

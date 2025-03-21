@@ -2,7 +2,7 @@ import sbt._
 
 object AppDependencies {
 
-  private val hmrcBootstrapVersion = "9.8.0"
+  private val hmrcBootstrapVersion = "9.11.0"
   private val hmrcMongoVersion     = "2.5.0"
   private val openHtmlToPdfVersion = "1.0.10"
 
