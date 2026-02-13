@@ -2,8 +2,8 @@ import sbt._
 
 object AppDependencies {
 
-  private val hmrcBootstrapVersion = "9.18.0"
-  private val hmrcMongoVersion     = "2.6.0"
+  private val hmrcBootstrapVersion = "10.5.0"
+  private val hmrcMongoVersion     = "2.12.0"
   private val openHtmlToPdfVersion = "1.0.10"
 
 
@@ -15,7 +15,7 @@ object AppDependencies {
     "org.typelevel"     %% "cats-core"                    % "2.13.0",
     "io.circe"          %% "circe-json-schema"            % "0.2.0",
     "org.json"          %  "json"                         % "20250517",
-    "uk.gov.hmrc"       %% "internal-auth-client-play-30" % "4.0.0",
+    "uk.gov.hmrc"       %% "internal-auth-client-play-30" % "4.3.0",
     "io.circe"          %% "circe-parser"                 % "0.14.14",
     "com.beachape"      %% "enumeratum-play-json"         % "1.9.0"
   )
