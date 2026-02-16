@@ -8,7 +8,7 @@ object AppDependencies {
 
 
   val compile: Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"       %% "bootstrap-backend-play-30"    % hmrcBootstrapVersion,
+    "uk.gov.hmrc"       %% "bootstrap-backend-play-30"    % hmrcBootstrapVersion exclude("org.apache.commons", "commons-lang3"),
     "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-30"           % hmrcMongoVersion,
     "com.openhtmltopdf"  % "openhtmltopdf-pdfbox"         % openHtmlToPdfVersion,
     "org.apache.pdfbox"  % "pdfbox"                       % "2.0.33",
@@ -17,7 +17,11 @@ object AppDependencies {
     "org.json"          %  "json"                         % "20250517",
     "uk.gov.hmrc"       %% "internal-auth-client-play-30" % "4.3.0",
     "io.circe"          %% "circe-parser"                 % "0.14.14",
-    "com.beachape"      %% "enumeratum-play-json"         % "1.9.0"
+    "com.beachape"      %% "enumeratum-play-json"         % "1.9.0",
+    "org.apache.commons" % "commons-lang3"    % "3.18.0",
+    "ch.qos.logback"     % "logback-core"     % "1.5.27",
+    "ch.qos.logback"     % "logback-classic"  % "1.5.27",
+    "at.yawk.lz4"        % "lz4-java"         % "1.10.3"
   )
 
   val test: Seq[ModuleID]    = Seq(

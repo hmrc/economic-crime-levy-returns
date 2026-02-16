@@ -25,6 +25,7 @@ lazy val root = (project in file("."))
     ),
     PlayKeys.playDefaultPort := 14003,
     libraryDependencies ++= AppDependencies(),
+    excludeDependencies += ExclusionRule("org.lz4", "lz4-java"),
     retrieveManaged := true,
     scalafmtOnCompile := true,
     (update / evictionWarningOptions).withRank(KeyRanks.Invisible) :=
