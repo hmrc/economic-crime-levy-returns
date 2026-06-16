@@ -57,7 +57,7 @@ class ReturnValidationControllerSpec extends SpecBase {
     }
 
     "return 200 OK with validation errors in the JSON response body when the ECL return data is invalid" in forAll {
-      eclReturn: EclReturn =>
+      (eclReturn: EclReturn) =>
         when(mockDataRetrievalService.get(anyString()))
           .thenReturn(EitherT.rightT[Future, DataRetrievalError](eclReturn))
 
@@ -73,7 +73,7 @@ class ReturnValidationControllerSpec extends SpecBase {
         contentAsJson(result) shouldBe Json.toJson(errorMessage)
     }
 
-    "return 404 NOT_FOUND when there is no ECL return data to validate" in forAll { eclReturn: EclReturn =>
+    "return 404 NOT_FOUND when there is no ECL return data to validate" in forAll { (eclReturn: EclReturn) =>
       when(mockDataRetrievalService.get(anyString()))
         .thenReturn(EitherT.leftT[Future, EclReturn](DataRetrievalError.NotFound(eclReturn.internalId)))
 

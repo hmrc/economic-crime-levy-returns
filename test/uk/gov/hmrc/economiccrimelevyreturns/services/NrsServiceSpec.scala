@@ -103,7 +103,7 @@ class NrsServiceSpec extends SpecBase {
 
     "return NrsSubmissionError.InternalUnexpectedError when an exception is thrown while decoding due to invalid base 64 string" in forAll(
       arbValidNrsSubmission(fakeRequestWithAuthorisation, stubClock).arbitrary
-    ) { validNrsSubmission: ValidNrsSubmission =>
+    ) { (validNrsSubmission: ValidNrsSubmission) =>
       val request = AuthorisedRequest(
         fakeRequestWithAuthorisation,
         validNrsSubmission.nrsSubmission.metadata.identityData.internalId,

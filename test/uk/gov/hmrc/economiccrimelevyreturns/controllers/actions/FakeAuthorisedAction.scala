@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.controllers.actions
 
-import com.danielasfregola.randomdatagenerator.RandomDataGenerator.random
 import play.api.mvc._
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs.NrsIdentityData

@@ -48,7 +48,7 @@ class DmsServiceSpec extends SpecBase {
       result shouldBe Right(SubmitEclReturnResponse(now, None))
     }
 
-    "return DmsSubmissionError.BadGateway if submission fails" in forAll(generateErrorCode) { errorCode: Int =>
+    "return DmsSubmissionError.BadGateway if submission fails" in forAll(generateErrorCode) { (errorCode: Int) =>
       val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
       val message      = "Gateway Error"

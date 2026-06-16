@@ -38,7 +38,7 @@ class SessionControllerSpec extends SpecBase {
   )
 
   "upsertSession" should {
-    "return 200 OK with the session that was upserted" in forAll { sessionData: SessionData =>
+    "return 200 OK with the session that was upserted" in forAll { (sessionData: SessionData) =>
       when(mockSessionService.upsert(ArgumentMatchers.eq(sessionData)))
         .thenReturn(EitherT.rightT[Future, DataRetrievalError](()))
 
@@ -50,7 +50,7 @@ class SessionControllerSpec extends SpecBase {
       status(result) shouldBe OK
     }
 
-    "return 404 NOT_FOUND when there is no SessionData for the id" in forAll { sessionData: SessionData =>
+    "return 404 NOT_FOUND when there is no SessionData for the id" in forAll { (sessionData: SessionData) =>
       when(mockSessionService.upsert(ArgumentMatchers.eq(sessionData)))
         .thenReturn(EitherT.leftT[Future, Unit](DataRetrievalError.NotFound(sessionData.internalId)))
 
@@ -65,7 +65,7 @@ class SessionControllerSpec extends SpecBase {
       )
     }
 
-    "return 500 INTERNAL_SERVER_ERROR when SessionData retrieval fails" in forAll { sessionData: SessionData =>
+    "return 500 INTERNAL_SERVER_ERROR when SessionData retrieval fails" in forAll { (sessionData: SessionData) =>
       when(mockSessionService.upsert(ArgumentMatchers.eq(sessionData)))
         .thenReturn(EitherT.leftT[Future, Unit](DataRetrievalError.InternalUnexpectedError(None)))
 
@@ -77,7 +77,7 @@ class SessionControllerSpec extends SpecBase {
   }
 
   "getSessionData" should {
-    "return 200 OK with an existing SessionData when there is one for the id" in forAll { sessionData: SessionData =>
+    "return 200 OK with an existing SessionData when there is one for the id" in forAll { (sessionData: SessionData) =>
       when(mockSessionService.get(ArgumentMatchers.eq(sessionData.internalId)))
         .thenReturn(EitherT.rightT[Future, DataRetrievalError](sessionData))
 
@@ -88,7 +88,7 @@ class SessionControllerSpec extends SpecBase {
       contentAsJson(result) shouldBe Json.toJson(sessionData)
     }
 
-    "return 404 NOT_FOUND when there is no SessionData for the id" in { sessionData: SessionData =>
+    "return 404 NOT_FOUND when there is no SessionData for the id" in { (sessionData: SessionData) =>
       when(mockSessionService.get(ArgumentMatchers.eq(sessionData.internalId)))
         .thenReturn(EitherT.leftT[Future, SessionData](DataRetrievalError.NotFound(sessionData.internalId)))
 
@@ -101,7 +101,7 @@ class SessionControllerSpec extends SpecBase {
       )
     }
 
-    "return 500 INTERNAL_SERVER_ERROR when SessionData retrieval fails" in { sessionData: SessionData =>
+    "return 500 INTERNAL_SERVER_ERROR when SessionData retrieval fails" in { (sessionData: SessionData) =>
       when(mockSessionService.get(ArgumentMatchers.eq(sessionData.internalId)))
         .thenReturn(EitherT.leftT[Future, SessionData](DataRetrievalError.InternalUnexpectedError(None)))
 
@@ -113,7 +113,7 @@ class SessionControllerSpec extends SpecBase {
   }
 
   "deleteSessionData" should {
-    "return 200 OK when deletion of SessionData with the given id is successful" in { sessionData: SessionData =>
+    "return 200 OK when deletion of SessionData with the given id is successful" in { (sessionData: SessionData) =>
       when(mockSessionService.delete(ArgumentMatchers.eq(sessionData.internalId)))
         .thenReturn(EitherT.rightT[Future, DataRetrievalError](()))
 
@@ -123,7 +123,7 @@ class SessionControllerSpec extends SpecBase {
       status(result) shouldBe OK
     }
 
-    "return 404 NOT_FOUND when there is no SessionData for the id" in { sessionData: SessionData =>
+    "return 404 NOT_FOUND when there is no SessionData for the id" in { (sessionData: SessionData) =>
       when(mockSessionService.delete(ArgumentMatchers.eq(sessionData.internalId)))
         .thenReturn(EitherT.leftT[Future, Unit](DataRetrievalError.NotFound("id")))
 
@@ -136,7 +136,7 @@ class SessionControllerSpec extends SpecBase {
       )
     }
 
-    "return 500 INTERNAL_SERVER_ERROR when SessionData deletion fails" in { sessionData: SessionData =>
+    "return 500 INTERNAL_SERVER_ERROR when SessionData deletion fails" in { (sessionData: SessionData) =>
       when(mockSessionService.delete(ArgumentMatchers.eq(sessionData.internalId)))
         .thenReturn(EitherT.leftT[Future, Unit](DataRetrievalError.InternalUnexpectedError(None)))
 

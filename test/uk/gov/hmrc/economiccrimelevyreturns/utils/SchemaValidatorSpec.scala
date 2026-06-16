@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.utils
 
-import io.circe.schema.Schema
 import play.api.libs.json._
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 
-class SchemaValidatorSpec extends SpecBase {
+class JsonSchemaValidatorSpec extends SpecBase {
   case class TestObject(foo: String, bar: String)
 
   object TestObject {
@@ -46,7 +45,7 @@ class SchemaValidatorSpec extends SpecBase {
         |}""".stripMargin)
     .getOrElse(fail("failed to create test JSON schema"))
 
-  val schemaValidator: SchemaValidator = new SchemaValidator
+  val schemaValidator: JsonSchemaValidator = new JsonSchemaValidator
 
   "validateAgainstJsonSchema" should {
     "serialize an object into JSON and validate it against a JSON schema, returning the given validated object if there are no errors" in {

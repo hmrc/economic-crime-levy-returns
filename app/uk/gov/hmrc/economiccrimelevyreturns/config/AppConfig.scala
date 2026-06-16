@@ -77,7 +77,7 @@ class AppConfig @Inject() (configuration: Configuration, servicesConfig: Service
 
   val internalAuthToken: String = configuration.get[String]("internal-auth.token")
 
-  val mongoTtl: Int = configuration.get[Int]("mongodb.timeToLiveInSeconds")
+  val mongoTtl: Long = configuration.get[Long]("mongodb.timeToLiveInSeconds")
 
   val nrsApiKey: String = configuration.get[String]("microservice.services.nrs.apiKey")
 
