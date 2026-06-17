@@ -79,7 +79,7 @@ object CachedArbitraries extends EclTestData with Generators {
       internalId,
       externalId,
       agentCode,
-      credentials, // credentials
+      credentials,
       confidenceLevel,
       nino,
       saUtr,
@@ -121,7 +121,7 @@ object CachedArbitraries extends EclTestData with Generators {
 
   implicit lazy val arbEclAmount: Arbitrary[EclAmount] = Arbitrary {
     for {
-      amount      <- Gen.posNum[Double].map(d => BigDecimal(d).setScale(2, scala.math.BigDecimal.RoundingMode.DOWN))
+      amount      <- bigDecimalInRange(0, Double.MaxValue)
       apportioned <- Gen.oneOf(true, false)
     } yield EclAmount(amount, apportioned)
   }
@@ -147,10 +147,8 @@ object CachedArbitraries extends EclTestData with Generators {
   implicit lazy val arbEclReturnDetails: Arbitrary[EclReturnDetails] = Arbitrary {
     for {
       revenueBand                            <- arbBand.arbitrary
-      amountOfEclDutyLiable                  <-
-        Gen.posNum[Double].map(d => BigDecimal(d).setScale(2, scala.math.BigDecimal.RoundingMode.DOWN))
-      accountingPeriodRevenue                <-
-        Gen.posNum[Double].map(d => BigDecimal(d).setScale(2, scala.math.BigDecimal.RoundingMode.DOWN))
+      amountOfEclDutyLiable                  <- bigDecimalInRange(0, Double.MaxValue)
+      accountingPeriodRevenue                <- bigDecimalInRange(0, Double.MaxValue)
       accountingPeriodLength                 <- Gen.posNum[Int]
       numberOfDaysRegulatedActivityTookPlace <- Gen.option(Gen.posNum[Int])
       returnDate                             <- Gen.alphaNumStr

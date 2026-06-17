@@ -221,10 +221,10 @@ trait EclTestData { self: Generators =>
   implicit lazy val arbEclReturn: Arbitrary[EclReturn] = Arbitrary {
     for {
       internalId                              <- Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString)
-      relevantAp12Months                      <- Gen.option(Arbitrary.arbitrary[Boolean])
+      relevantAp12Months                      <- Gen.option(Gen.oneOf(true, false))
       relevantApLength                        <- Gen.option(Gen.posNum[Int])
-      relevantApRevenue                       <- Gen.option(Gen.posNum[Double].map(BigDecimal.apply))
-      carriedOutAmlRegulatedActivityForFullFy <- Gen.option(Arbitrary.arbitrary[Boolean])
+      relevantApRevenue                       <- Gen.option(bigDecimalInRange(minRevenue, maxRevenue))
+      carriedOutAmlRegulatedActivityForFullFy <- Gen.option(Gen.oneOf(true, false))
       amlRegulatedActivityLength              <- Gen.option(Gen.posNum[Int])
       calculatedLiability                     <- Gen.option(arbCalculatedLiability.arbitrary)
       contactName                             <- Gen.option(Gen.alphaNumStr)
@@ -287,10 +287,10 @@ trait EclTestData { self: Generators =>
 
   implicit val arbValidEclReturn: Arbitrary[ValidEclReturn] = Arbitrary {
     for {
-      relevantAp12Months                      <- Arbitrary.arbitrary[Boolean]
+      relevantAp12Months                      <- Gen.oneOf(true, false)
       relevantApLength                        <- Gen.chooseNum[Int](minApDays, maxApDays)
       relevantApRevenue                       <- arbBigDecimal(minRevenue, maxRevenue).arbitrary
-      carriedOutAmlRegulatedActivityForFullFy <- Arbitrary.arbitrary[Boolean]
+      carriedOutAmlRegulatedActivityForFullFy <- Gen.oneOf(true, false)
       amlRegulatedActivityLength              <- Gen.chooseNum[Int](minAmlDays, maxAmlDays)
       liabilityAmountDue                      <- arbBigDecimal(minAmountDue, maxAmountDue).arbitrary
       calculatedLiability                     <-

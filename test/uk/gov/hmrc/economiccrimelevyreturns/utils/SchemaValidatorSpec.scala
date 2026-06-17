@@ -46,7 +46,7 @@ class JsonSchemaValidatorSpec extends SpecBase {
       |    }
       |  }
       |}""".stripMargin))
-    .get
+    .getOrElse(fail("Failed to parse JSON schema"))
 
   val schemaValidator: JsonSchemaValidator = new JsonSchemaValidator
 
