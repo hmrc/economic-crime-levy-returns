@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns
 
-import com.danielasfregola.randomdatagenerator.RandomDataGenerator.random
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import uk.gov.hmrc.economiccrimelevyreturns.base.ISpecBase

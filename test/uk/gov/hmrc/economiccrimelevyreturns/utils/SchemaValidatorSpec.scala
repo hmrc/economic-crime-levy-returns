@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.utils
 
+import com.eclipsesource.schema._
+import com.eclipsesource.schema.drafts.Version7
+import com.eclipsesource.schema.drafts.Version7._
 import play.api.libs.json._
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 
@@ -26,24 +29,24 @@ class JsonSchemaValidatorSpec extends SpecBase {
     implicit val format: OFormat[TestObject] = Json.format[TestObject]
   }
 
-  private val testJsonSchema: Schema = Schema
-    .loadFromString("""{
-        |  "$schema": "http://json-schema.org/draft-07/schema#",
-        |  "title": "TestObject",
-        |  "type": "object",
-        |  "properties": {
-        |    "foo": {
-        |      "type": "string",
-        |      "description": "A string value"
-        |    },
-        |    "bar": {
-        |      "type": "string",
-        |      "description": "A string value",
-        |      "pattern": "^[a-z]*$"
-        |    }
-        |  }
-        |}""".stripMargin)
-    .getOrElse(fail("failed to create test JSON schema"))
+  private val testJsonSchema: SchemaType = Json
+    .fromJson[SchemaType](Json.parse("""{
+      |  "$schema": "http://json-schema.org/draft-07/schema#",
+      |  "title": "TestObject",
+      |  "type": "object",
+      |  "properties": {
+      |    "foo": {
+      |      "type": "string",
+      |      "description": "A string value"
+      |    },
+      |    "bar": {
+      |      "type": "string",
+      |      "description": "A string value",
+      |      "pattern": "^[a-z]*$"
+      |    }
+      |  }
+      |}""".stripMargin))
+    .get
 
   val schemaValidator: JsonSchemaValidator = new JsonSchemaValidator
 

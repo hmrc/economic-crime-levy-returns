@@ -19,7 +19,7 @@ package uk.gov.hmrc.economiccrimelevyreturns
 import org.scalacheck.{Arbitrary, Gen}
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.{HeaderNames, MimeTypes}
-import play.api.libs.json.{JsObject, JsString}
+import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
@@ -99,12 +99,102 @@ trait EclTestData { self: Generators =>
     Gen.oneOf(User, Assistant)
   }
 
+  implicit val arbCredentials: Arbitrary[Credentials] = Arbitrary {
+    for {
+      providerId   <- Gen.alphaNumStr
+      providerType <- Gen.alphaNumStr
+    } yield Credentials(providerId, providerType)
+  }
+
+  implicit val arbName: Arbitrary[Name] = Arbitrary {
+    for {
+      name     <- Gen.option(Gen.alphaNumStr)
+      lastName <- Gen.option(Gen.alphaNumStr)
+    } yield Name(name, lastName)
+  }
+
+  implicit val arbAgentInformation: Arbitrary[AgentInformation] = Arbitrary {
+    for {
+      agentId           <- Gen.option(Gen.alphaNumStr)
+      agentCode         <- Gen.option(Gen.alphaNumStr)
+      agentFriendlyName <- Gen.option(Gen.alphaNumStr)
+    } yield AgentInformation(agentId, agentCode, agentFriendlyName)
+  }
+
+  implicit val arbMdtpInformation: Arbitrary[MdtpInformation] = Arbitrary {
+    for {
+      deviceId  <- Gen.alphaNumStr
+      sessionId <- Gen.alphaNumStr
+    } yield MdtpInformation(deviceId, sessionId)
+  }
+
+  implicit val arbItmpName: Arbitrary[ItmpName] = Arbitrary {
+    for {
+      givenName  <- Gen.option(Gen.alphaNumStr)
+      middleName <- Gen.option(Gen.alphaNumStr)
+      familyName <- Gen.option(Gen.alphaNumStr)
+    } yield ItmpName(givenName, middleName, familyName)
+  }
+
+  implicit val arbItmpAddress: Arbitrary[ItmpAddress] = Arbitrary {
+    for {
+      line1       <- Gen.option(Gen.alphaNumStr)
+      line2       <- Gen.option(Gen.alphaNumStr)
+      line3       <- Gen.option(Gen.alphaNumStr)
+      line4       <- Gen.option(Gen.alphaNumStr)
+      line5       <- Gen.option(Gen.alphaNumStr)
+      postcode    <- Gen.option(Gen.alphaNumStr)
+      countryName <- Gen.option(Gen.alphaNumStr)
+      countryCode <- Gen.option(Gen.alphaNumStr)
+    } yield ItmpAddress(line1, line2, line3, line4, line5, postcode, countryName, countryCode)
+  }
+
+  implicit val arbLoginTimes: Arbitrary[LoginTimes] = Arbitrary {
+    for {
+      currentLogin  <- arbInstant.arbitrary
+      previousLogin <- Gen.option(arbInstant.arbitrary)
+    } yield LoginTimes(currentLogin, previousLogin)
+  }
+
+  implicit lazy val arbJsObject: Arbitrary[JsObject] = Arbitrary {
+    for {
+      key   <- Gen.alphaNumStr
+      value <- Gen.alphaNumStr
+    } yield Json.obj(key -> value)
+  }
+
+  implicit lazy val arbNrsSearchKeys: Arbitrary[NrsSearchKeys] = Arbitrary {
+    for {
+      eclRegistrationReference <- Gen.alphaNumStr
+    } yield NrsSearchKeys(eclRegistrationReference)
+  }
+
   implicit val arbAffinityGroup: Arbitrary[AffinityGroup] = Arbitrary {
     Gen.oneOf(Organisation, Individual, Agent)
   }
 
   implicit val arbUpstreamErrorResponse: Arbitrary[UpstreamErrorResponse] = Arbitrary {
     UpstreamErrorResponse("Internal server error", INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)
+  }
+
+  implicit lazy val arbEnrolmentIdentifier: Arbitrary[EnrolmentIdentifier] = Arbitrary {
+    for {
+      key   <- Gen.alphaNumStr
+      value <- Gen.alphaNumStr
+    } yield EnrolmentIdentifier(key, value)
+  }
+
+  implicit lazy val arbEnrolment: Arbitrary[Enrolment] = Arbitrary {
+    for {
+      key               <- Gen.alphaNumStr
+      identifiers       <- Gen.listOf(arbEnrolmentIdentifier.arbitrary)
+      state             <- Gen.oneOf("Activated", "NotYetActivated")
+      delegatedAuthRule <- Gen.option(Gen.alphaNumStr)
+    } yield Enrolment(key, identifiers, state, delegatedAuthRule)
+  }
+
+  implicit lazy val arbEnrolments: Arbitrary[Enrolments] = Arbitrary {
+    Gen.listOf(arbEnrolment.arbitrary).map(es => Enrolments(es.toSet))
   }
 
   implicit val arbEnrolmentsWithEcl: Arbitrary[EnrolmentsWithEcl] = Arbitrary {
@@ -122,18 +212,50 @@ trait EclTestData { self: Generators =>
     Arbitrary
       .arbitrary[Enrolments]
       .retryUntil(
-        !_.enrolments.exists(e =>
-          e.key == EclEnrolment.serviceName && e.identifiers.exists(_.key == EclEnrolment.identifierKey)
-        )
+        !_.enrolments
+          .exists(e => e.key == EclEnrolment.serviceName && e.identifiers.exists(_.key == EclEnrolment.identifierKey))
       )
       .map(EnrolmentsWithoutEcl)
   }
 
-  implicit val arbEclReturn: Arbitrary[EclReturn] = Arbitrary {
+  implicit lazy val arbEclReturn: Arbitrary[EclReturn] = Arbitrary {
     for {
-      eclReturn  <- MkArbitrary[EclReturn].arbitrary.arbitrary
-      internalId <- Gen.nonEmptyListOf(Arbitrary.arbitrary[Char]).map(_.mkString)
-    } yield eclReturn.copy(internalId = internalId)
+      internalId                              <- Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString)
+      relevantAp12Months                      <- Gen.option(Arbitrary.arbitrary[Boolean])
+      relevantApLength                        <- Gen.option(Gen.posNum[Int])
+      relevantApRevenue                       <- Gen.option(Gen.posNum[Double].map(BigDecimal.apply))
+      carriedOutAmlRegulatedActivityForFullFy <- Gen.option(Arbitrary.arbitrary[Boolean])
+      amlRegulatedActivityLength              <- Gen.option(Gen.posNum[Int])
+      calculatedLiability                     <- Gen.option(arbCalculatedLiability.arbitrary)
+      contactName                             <- Gen.option(Gen.alphaNumStr)
+      contactRole                             <- Gen.option(Gen.alphaNumStr)
+      contactEmailAddress                     <- Gen.option(Gen.alphaNumStr)
+      contactTelephoneNumber                  <- Gen.option(Gen.alphaNumStr)
+      obligationDetails                       <- Gen.option(arbObligationDetails.arbitrary)
+      base64EncodedNrsSubmissionHtml          <- Gen.option(Gen.alphaNumStr)
+      base64EncodedDmsSubmissionHtml          <- Gen.option(Gen.alphaNumStr)
+      lastUpdated                             <- Gen.option(arbInstant.arbitrary)
+      returnType                              <- Gen.option(arbReturnType.arbitrary)
+      amendReason                             <- Gen.option(Gen.alphaNumStr)
+    } yield EclReturn(
+      internalId,
+      relevantAp12Months,
+      relevantApLength,
+      relevantApRevenue,
+      carriedOutAmlRegulatedActivityForFullFy,
+      amlRegulatedActivityLength,
+      calculatedLiability,
+      contactName,
+      contactRole,
+      contactEmailAddress,
+      contactTelephoneNumber,
+      obligationDetails,
+      base64EncodedNrsSubmissionHtml,
+      base64EncodedDmsSubmissionHtml,
+      lastUpdated,
+      returnType,
+      amendReason
+    )
   }
 
   implicit val arbPeriodKey: Arbitrary[ValidPeriodKey] = Arbitrary {
@@ -144,6 +266,24 @@ trait EclTestData { self: Generators =>
     Arbitrary {
       Gen.chooseNum[Double](min, max).map(BigDecimal.apply(_).setScale(2, RoundingMode.DOWN))
     }
+
+  implicit lazy val arbObligationDetails: Arbitrary[ObligationDetails] = Arbitrary {
+    for {
+      status                            <- arbObligationStatus.arbitrary
+      inboundCorrespondenceFromDate     <- arbLocalDate.arbitrary
+      inboundCorrespondenceToDate       <- arbLocalDate.arbitrary
+      inboundCorrespondenceDateReceived <- Gen.option(arbLocalDate.arbitrary)
+      inboundCorrespondenceDueDate      <- arbLocalDate.arbitrary
+      periodKey                         <- Gen.alphaNumStr
+    } yield ObligationDetails(
+      status,
+      inboundCorrespondenceFromDate,
+      inboundCorrespondenceToDate,
+      inboundCorrespondenceDateReceived,
+      inboundCorrespondenceDueDate,
+      periodKey
+    )
+  }
 
   implicit val arbValidEclReturn: Arbitrary[ValidEclReturn] = Arbitrary {
     for {
@@ -213,16 +353,26 @@ trait EclTestData { self: Generators =>
   }
 
   type AuthRetrievals =
-    Option[String] ~ ConfidenceLevel ~ Option[String] ~ Option[String] ~
-      Option[MdtpInformation] ~ Option[String] ~ LoginTimes ~
-      Option[Credentials] ~ Option[LocalDate] ~ Option[String] ~
-      Option[AffinityGroup] ~ Option[String] ~ AgentInformation ~ Option[CredentialRole] ~ Option[String] ~
-      Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress]
+    Option[String] ~ ConfidenceLevel ~ Option[String] ~ Option[String] ~ Option[MdtpInformation] ~ Option[String] ~
+      LoginTimes ~ Option[Credentials] ~ Option[LocalDate] ~ Option[String] ~ Option[AffinityGroup] ~ Option[String] ~
+      AgentInformation ~ Option[CredentialRole] ~ Option[String] ~ Option[ItmpName] ~ Option[LocalDate] ~
+      Option[ItmpAddress]
+
+  implicit lazy val arbConfidenceLevel: Arbitrary[ConfidenceLevel] =
+    Arbitrary(
+      Gen.oneOf(
+        ConfidenceLevel.L50,
+        ConfidenceLevel.L200,
+        ConfidenceLevel.L250,
+        ConfidenceLevel.L500,
+        ConfidenceLevel.L600
+      )
+    )
 
   def arbAuthNrsDataRetrievals(internalId: Option[String], enrolmentsWithEcl: Boolean): Arbitrary[AuthRetrievals] =
     Arbitrary {
       for {
-        confidenceLevel    <- Arbitrary.arbitrary[ConfidenceLevel]
+        confidenceLevel    <- arbConfidenceLevel.arbitrary
         externalId         <- Arbitrary.arbitrary[Option[String]]
         nino               <- Arbitrary.arbitrary[Option[String]]
         saUtr              <- Arbitrary.arbitrary[Option[String]]
@@ -289,15 +439,51 @@ trait EclTestData { self: Generators =>
       } yield SessionData(id.toString, values, None)
     }
 
+  implicit val arbGetEclReturnChargeDetails: Arbitrary[GetEclReturnChargeDetails] = Arbitrary {
+    for {
+      chargeReference <- Gen.option(Gen.alphaNumStr)
+      periodKey       <- Gen.alphaNumStr
+      receiptDate     <- arbInstant.arbitrary
+      returnType      <- Gen.alphaNumStr
+    } yield GetEclReturnChargeDetails(chargeReference, periodKey, receiptDate, returnType)
+  }
+
+  implicit val arbGetEclReturnDeclarationDetails: Arbitrary[GetEclReturnDeclarationDetails] = Arbitrary {
+    for {
+      emailAddress      <- Gen.alphaNumStr
+      name              <- Gen.alphaNumStr
+      positionInCompany <- Gen.alphaNumStr
+      telephoneNumber   <- Gen.alphaNumStr
+    } yield GetEclReturnDeclarationDetails(emailAddress, name, positionInCompany, telephoneNumber)
+  }
+
+  implicit val arbGetEclReturnDetails: Arbitrary[GetEclReturnDetails] = Arbitrary {
+    for {
+      accountingPeriodLength                 <- Gen.posNum[Int]
+      accountingPeriodRevenue                <- Gen.posNum[Double].map(BigDecimal.apply)
+      amountOfEclDutyLiable                  <- Gen.posNum[Double].map(BigDecimal.apply)
+      numberOfDaysRegulatedActivityTookPlace <- Gen.option(Gen.posNum[Int])
+      returnDate                             <- arbLocalDate.arbitrary
+      revenueBand                            <- arbBand.arbitrary
+    } yield GetEclReturnDetails(
+      accountingPeriodLength,
+      accountingPeriodRevenue,
+      amountOfEclDutyLiable,
+      numberOfDaysRegulatedActivityTookPlace,
+      returnDate,
+      revenueBand
+    )
+  }
+
   implicit val arbValidGetEclReturnSubmissionResponse: Arbitrary[ValidGetEclReturnSubmissionResponse] = Arbitrary {
     for {
       accountingPeriodRevenue <- bigDecimalInRange(minRevenue, maxRevenue)
       amountOfEclDutyLiable   <- bigDecimalInRange(minAmountDue, maxAmountDue)
-      chargeDetails           <- Arbitrary.arbitrary[GetEclReturnChargeDetails]
-      declarationDetails      <- Arbitrary.arbitrary[GetEclReturnDeclarationDetails]
+      chargeDetails           <- arbGetEclReturnChargeDetails.arbitrary
+      declarationDetails      <- arbGetEclReturnDeclarationDetails.arbitrary
       eclReference            <- Arbitrary.arbitrary[String]
       processingDateTime      <- Arbitrary.arbitrary[Instant]
-      returnDetails           <- Arbitrary.arbitrary[GetEclReturnDetails]
+      returnDetails           <- arbGetEclReturnDetails.arbitrary
       submissionId            <- Arbitrary.arbitrary[String]
     } yield ValidGetEclReturnSubmissionResponse(
       GetEclReturnSubmissionResponse(

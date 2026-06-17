@@ -68,7 +68,7 @@ class AuthorisedActionSpec extends SpecBase {
       contentAsString(result) shouldBe "Test"
     }
 
-    "return 401 unauthorized if there is an authorisation exception" in {
+    "return 401 unauthorized if there is an authorisation exception" in
       List(
         InsufficientConfidenceLevel(),
         InsufficientEnrolments(),
@@ -88,7 +88,6 @@ class AuthorisedActionSpec extends SpecBase {
 
         status(result) shouldBe UNAUTHORIZED
       }
-    }
 
     "return internal server error if there is no internal id" in forAll(
       arbAuthNrsDataRetrievals(None, enrolmentsWithEcl = false).arbitrary,

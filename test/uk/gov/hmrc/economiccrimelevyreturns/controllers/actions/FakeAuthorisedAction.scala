@@ -23,10 +23,13 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.requests.AuthorisedRequest
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import org.scalacheck.Arbitrary
 
 class FakeAuthorisedAction @Inject() (bodyParsers: PlayBodyParsers) extends AuthorisedAction {
 
   override def parser: BodyParser[AnyContent] = bodyParsers.defaultBodyParser
+
+  def random[T](implicit arb: Arbitrary[T]): T = arb.arbitrary.sample.get
 
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] =
     block(AuthorisedRequest(request, "id", "test-ecl-registration-reference", random[NrsIdentityData]))
