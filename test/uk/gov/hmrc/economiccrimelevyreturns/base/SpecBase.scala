@@ -38,6 +38,7 @@ import uk.gov.hmrc.economiccrimelevyreturns.controllers.actions.FakeAuthorisedAc
 import uk.gov.hmrc.economiccrimelevyreturns.generators.Generators
 import uk.gov.hmrc.economiccrimelevyreturns.models.EclReturn
 import uk.gov.hmrc.http.HeaderCarrier
+import org.scalacheck.Arbitrary
 
 import scala.concurrent.ExecutionContext
 
@@ -89,4 +90,5 @@ trait SpecBase
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
   implicit val hc: HeaderCarrier    = HeaderCarrier()
 
+  def random[T](implicit arb: Arbitrary[T]): T = arb.arbitrary.sample.get
 }

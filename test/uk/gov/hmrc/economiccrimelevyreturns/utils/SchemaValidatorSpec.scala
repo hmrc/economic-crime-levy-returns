@@ -16,37 +16,39 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.utils
 
-import io.circe.schema.Schema
+import com.eclipsesource.schema._
+import com.eclipsesource.schema.drafts.Version7
+import com.eclipsesource.schema.drafts.Version7._
 import play.api.libs.json._
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 
-class SchemaValidatorSpec extends SpecBase {
+class JsonSchemaValidatorSpec extends SpecBase {
   case class TestObject(foo: String, bar: String)
 
   object TestObject {
     implicit val format: OFormat[TestObject] = Json.format[TestObject]
   }
 
-  private val testJsonSchema: Schema = Schema
-    .loadFromString("""{
-        |  "$schema": "http://json-schema.org/draft-07/schema#",
-        |  "title": "TestObject",
-        |  "type": "object",
-        |  "properties": {
-        |    "foo": {
-        |      "type": "string",
-        |      "description": "A string value"
-        |    },
-        |    "bar": {
-        |      "type": "string",
-        |      "description": "A string value",
-        |      "pattern": "^[a-z]*$"
-        |    }
-        |  }
-        |}""".stripMargin)
-    .getOrElse(fail("failed to create test JSON schema"))
+  private val testJsonSchema: SchemaType = Json
+    .fromJson[SchemaType](Json.parse("""{
+      |  "$schema": "http://json-schema.org/draft-07/schema#",
+      |  "title": "TestObject",
+      |  "type": "object",
+      |  "properties": {
+      |    "foo": {
+      |      "type": "string",
+      |      "description": "A string value"
+      |    },
+      |    "bar": {
+      |      "type": "string",
+      |      "description": "A string value",
+      |      "pattern": "^[a-z]*$"
+      |    }
+      |  }
+      |}""".stripMargin))
+    .getOrElse(fail("Failed to parse JSON schema"))
 
-  val schemaValidator: SchemaValidator = new SchemaValidator
+  val schemaValidator: JsonSchemaValidator = new JsonSchemaValidator
 
   "validateAgainstJsonSchema" should {
     "serialize an object into JSON and validate it against a JSON schema, returning the given validated object if there are no errors" in {

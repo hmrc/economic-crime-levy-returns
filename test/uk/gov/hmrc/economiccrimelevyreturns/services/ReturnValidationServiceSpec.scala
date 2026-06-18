@@ -25,19 +25,19 @@ import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
 import uk.gov.hmrc.economiccrimelevyreturns.models.Band._
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, Band, EclReturn}
-import uk.gov.hmrc.economiccrimelevyreturns.utils.SchemaValidator
+import uk.gov.hmrc.economiccrimelevyreturns.utils.JsonSchemaValidator
 
 import java.time.{Clock, Instant, ZoneId}
 
 class ReturnValidationServiceSpec extends SpecBase {
 
-  private val fixedPointInTime             = Instant.parse("2007-12-25T10:15:30.00Z")
-  private val stubClock: Clock             = Clock.fixed(fixedPointInTime, ZoneId.systemDefault)
-  val mockSchemaValidator: SchemaValidator = mock[SchemaValidator]
-  val service                              = new ReturnValidationService(stubClock, mockSchemaValidator)
+  private val fixedPointInTime                 = Instant.parse("2007-12-25T10:15:30.00Z")
+  private val stubClock: Clock                 = Clock.fixed(fixedPointInTime, ZoneId.systemDefault)
+  val mockSchemaValidator: JsonSchemaValidator = mock[JsonSchemaValidator]
+  val service                                  = new ReturnValidationService(stubClock, mockSchemaValidator)
 
   "validateReturn" should {
-    "return the ECL return details if the ECL return is valid" in forAll { validEclReturn: ValidEclReturn =>
+    "return the ECL return details if the ECL return is valid" in forAll { (validEclReturn: ValidEclReturn) =>
       when(
         mockSchemaValidator.validateAgainstJsonSchema(
           ArgumentMatchers.eq(validEclReturn.expectedEclReturnSubmission),
@@ -59,7 +59,7 @@ class ReturnValidationServiceSpec extends SpecBase {
     }
 
     "return an error if the relevant AP is not 12 months and the relevant AP length is missing" in forAll {
-      validEclReturn: ValidEclReturn =>
+      (validEclReturn: ValidEclReturn) =>
         val invalidEclReturn =
           validEclReturn.eclReturn.copy(relevantAp12Months = Some(false), relevantApLength = None)
 
@@ -91,7 +91,7 @@ class ReturnValidationServiceSpec extends SpecBase {
     }
 
     "return an error if AML regulated activity was not carried out for the full financial year and the AML regulated activity length is missing" in forAll {
-      validEclReturn: ValidEclReturn =>
+      (validEclReturn: ValidEclReturn) =>
         val invalidEclReturn =
           validEclReturn.eclReturn
             .copy(carriedOutAmlRegulatedActivityForFullFy = Some(false), amlRegulatedActivityLength = None)

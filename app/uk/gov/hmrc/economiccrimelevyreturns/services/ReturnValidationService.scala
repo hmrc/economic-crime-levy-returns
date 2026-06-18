@@ -22,14 +22,14 @@ import uk.gov.hmrc.economiccrimelevyreturns.models.Band.Small
 import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
-import uk.gov.hmrc.economiccrimelevyreturns.utils.{SchemaLoader, SchemaValidator}
+import uk.gov.hmrc.economiccrimelevyreturns.utils.{JsonSchemaValidator, SchemaLoader}
 
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, Instant, ZoneOffset}
 import javax.inject.Inject
 import scala.concurrent.Future
 
-class ReturnValidationService @Inject() (clock: Clock, schemaValidator: SchemaValidator) extends Logging {
+class ReturnValidationService @Inject() (clock: Clock, schemaValidator: JsonSchemaValidator) extends Logging {
 
   private val YearInDays: Int = 365
 

@@ -28,9 +28,9 @@ class ReturnsRepositorySpec
   private val eclReturn        = EclReturn.empty("test-id").copy(lastUpdated = Some(Instant.ofEpochSecond(1)))
   private val mockAppConfig    = mock[AppConfig]
 
-  when(mockAppConfig.mongoTtl) thenReturn 1
+  when(mockAppConfig.mongoTtl) thenReturn 1L
 
-  protected override val repository = new ReturnsRepository(
+  protected override val repository: ReturnsRepository = new ReturnsRepository(
     mongoComponent = mongoComponent,
     appConfig = mockAppConfig,
     clock = stubClock

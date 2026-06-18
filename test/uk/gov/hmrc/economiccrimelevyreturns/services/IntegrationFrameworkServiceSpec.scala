@@ -57,7 +57,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
       generateErrorCode
     ) {
       (
-        errorCode: Int,
+        errorCode: Int
       ) =>
         val message       = "Gateway Error"
         val errorMessages = s"Get ECL Return Failed - $message"

@@ -52,7 +52,7 @@ class SessionRepositorySpec
 
   when(mockAppConfig.mongoTtl) thenReturn 1
 
-  protected override val repository = new SessionRepository(
+  protected override val repository: SessionRepository = new SessionRepository(
     mongoComponent = mongoComponent,
     appConfig = mockAppConfig,
     clock = stubClock

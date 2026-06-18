@@ -16,13 +16,15 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.utils
 
-import io.circe.schema.Schema
-
 import scala.io.Source
+import com.eclipsesource.schema.*
+import com.eclipsesource.schema.drafts.Version7
+import com.eclipsesource.schema.drafts.Version7.*
+import play.api.libs.json.Json
 
 object SchemaLoader {
 
-  def loadSchema(schemaFileName: String): Schema = {
+  def loadSchema(schemaFileName: String): SchemaType = {
     val schemaFilePath = s"/schemas/$schemaFileName"
     val resource       = getClass.getResourceAsStream(schemaFilePath)
     val source         = Source.fromInputStream(resource)
@@ -31,9 +33,7 @@ object SchemaLoader {
       try source.getLines().mkString
       finally source.close()
 
-    Schema
-      .loadFromString(jsonSchema)
-      .get
+    Json.fromJson[SchemaType](Json.parse(jsonSchema)).get
   }
 
 }

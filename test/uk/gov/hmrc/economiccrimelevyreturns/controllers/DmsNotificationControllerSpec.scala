@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.controllers
 
-import com.danielasfregola.randomdatagenerator.RandomDataGenerator.random
 import org.mockito.ArgumentMatchers.any
 import play.api.libs.json.Json
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
@@ -46,7 +45,7 @@ class DmsNotificationControllerSpec extends SpecBase {
   )
 
   "dmsCallback" should {
-    "return OK when receiving a correct notifications from DMS" in forAll { dmsNotification: DmsNotification =>
+    "return OK when receiving a correct notifications from DMS" in forAll { (dmsNotification: DmsNotification) =>
       when(mockStubBehaviour.stubAuth[Unit](any(), any()))
         .thenReturn(Future.unit)
 

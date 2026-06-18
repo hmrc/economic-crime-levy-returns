@@ -135,4 +135,6 @@ abstract class ISpecBase
     }
   }
 
+  def random[T](implicit arb: Arbitrary[T]): T = arb.arbitrary.sample.get
+
 }

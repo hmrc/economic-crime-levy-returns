@@ -53,7 +53,7 @@ object ErrorCode {
     JsString(errorCode.code)
   }
 
-  implicit val errorCodeReads: Reads[ErrorCode] = Reads { errorCode: JsValue =>
+  implicit val errorCodeReads: Reads[ErrorCode] = Reads { (errorCode: JsValue) =>
     errorCodes
       .find(value => value.code == errorCode.asInstanceOf[JsString].value)
       .map(errorCode => JsSuccess(errorCode))
