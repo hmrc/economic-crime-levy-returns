@@ -1,2 +1,6 @@
-repoVisibility: public_0C3F0CE3E6E6448FAD341E7BFA50FCD333E06A20CFF05FCACE61154DDBBADF71
 type: service
+serviceNowMapping: SNSVC0016773
+repoVisibility: public_0C3F0CE3E6E6448FAD341E7BFA50FCD333E06A20CFF05FCACE61154DDBBADF71
+test-repositories:
+  - economic-crime-levy-acceptance-tests
+  - economic-crime-levy-performance-tests
