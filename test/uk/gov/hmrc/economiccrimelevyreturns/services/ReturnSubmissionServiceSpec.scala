@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
+import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
 import uk.gov.hmrc.economiccrimelevyreturns.connectors.{HipReturnsConnector, IntegrationFrameworkReturnConnector}
 import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries.*
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ReturnsSubmissionError
@@ -32,9 +33,16 @@ import scala.concurrent.Future
 class ReturnSubmissionServiceSpec extends SpecBase {
 
   private val mockIntegrationFrameworkReturnConnector = mock[IntegrationFrameworkReturnConnector]
-  private val mockHipReturnConnector = mock[HipReturnsConnector]
+  private val mockHipReturnConnector                  = mock[HipReturnsConnector]
 
-  val service = new ReturnSubmissionService(mockIntegrationFrameworkReturnConnector, mockHipReturnConnector)
+  private def serviceWith(hipEnabled: Boolean): ReturnSubmissionService = {
+    val config = mock[AppConfig]
+    when(config.hipReturns).thenReturn(hipEnabled)
+    new ReturnSubmissionService(config, mockIntegrationFrameworkReturnConnector, mockHipReturnConnector)
+  }
+
+  val ifService    = serviceWith(hipEnabled = false)
+  val hipService = serviceWith(hipEnabled = true)
 
   "getEclReturnSubmission" should {
     "return successful return submission response when call to the integration framework succeeds" in forAll {
@@ -49,7 +57,7 @@ class ReturnSubmissionServiceSpec extends SpecBase {
         )
           .thenReturn(Future.successful(validResponse.response))
 
-        val result = await(service.getEclReturnSubmission(periodKey, testEclRegistrationReference).value)
+        val result = await(ifService.getEclReturnSubmission(periodKey, testEclRegistrationReference).value)
 
         result shouldBe Right(validResponse.response)
     }
@@ -75,7 +83,7 @@ class ReturnSubmissionServiceSpec extends SpecBase {
           .thenReturn(Future.failed(UpstreamErrorResponse.apply(message, errorCode)))
 
         val result =
-          await(service.getEclReturnSubmission(periodKey, testEclRegistrationReference).value)
+          await(ifService.getEclReturnSubmission(periodKey, testEclRegistrationReference).value)
 
         result shouldBe Left(ReturnsSubmissionError.BadGateway(errorMessages, errorCode))
     }
@@ -95,7 +103,7 @@ class ReturnSubmissionServiceSpec extends SpecBase {
         .thenReturn(Future.failed(exception))
 
       val result =
-        await(service.getEclReturnSubmission(periodKey, testEclRegistrationReference).value)
+        await(ifService.getEclReturnSubmission(periodKey, testEclRegistrationReference).value)
 
       result shouldBe Left(ReturnsSubmissionError.InternalUnexpectedError(Some(exception)))
     }
@@ -118,7 +126,7 @@ class ReturnSubmissionServiceSpec extends SpecBase {
         )
           .thenReturn(Future.successful(returnResponse))
 
-        val result = await(service.submitEclReturn(testEclRegistrationReference, eclReturnSubmission).value)
+        val result = await(ifService.submitEclReturn(testEclRegistrationReference, eclReturnSubmission).value)
 
         result shouldBe Right(returnResponse)
     }
@@ -146,7 +154,7 @@ class ReturnSubmissionServiceSpec extends SpecBase {
           .thenReturn(Future.failed(UpstreamErrorResponse.apply(message, errorCode)))
 
         val result =
-          await(service.submitEclReturn(testEclRegistrationReference, eclReturn.expectedEclReturnSubmission).value)
+          await(ifService.submitEclReturn(testEclRegistrationReference, eclReturn.expectedEclReturnSubmission).value)
 
         result shouldBe Left(ReturnsSubmissionError.BadGateway(errorMessage, errorCode))
     }
@@ -169,9 +177,77 @@ class ReturnSubmissionServiceSpec extends SpecBase {
           .thenReturn(Future.failed(exception))
 
         val result =
-          await(service.submitEclReturn(testEclRegistrationReference, eclReturn.expectedEclReturnSubmission).value)
+          await(ifService.submitEclReturn(testEclRegistrationReference, eclReturn.expectedEclReturnSubmission).value)
 
         result shouldBe Left(ReturnsSubmissionError.InternalUnexpectedError(Some(exception)))
+    }
+  }
+
+  "connector selection" should {
+    "route getEclReturnSubmission to the integration framework when the hip returns feature is disabled" in {
+      reset(mockIntegrationFrameworkReturnConnector)
+      reset(mockHipReturnConnector)
+
+      val expected = random[ValidGetEclReturnSubmissionResponse].response
+
+      when(mockIntegrationFrameworkReturnConnector.getEclReturnSubmission(any(), any())(any()))
+        .thenReturn(Future.successful(expected))
+
+      val result = await(ifService.getEclReturnSubmission(periodKey, testEclRegistrationReference).value)
+
+      result shouldBe Right(expected)
+      verify(mockIntegrationFrameworkReturnConnector, times(1)).getEclReturnSubmission(any(), any())(any())
+      verify(mockHipReturnConnector, times(0)).getEclReturnSubmission(any(), any())(any())
+    }
+
+    "route getEclReturnSubmission to hip when the hip returns feature is enabled" in {
+      reset(mockIntegrationFrameworkReturnConnector)
+      reset(mockHipReturnConnector)
+
+      val expected = random[ValidGetEclReturnSubmissionResponse].response
+
+      when(mockHipReturnConnector.getEclReturnSubmission(any(), any())(any()))
+        .thenReturn(Future.successful(expected))
+
+      val result = await(hipService.getEclReturnSubmission(periodKey, testEclRegistrationReference).value)
+
+      result shouldBe Right(expected)
+      verify(mockHipReturnConnector, times(1)).getEclReturnSubmission(any(), any())(any())
+      verify(mockIntegrationFrameworkReturnConnector, times(0)).getEclReturnSubmission(any(), any())(any())
+    }
+
+    "route submitEclReturn to the integration framework when the hip returns feature is disabled" in {
+      reset(mockIntegrationFrameworkReturnConnector)
+      reset(mockHipReturnConnector)
+
+      val submission = random[EclReturnSubmission]
+      val expected   = random[SubmitEclReturnResponse]
+
+      when(mockIntegrationFrameworkReturnConnector.submitEclReturn(any(), any())(any()))
+        .thenReturn(Future.successful(expected))
+
+      val result = await(ifService.submitEclReturn(testEclRegistrationReference, submission).value)
+
+      result shouldBe Right(expected)
+      verify(mockIntegrationFrameworkReturnConnector, times(1)).submitEclReturn(any(), any())(any())
+      verify(mockHipReturnConnector, times(0)).submitEclReturn(any(), any())(any())
+    }
+
+    "route submitEclReturn to hip when the hip returns feature is enabled" in {
+      reset(mockIntegrationFrameworkReturnConnector)
+      reset(mockHipReturnConnector)
+
+      val submission = random[EclReturnSubmission]
+      val expected   = random[SubmitEclReturnResponse]
+
+      when(mockHipReturnConnector.submitEclReturn(any(), any())(any()))
+        .thenReturn(Future.successful(expected))
+
+      val result = await(hipService.submitEclReturn(testEclRegistrationReference, submission).value)
+
+      result shouldBe Right(expected)
+      verify(mockHipReturnConnector, times(1)).submitEclReturn(any(), any())(any())
+      verify(mockIntegrationFrameworkReturnConnector, times(0)).submitEclReturn(any(), any())(any())
     }
   }
 }

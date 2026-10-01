@@ -36,7 +36,7 @@ import scala.concurrent.Future
 class ReturnSubmissionControllerSpec extends SpecBase {
 
   val mockReturnValidationService: ReturnValidationService = mock[ReturnValidationService]
-  val mockReturnSubmissionService: ReturnSubmissionService       = mock[ReturnSubmissionService]
+  val mockReturnSubmissionService: ReturnSubmissionService = mock[ReturnSubmissionService]
   val mockNrsService: NrsService                           = mock[NrsService]
   val mockDmsService: DmsService                           = mock[DmsService]
   val mockAuditService: AuditService                       = mock[AuditService]

@@ -30,7 +30,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class IntegrationFrameworkReturnConnector @Inject()(
+class IntegrationFrameworkReturnConnector @Inject() (
   override val appConfig: AppConfig,
   httpClient: HttpClientV2,
   override val configuration: Config,

@@ -25,19 +25,20 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 trait HipConnector extends Logging {
-  
+
   val appConfig: AppConfig
-  
+
   def hipHeaders(correlationId: String): Seq[(String, String)] =
     Seq(
-      HeaderNames.ACCEPT -> MimeTypes.JSON,
-      "correlationid" -> correlationId,
-      "X-Originating-System" -> "ECL",
-      "X-Receipt-Date" -> DateTimeFormatter.ISO_INSTANT.format(
-        Instant.now()
+      HeaderNames.ACCEPT      -> MimeTypes.JSON,
+      "correlationid"         -> correlationId,
+      "X-Originating-System"  -> "ECL",
+      "X-Receipt-Date"        -> DateTimeFormatter.ISO_INSTANT.format(
+        Instant
+          .now()
           .truncatedTo(ChronoUnit.SECONDS)
       ),
       "X-Transmitting-System" -> "HIP",
-      "Authorization" -> s"Basic ${appConfig.hipAuthorizationToken}"
+      "Authorization"         -> s"Basic ${appConfig.hipAuthorizationToken}"
     )
 }

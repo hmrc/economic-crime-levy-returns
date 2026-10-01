@@ -29,10 +29,10 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
-class ReturnSubmissionService @Inject()(
-                                              config: AppConfig,
-                                              integrationFrameworkReturnConnector: IntegrationFrameworkReturnConnector,
-                                              hipConnector: HipReturnsConnector
+class ReturnSubmissionService @Inject() (
+  config: AppConfig,
+  integrationFrameworkReturnConnector: IntegrationFrameworkReturnConnector,
+  hipConnector: HipReturnsConnector
 )(implicit ec: ExecutionContext) {
 
   private val connector: ReturnsConnector =

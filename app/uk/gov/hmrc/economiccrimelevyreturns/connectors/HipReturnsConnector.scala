@@ -32,34 +32,39 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class HipReturnsConnector @Inject()(
+class HipReturnsConnector @Inject() (
   override val appConfig: AppConfig,
   httpClient: HttpClientV2,
   override val configuration: Config,
   override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
-  extends Retries
+    extends Retries
     with BaseConnector
     with HipConnector
     with ReturnsConnector {
 
   def getEclReturnSubmission(periodKey: String, eclRegistrationReference: String)(implicit
-    hc: HeaderCarrier): Future[GetEclReturnSubmissionResponse] = {
-    
+    hc: HeaderCarrier
+  ): Future[GetEclReturnSubmissionResponse] = {
+
     val correlationId = UUID.randomUUID().toString
 
     logger.info(s"Attempting to send ECL GET Return Request with correlationid: $correlationId to HIP")
     retryFor[GetEclReturnSubmissionResponse]("HIP Platform - Get ECL return")(retryCondition) {
       httpClient
-        .get(url"${appConfig.hipBaseUrl}/etmp/RESTAdapter/economic-crime-levy/return/$periodKey/$eclRegistrationReference")
+        .get(
+          url"${appConfig.hipBaseUrl}/etmp/RESTAdapter/economic-crime-levy/return/$periodKey/$eclRegistrationReference"
+        )
         .setHeader(hipHeaders(correlationId): _*)
-        .executeAndDeserialise[HipSuccessWrapper[GetEclReturnSubmissionResponse]].map(_.success)
+        .executeAndDeserialise[HipSuccessWrapper[GetEclReturnSubmissionResponse]]
+        .map(_.success)
     }
   }
 
   def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit
-    hc: HeaderCarrier): Future[SubmitEclReturnResponse] = {
-    
+    hc: HeaderCarrier
+  ): Future[SubmitEclReturnResponse] = {
+
     val correlationId = UUID.randomUUID().toString
 
     logger.info(s"Attempting to send ECL POST Return Request with correlationid: $correlationId to HIP")
@@ -68,7 +73,8 @@ class HipReturnsConnector @Inject()(
         .post(url"${appConfig.hipBaseUrl}/etmp/RESTAdapter/economic-crime-levy/return/$eclRegistrationReference")
         .setHeader(hipHeaders(correlationId): _*)
         .withBody(Json.toJson(eclReturnSubmission))
-        .executeAndDeserialise[HipSubmitReturnSuccessResponse].map(_.success.toIfsResponse)
+        .executeAndDeserialise[HipSubmitReturnSuccessResponse]
+        .map(_.success.toIfResponse)
     }
   }
 }

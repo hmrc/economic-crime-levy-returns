@@ -22,11 +22,14 @@ import play.api.libs.json.{JsObject, JsString}
 import uk.gov.hmrc.economiccrimelevyreturns.models.des.{Fulfilled => DesFulfilled, ObligationStatus => DesObligationStatus, Open => DesOpen}
 import uk.gov.hmrc.economiccrimelevyreturns.models.*
 import uk.gov.hmrc.economiccrimelevyreturns.models.dms.*
+import uk.gov.hmrc.economiccrimelevyreturns.models.hip.HipSubmitReturn
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.*
 import uk.gov.hmrc.economiccrimelevyreturns.models.nrs._
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ErrorCode
 
 object CachedArbitraries extends EclTestData with Generators {
+
+  private val maxHipAmount: Double = 99999999999.99
 
   implicit lazy val arbBand: Arbitrary[Band]                                       = Arbitrary(Gen.oneOf(Band.Small, Band.Medium, Band.Large, Band.VeryLarge))
   implicit lazy val arbObligationStatus: Arbitrary[ObligationStatus]               = Arbitrary(Gen.oneOf(Open, Fulfilled))
@@ -43,6 +46,16 @@ object CachedArbitraries extends EclTestData with Generators {
       processingDate  <- arbInstant.arbitrary
       chargeReference <- Gen.option(Gen.alphaNumStr)
     } yield SubmitEclReturnResponse(processingDate, chargeReference)
+  }
+  implicit lazy val arbHipSubmitReturn: Arbitrary[HipSubmitReturn]                 = Arbitrary {
+    for {
+      processingDate  <- arbInstant.arbitrary
+      eclReference    <- Gen.alphaNumStr
+      submissionId    <- Gen.option(Gen.alphaNumStr)
+      chargeReference <- Gen.option(Gen.alphaNumStr)
+      amount          <- bigDecimalInRange(0, maxHipAmount)
+      dueDate         <- Gen.alphaNumStr
+    } yield HipSubmitReturn(processingDate, eclReference, submissionId, chargeReference, amount, dueDate)
   }
   implicit lazy val arbEclReturnSubmission: Arbitrary[EclReturnSubmission]         = Arbitrary {
     for {
