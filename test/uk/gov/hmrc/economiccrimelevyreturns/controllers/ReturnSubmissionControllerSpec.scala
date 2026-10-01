@@ -36,7 +36,7 @@ import scala.concurrent.Future
 class ReturnSubmissionControllerSpec extends SpecBase {
 
   val mockReturnValidationService: ReturnValidationService = mock[ReturnValidationService]
-  val mockReturnService: IntegrationFrameworkService       = mock[IntegrationFrameworkService]
+  val mockReturnSubmissionService: ReturnSubmissionService       = mock[ReturnSubmissionService]
   val mockNrsService: NrsService                           = mock[NrsService]
   val mockDmsService: DmsService                           = mock[DmsService]
   val mockAuditService: AuditService                       = mock[AuditService]
@@ -47,7 +47,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
     cc,
     fakeAuthorisedAction,
     mockReturnValidationService,
-    mockReturnService,
+    mockReturnSubmissionService,
     mockNrsService,
     mockDmsService,
     mockAuditService,
@@ -57,7 +57,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
 
   override def beforeEach(): Unit = {
     reset(mockReturnValidationService)
-    reset(mockReturnService)
+    reset(mockReturnSubmissionService)
     reset(mockNrsService)
     reset(mockDmsService)
     reset(mockAuditService)
@@ -72,7 +72,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
         beforeEach()
 
         when(
-          mockReturnService.getEclReturnSubmission(
+          mockReturnSubmissionService.getEclReturnSubmission(
             ArgumentMatchers.eq(periodKey),
             ArgumentMatchers.eq(testEclRegistrationReference)
           )(any())
@@ -84,7 +84,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
       val errorMessage: String = "BAD_GATEWAY"
 
       when(
-        mockReturnService.getEclReturnSubmission(
+        mockReturnSubmissionService.getEclReturnSubmission(
           ArgumentMatchers.eq(periodKey),
           ArgumentMatchers.eq(testEclRegistrationReference)
         )(any())
@@ -108,7 +108,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
     "return 500 INTERNAL_SERVER_ERROR when server error" in {
 
       when(
-        mockReturnService.getEclReturnSubmission(
+        mockReturnSubmissionService.getEclReturnSubmission(
           ArgumentMatchers.eq(periodKey),
           ArgumentMatchers.eq(testEclRegistrationReference)
         )(any())
@@ -147,7 +147,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
           .thenReturn(EitherT.rightT[Future, DataRetrievalError](validEclReturn))
 
         when(
-          mockReturnService.submitEclReturn(
+          mockReturnSubmissionService.submitEclReturn(
             anyString(),
             ArgumentMatchers.eq(eclReturnSubmission)
           )(any())
@@ -194,7 +194,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
           .thenReturn(EitherT.rightT[Future, DataValidationError](eclReturnSubmission))
 
         when(
-          mockReturnService.submitEclReturn(
+          mockReturnSubmissionService.submitEclReturn(
             ArgumentMatchers.eq(testEclRegistrationReference),
             ArgumentMatchers.eq(eclReturnSubmission)
           )(any())
@@ -222,7 +222,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
           .thenReturn(EitherT.rightT[Future, DataRetrievalError](eclReturn))
 
         when(
-          mockReturnService.submitEclReturn(
+          mockReturnSubmissionService.submitEclReturn(
             ArgumentMatchers.eq(testEclRegistrationReference),
             ArgumentMatchers.eq(eclReturnSubmission)
           )(any())
@@ -270,7 +270,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
           .thenReturn(EitherT.rightT[Future, DataValidationError](eclReturnSubmission))
 
         when(
-          mockReturnService.submitEclReturn(
+          mockReturnSubmissionService.submitEclReturn(
             ArgumentMatchers.eq(testEclRegistrationReference),
             ArgumentMatchers.eq(eclReturnSubmission)
           )(any())
@@ -320,7 +320,7 @@ class ReturnSubmissionControllerSpec extends SpecBase {
           .thenReturn(EitherT.rightT[Future, DataValidationError](eclReturnSubmission))
 
         when(
-          mockReturnService.submitEclReturn(
+          mockReturnSubmissionService.submitEclReturn(
             ArgumentMatchers.eq(testEclRegistrationReference),
             ArgumentMatchers.eq(eclReturnSubmission)
           )(any())

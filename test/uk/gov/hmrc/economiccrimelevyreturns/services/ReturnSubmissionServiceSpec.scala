@@ -20,8 +20,8 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.base.SpecBase
-import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
-import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries._
+import uk.gov.hmrc.economiccrimelevyreturns.connectors.{HipReturnsConnector, IntegrationFrameworkReturnConnector}
+import uk.gov.hmrc.economiccrimelevyreturns.generators.CachedArbitraries.*
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ReturnsSubmissionError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, SubmitEclReturnResponse}
 import uk.gov.hmrc.economiccrimelevyreturns.{ValidEclReturn, ValidGetEclReturnSubmissionResponse}
@@ -29,11 +29,12 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import scala.concurrent.Future
 
-class IntegrationFrameworkServiceSpec extends SpecBase {
+class ReturnSubmissionServiceSpec extends SpecBase {
 
-  private val mockIntegrationFrameworkConnector = mock[IntegrationFrameworkConnector]
+  private val mockIntegrationFrameworkReturnConnector = mock[IntegrationFrameworkReturnConnector]
+  private val mockHipReturnConnector = mock[HipReturnsConnector]
 
-  val service = new IntegrationFrameworkService(mockIntegrationFrameworkConnector)
+  val service = new ReturnSubmissionService(mockIntegrationFrameworkReturnConnector, mockHipReturnConnector)
 
   "getEclReturnSubmission" should {
     "return successful return submission response when call to the integration framework succeeds" in forAll {
@@ -41,7 +42,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         validResponse: ValidGetEclReturnSubmissionResponse
       ) =>
         when(
-          mockIntegrationFrameworkConnector
+          mockIntegrationFrameworkReturnConnector
             .getEclReturnSubmission(ArgumentMatchers.eq(periodKey), ArgumentMatchers.eq(testEclRegistrationReference))(
               any()
             )
@@ -63,7 +64,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         val errorMessages = s"Get ECL Return Failed - $message"
 
         when(
-          mockIntegrationFrameworkConnector
+          mockIntegrationFrameworkReturnConnector
             .getEclReturnSubmission(
               ArgumentMatchers.eq(periodKey),
               ArgumentMatchers.eq(testEclRegistrationReference)
@@ -83,7 +84,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
       val exception = new Exception("Unexpected error")
 
       when(
-        mockIntegrationFrameworkConnector
+        mockIntegrationFrameworkReturnConnector
           .getEclReturnSubmission(
             ArgumentMatchers.eq(periodKey),
             ArgumentMatchers.eq(testEclRegistrationReference)
@@ -107,7 +108,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         returnResponse: SubmitEclReturnResponse
       ) =>
         when(
-          mockIntegrationFrameworkConnector
+          mockIntegrationFrameworkReturnConnector
             .submitEclReturn(
               ArgumentMatchers.eq(testEclRegistrationReference),
               ArgumentMatchers.eq(eclReturnSubmission)
@@ -134,7 +135,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         val errorMessage = s"Submit ECL Return Failed - $message"
 
         when(
-          mockIntegrationFrameworkConnector
+          mockIntegrationFrameworkReturnConnector
             .submitEclReturn(
               ArgumentMatchers.eq(testEclRegistrationReference),
               ArgumentMatchers.eq(eclReturn.expectedEclReturnSubmission)
@@ -157,7 +158,7 @@ class IntegrationFrameworkServiceSpec extends SpecBase {
         val exception = new Exception("Unexpected error")
 
         when(
-          mockIntegrationFrameworkConnector
+          mockIntegrationFrameworkReturnConnector
             .submitEclReturn(
               ArgumentMatchers.eq(testEclRegistrationReference),
               ArgumentMatchers.eq(eclReturn.expectedEclReturnSubmission)

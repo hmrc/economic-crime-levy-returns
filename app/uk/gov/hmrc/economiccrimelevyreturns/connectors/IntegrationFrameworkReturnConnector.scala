@@ -16,45 +16,30 @@
 
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
-import org.apache.pekko.actor.ActorSystem
 import com.typesafe.config.Config
-import play.api.http.HeaderNames
+import org.apache.pekko.actor.ActorSystem
 import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
-import uk.gov.hmrc.economiccrimelevyreturns.models.CustomHeaderNames
-import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
+import uk.gov.hmrc.economiccrimelevyreturns.connectors.traits.{BaseConnector, IntegrationFrameworkConnector, ReturnsConnector}
+import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, Retries, StringContextOps}
-import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
-import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class IntegrationFrameworkConnector @Inject() (
-  appConfig: AppConfig,
+class IntegrationFrameworkReturnConnector @Inject()(
+  override val appConfig: AppConfig,
   httpClient: HttpClientV2,
   override val configuration: Config,
   override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
     extends Retries
-    with BaseConnector {
-
-  private def integrationFrameworkHeaders(bearerToken: String)(implicit hc: HeaderCarrier): Seq[(String, String)] = {
-    val correlationId = hc.headers(scala.Seq(CustomHeaderNames.xCorrelationId)) match {
-      case Seq((_, id)) =>
-        id
-      case _            =>
-        UUID.randomUUID().toString
-    }
-
-    Seq(
-      (HeaderNames.AUTHORIZATION, s"Bearer $bearerToken"),
-      (CustomHeaderNames.environment, appConfig.integrationFrameworkEnvironment),
-      (CustomHeaderNames.correlationId, correlationId)
-    )
-  }
+    with BaseConnector
+    with IntegrationFrameworkConnector
+    with ReturnsConnector {
 
   def getEclReturnSubmission(periodKey: String, eclRegistrationReference: String)(implicit
     hc: HeaderCarrier

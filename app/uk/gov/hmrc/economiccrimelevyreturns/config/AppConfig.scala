@@ -19,6 +19,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.config
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import java.util.Base64
 import javax.inject.{Inject, Singleton}
 
 @Singleton
@@ -32,6 +33,17 @@ class AppConfig @Inject() (configuration: Configuration, servicesConfig: Service
     configuration.get[String](
       "microservice.services.dms-submission.amend-returns-submission.callbackEndpoint"
     )
+
+  val hipReturns: Boolean = configuration.get[Boolean]("features.hip.returns")
+
+  val hipBaseUrl: String = servicesConfig.baseUrl("hip")
+
+  private val hipClientId: String = configuration.get[String]("microservice.services.hip.clientId")
+
+  private val hipSecret: String = configuration.get[String]("microservice.services.hip.secret")
+
+  def hipAuthorizationToken: String =
+    Base64.getEncoder.encodeToString(s"$hipClientId:$hipSecret".getBytes("UTF-8"))
 
   val amendReturnNotableEvent: String =
     configuration.get[String]("microservice.services.nrs.notable-events.amend-return")

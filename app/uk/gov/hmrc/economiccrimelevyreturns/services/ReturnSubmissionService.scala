@@ -17,7 +17,10 @@
 package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import cats.data.EitherT
-import uk.gov.hmrc.economiccrimelevyreturns.connectors.IntegrationFrameworkConnector
+import play.api.Configuration
+import uk.gov.hmrc.economiccrimelevyreturns.config.AppConfig
+import uk.gov.hmrc.economiccrimelevyreturns.connectors.traits.ReturnsConnector
+import uk.gov.hmrc.economiccrimelevyreturns.connectors.{HipReturnsConnector, IntegrationFrameworkReturnConnector}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.ReturnsSubmissionError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework.{EclReturnSubmission, GetEclReturnSubmissionResponse, SubmitEclReturnResponse}
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
@@ -26,15 +29,20 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
-class IntegrationFrameworkService @Inject() (
-  integrationFrameworkConnector: IntegrationFrameworkConnector
+class ReturnSubmissionService @Inject()(
+                                              config: AppConfig,
+                                              integrationFrameworkReturnConnector: IntegrationFrameworkReturnConnector,
+                                              hipConnector: HipReturnsConnector
 )(implicit ec: ExecutionContext) {
+
+  private val connector: ReturnsConnector =
+    if (config.hipReturns) hipConnector else integrationFrameworkReturnConnector
 
   def submitEclReturn(eclRegistrationReference: String, eclReturnSubmission: EclReturnSubmission)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, ReturnsSubmissionError, SubmitEclReturnResponse] =
     EitherT {
-      integrationFrameworkConnector
+      connector
         .submitEclReturn(eclRegistrationReference, eclReturnSubmission)
         .map { submitEclResponse =>
           Right(submitEclResponse)
@@ -54,7 +62,7 @@ class IntegrationFrameworkService @Inject() (
     hc: HeaderCarrier
   ): EitherT[Future, ReturnsSubmissionError, GetEclReturnSubmissionResponse] =
     EitherT {
-      integrationFrameworkConnector
+      connector
         .getEclReturnSubmission(periodKey, eclReference)
         .map { getEclReturnSubmissionResponse =>
           Right(getEclReturnSubmissionResponse)

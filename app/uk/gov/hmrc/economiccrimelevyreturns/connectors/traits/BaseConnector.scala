@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.economiccrimelevyreturns.connectors
+package uk.gov.hmrc.economiccrimelevyreturns.connectors.traits
 
-import org.apache.pekko.actor.ActorSystem
 import com.typesafe.config.Config
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import play.api.http.Status._
-import play.api.libs.json.JsResult
-import play.api.libs.json.Reads
+import org.apache.pekko.actor.ActorSystem
+import play.api.http.Status.*
+import play.api.libs.json.{JsResult, Reads}
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.RequestBuilder
 import uk.gov.hmrc.http.{HttpResponse, Retries, UpstreamErrorResponse}
-import uk.gov.hmrc.http.HttpReads.Implicits._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 trait BaseConnector extends Retries {
 
