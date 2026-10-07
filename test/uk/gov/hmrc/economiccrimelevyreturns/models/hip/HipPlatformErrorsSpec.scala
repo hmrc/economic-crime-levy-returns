@@ -82,11 +82,10 @@ class HipPlatformErrorsSpec extends AnyWordSpec with Matchers {
       |""".stripMargin)
 
   "HipPlatformErrors" should {
-    "be read and written correctly" in {
+    "be read and written correctly" in
       forAll(Seq(failuresArrayErr, objErr, unexpectedErr)) { jsValue =>
         Json.toJson(jsValue.as[HipErrorWrapper]) shouldBe jsValue
       }
-    }
 
     "read the HoD origin with a system error" in {
       val wrapper = objErr.as[HipErrorWrapper]
@@ -110,7 +109,7 @@ class HipPlatformErrorsSpec extends AnyWordSpec with Matchers {
     }
 
     "reject an unknown origin" in {
-      JsString("ETMP").validate[Origin].isError shouldBe true
+      JsString("ETMP").validate[Origin].isError                 shouldBe true
       Json.obj("origin" -> 1).validate[HipErrorWrapper].isError shouldBe true
     }
 
@@ -123,7 +122,7 @@ class HipPlatformErrorsSpec extends AnyWordSpec with Matchers {
     "be read and written correctly" in {
       val parsed = err422.as[Hip422Error]
 
-      parsed                shouldBe Hip422Error(HipInner422Err("044", "2022-01-31T09:26:17Z", "Tax Obligation Already Fulfilled"))
+      parsed              shouldBe Hip422Error(HipInner422Err("044", "2022-01-31T09:26:17Z", "Tax Obligation Already Fulfilled"))
       Json.toJson(parsed) shouldBe err422
     }
   }

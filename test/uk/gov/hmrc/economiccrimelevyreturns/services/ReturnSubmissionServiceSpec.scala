@@ -41,7 +41,7 @@ class ReturnSubmissionServiceSpec extends SpecBase {
     new ReturnSubmissionService(config, mockIntegrationFrameworkReturnConnector, mockHipReturnConnector)
   }
 
-  val ifService    = serviceWith(hipEnabled = false)
+  val ifService  = serviceWith(hipEnabled = false)
   val hipService = serviceWith(hipEnabled = true)
 
   "getEclReturnSubmission" should {

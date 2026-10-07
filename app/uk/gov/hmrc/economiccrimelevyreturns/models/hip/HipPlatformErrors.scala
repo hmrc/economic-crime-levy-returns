@@ -45,14 +45,18 @@ object HipPlatformErrors {
 
   given hipErrorTraitFormat: Format[HipErrorTrait] = Format(
     Reads:
-      case fails: JsObject if (fails \ "failures").isDefined =>
-        val failures: Array[HipFailure] = (fails \ "failures").as[JsArray].value.map { x =>
-          val t = (x \ "type").as[String]
-          val r = (x \ "reason").as[String]
-          HipFailure(t, r)
-        }.toArray
+      case fails: JsObject if (fails \ "failures").isDefined    =>
+        val failures: Array[HipFailure] = (fails \ "failures")
+          .as[JsArray]
+          .value
+          .map { x =>
+            val t = (x \ "type").as[String]
+            val r = (x \ "reason").as[String]
+            HipFailure(t, r)
+          }
+          .toArray
         JsSuccess(HipFailuresErrorArray(failures))
-      case obj: JsObject if (obj \ "error").isDefined =>
+      case obj: JsObject if (obj \ "error").isDefined           =>
         JsSuccess(
           HipSystemErrorObject(
             HipError(
@@ -69,23 +73,23 @@ object HipPlatformErrors {
             (obj \ "unexpectedError" \ "body").as[String]
           )
         )
-      case badJson => JsError(s"Expected HipErrorTrait Json... got $badJson")
+      case badJson                                              => JsError(s"Expected HipErrorTrait Json... got $badJson")
     ,
     Writes:
       case HipSystemErrorObject(HipError(code, logID, message)) =>
         Json.obj("error" -> Json.obj("code" -> code, "logID" -> logID, "message" -> message))
-      case HipFailuresErrorArray(failures) =>
+      case HipFailuresErrorArray(failures)                      =>
         Json.obj("failures" -> failures.map(x => Json.obj("type" -> x.`type`, "reason" -> x.reason)).toSeq)
-      case HipUnexpectedError(status, body) =>
+      case HipUnexpectedError(status, body)                     =>
         Json.obj("unexpectedError" -> Json.obj("status" -> status, "body" -> body))
   )
 
   case class HipErrorWrapper(origin: Origin, response: HipErrorTrait)
 
-  given failureFormat: OFormat[HipFailure]                             = Json.format[HipFailure]
-  given errorFormat: OFormat[HipError]                                 = Json.format[HipError]
-  given hipSystemErrorObjectFormat: OFormat[HipSystemErrorObject]      = Json.format[HipSystemErrorObject]
-  given hipFailuresErrorArrayFormat: OFormat[HipFailuresErrorArray]    = Json.format[HipFailuresErrorArray]
-  given unexpectedErrorFormat: OFormat[HipUnexpectedError]             = Json.format[HipUnexpectedError]
-  given hipErrorWrapperFormat: OFormat[HipErrorWrapper]                = Json.format[HipErrorWrapper]
+  given failureFormat: OFormat[HipFailure]                          = Json.format[HipFailure]
+  given errorFormat: OFormat[HipError]                              = Json.format[HipError]
+  given hipSystemErrorObjectFormat: OFormat[HipSystemErrorObject]   = Json.format[HipSystemErrorObject]
+  given hipFailuresErrorArrayFormat: OFormat[HipFailuresErrorArray] = Json.format[HipFailuresErrorArray]
+  given unexpectedErrorFormat: OFormat[HipUnexpectedError]          = Json.format[HipUnexpectedError]
+  given hipErrorWrapperFormat: OFormat[HipErrorWrapper]             = Json.format[HipErrorWrapper]
 }
