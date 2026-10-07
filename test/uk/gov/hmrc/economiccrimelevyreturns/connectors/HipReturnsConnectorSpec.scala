@@ -17,6 +17,7 @@
 package uk.gov.hmrc.economiccrimelevyreturns.connectors
 
 import org.mockito.ArgumentMatchers.any
+import org.scalatest.prop.TableFor4
 import play.api.libs.json.{JsResult, JsValue, Json}
 import play.api.test.Helpers.await
 import uk.gov.hmrc.economiccrimelevyreturns.ValidGetEclReturnSubmissionResponse
@@ -62,8 +63,95 @@ class HipReturnsConnectorSpec extends SpecBase {
   private def wrapped(body: JsValue): String =
     Json.stringify(Json.obj("success" -> body))
 
+  private def envelope(origin: String, response: JsValue): String =
+    Json.stringify(Json.obj("origin" -> origin, "response" -> response))
+
+  private def systemError(code: String, message: String): JsValue =
+    Json.obj("error" -> Json.obj("code" -> code, "logID" -> "D82EBAB67AC6D7565C0682CA91BDC577", "message" -> message))
+
+  private val hipFailures: JsValue =
+    Json.obj("failures" -> Json.arr(Json.obj("type" -> "Type of Failure", "reason" -> "Reason for Failure")))
+
+  private val businessValidationError: String =
+    Json.stringify(
+      Json.obj(
+        "error" -> Json.obj(
+          "errorId"        -> "044",
+          "processingDate" -> "2022-01-31T09:26:17Z",
+          "text"           -> "Tax Obligation Already Fulfilled"
+        )
+      )
+    )
+
+  private val errorCases: TableFor4[Int, String, String, Int] = Table(
+    ("status", "body", "message", "attempts"),
+    (
+      BAD_REQUEST,
+      envelope("HoD", systemError("400", "Submission has not passed validation.")),
+      "origin: HoD, HIP system error code: 400, logID: D82EBAB67AC6D7565C0682CA91BDC577, " +
+        "message: Submission has not passed validation.",
+      1
+    ),
+    (
+      BAD_REQUEST,
+      envelope("HIP", hipFailures),
+      "origin: HIP, HIP failures: [Type of Failure - Reason for Failure]",
+      1
+    ),
+    (
+      INTERNAL_SERVER_ERROR,
+      envelope("HoD", systemError("500", "Internal Server Error")),
+      "origin: HoD, HIP system error code: 500",
+      retryAmount
+    ),
+    (
+      SERVICE_UNAVAILABLE,
+      envelope("HIP", hipFailures),
+      "origin: HIP, HIP failures: [Type of Failure - Reason for Failure]",
+      retryAmount
+    ),
+    (
+      UNPROCESSABLE_ENTITY,
+      businessValidationError,
+      "HIP 422 errorId: 044, processingDate: 2022-01-31T09:26:17Z, text: Tax Obligation Already Fulfilled",
+      1
+    ),
+    (
+      BAD_REQUEST,
+      "not json",
+      "origin: unknown, HIP error response in unexpected format: status: 400 body: not json",
+      1
+    ),
+    (
+      SERVICE_UNAVAILABLE,
+      envelope("HIP", Json.obj("other" -> 1)),
+      "HIP error response in unexpected format: status: 503",
+      retryAmount
+    ),
+    (UNPROCESSABLE_ENTITY, "{}", "HIP 422 in unexpected format: {}", 1),
+    (UNAUTHORIZED, "", "", 1),
+    (NOT_FOUND, "", "", 1)
+  )
+
+  private def assertUpstreamError(
+    call: => Future[?],
+    expectedStatus: Int,
+    expectedMessage: String,
+    expectedAttempts: Int
+  ): Unit = {
+    Try(await(call)) match {
+      case Failure(UpstreamErrorResponse(message, status, _, _)) =>
+        status shouldEqual expectedStatus
+        message     should include(expectedMessage)
+      case other                                                 =>
+        fail(s"expected UpstreamErrorResponse, got $other")
+    }
+
+    verify(mockRequestBuilder, times(expectedAttempts)).execute(any(), any())
+  }
+
   "getEclReturnSubmission" should {
-    "return the return submission when the response is wrapped in a success envelope" in forAll {
+    "return the integration framework shaped return submission when the response is wrapped in a success envelope from HIP" in {
       (validResponse: ValidGetEclReturnSubmissionResponse) =>
         beforeEach()
 
@@ -74,7 +162,7 @@ class HipReturnsConnectorSpec extends SpecBase {
         result shouldBe validResponse.response
     }
 
-    "fail to parse a success response that is not wrapped in a success envelope" in forAll {
+    "fail to parse a success response that is not wrapped in a success envelope" in {
       (validResponse: ValidGetEclReturnSubmissionResponse) =>
         beforeEach()
 
@@ -86,73 +174,23 @@ class HipReturnsConnectorSpec extends SpecBase {
         }
     }
 
-    "return 400 UpstreamErrorResponse without retrying when downstream call returns an error" in {
-      beforeEach()
+    "keep the original status, describe the HIP error body and retry only on 5xx" in
+      forAll(errorCases) { (status, body, message, attempts) =>
+        beforeEach()
 
-      val errorCode = BAD_REQUEST
+        stubGet(HttpResponse.apply(status, body))
 
-      stubGet(HttpResponse.apply(errorCode, "BAD_REQUEST"))
-
-      Try(await(connector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
-        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-          code shouldEqual errorCode
-        case _                                             => fail("expected UpstreamErrorResponse when error is received")
+        assertUpstreamError(
+          connector.getEclReturnSubmission(periodKey, testEclRegistrationReference),
+          status,
+          message,
+          attempts
+        )
       }
-
-      verify(mockRequestBuilder, times(1)).execute(any(), any())
-    }
-
-    "return 422 UpstreamErrorResponse without retrying when downstream call returns a business validation error" in {
-      beforeEach()
-
-      val errorCode = UNPROCESSABLE_ENTITY
-
-      stubGet(HttpResponse.apply(errorCode, "UNPROCESSABLE_ENTITY"))
-
-      Try(await(connector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
-        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-          code shouldEqual errorCode
-        case _                                             => fail("expected UpstreamErrorResponse when error is received")
-      }
-
-      verify(mockRequestBuilder, times(1)).execute(any(), any())
-    }
-
-    "return 500 UpstreamErrorResponse when downstream call returns an error and executes retry" in {
-      beforeEach()
-
-      val errorCode = INTERNAL_SERVER_ERROR
-
-      stubGet(HttpResponse.apply(errorCode, "Internal server error"))
-
-      Try(await(connector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
-        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-          code shouldEqual errorCode
-        case _                                             => fail("expected UpstreamErrorResponse when an error is received")
-      }
-
-      verify(mockRequestBuilder, times(retryAmount)).execute(any(), any())
-    }
-
-    "return 503 UpstreamErrorResponse when downstream call returns an error and executes retry" in {
-      beforeEach()
-
-      val errorCode = SERVICE_UNAVAILABLE
-
-      stubGet(HttpResponse.apply(errorCode, "SERVICE_UNAVAILABLE"))
-
-      Try(await(connector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
-        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-          code shouldEqual errorCode
-        case _                                             => fail("expected UpstreamErrorResponse when an error is received")
-      }
-
-      verify(mockRequestBuilder, times(retryAmount)).execute(any(), any())
-    }
   }
 
   "submitEclReturn" should {
-    "return the integration framework shaped response from a 201, dropping the hip only fields" in forAll {
+    "return the integration framework shaped response from a 201, dropping the hip only fields" in {
       (eclReturnSubmission: EclReturnSubmission, hipSubmitReturn: HipSubmitReturn) =>
         beforeEach()
 
@@ -165,12 +203,12 @@ class HipReturnsConnectorSpec extends SpecBase {
 
         val result = await(connector.submitEclReturn(testEclRegistrationReference, eclReturnSubmission))
 
-        result shouldBe hipSubmitReturn.toIfResponse
+        result                 shouldBe hipSubmitReturn.toIfResponse
         result.processingDate  shouldBe hipSubmitReturn.processingDate
         result.chargeReference shouldBe hipSubmitReturn.chargeReference
     }
 
-    "fail to parse a 201 that is not wrapped in a success envelope" in forAll {
+    "fail to parse a 201 that is not wrapped in a success envelope" in {
       (eclReturnSubmission: EclReturnSubmission, hipSubmitReturn: HipSubmitReturn) =>
         beforeEach()
 
@@ -182,55 +220,28 @@ class HipReturnsConnectorSpec extends SpecBase {
         }
     }
 
-    "return 401 UpstreamErrorResponse without retrying when downstream call returns an error" in forAll {
-      (eclReturnSubmission: EclReturnSubmission) =>
+    "keep the original status, describe the HIP error body and retry only on 5xx" in {
+      val eclReturnSubmission = random[EclReturnSubmission]
+
+      forAll(errorCases) { (status, body, message, attempts) =>
         beforeEach()
 
-        val errorCode = UNAUTHORIZED
+        stubPost(HttpResponse.apply(status, body))
 
-        stubPost(HttpResponse.apply(errorCode, "Failed authorization"))
-
-        Try(await(connector.submitEclReturn(testEclRegistrationReference, eclReturnSubmission))) match {
-          case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-            code shouldEqual errorCode
-          case _                                             => fail("expected UpstreamErrorResponse when an error is received")
-        }
-
-        verify(mockRequestBuilder, times(1)).execute(any(), any())
+        assertUpstreamError(
+          connector.submitEclReturn(testEclRegistrationReference, eclReturnSubmission),
+          status,
+          message,
+          attempts
+        )
+      }
     }
+  }
 
-    "return 422 UpstreamErrorResponse without retrying when downstream call returns a business validation error" in forAll {
-      (eclReturnSubmission: EclReturnSubmission) =>
-        beforeEach()
-
-        val errorCode = UNPROCESSABLE_ENTITY
-
-        stubPost(HttpResponse.apply(errorCode, "UNPROCESSABLE_ENTITY"))
-
-        Try(await(connector.submitEclReturn(testEclRegistrationReference, eclReturnSubmission))) match {
-          case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-            code shouldEqual errorCode
-          case _                                             => fail("expected UpstreamErrorResponse when an error is received")
-        }
-
-        verify(mockRequestBuilder, times(1)).execute(any(), any())
-    }
-
-    "return 500 UpstreamErrorResponse when downstream call returns an error and executes retry" in forAll {
-      (eclReturnSubmission: EclReturnSubmission) =>
-        beforeEach()
-
-        val errorCode = INTERNAL_SERVER_ERROR
-
-        stubPost(HttpResponse.apply(errorCode, "Internal server error"))
-
-        Try(await(connector.submitEclReturn(testEclRegistrationReference, eclReturnSubmission))) match {
-          case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-            code shouldEqual errorCode
-          case _                                             => fail("expected UpstreamErrorResponse when an error is received")
-        }
-
-        verify(mockRequestBuilder, times(retryAmount)).execute(any(), any())
+  "parseHipErrorEnvelopeResponse" should {
+    "reject a status that HIP does not wrap in an origin envelope" in {
+      an[IllegalArgumentException] should be thrownBy
+        connector.parseHipErrorEnvelopeResponse(HttpResponse.apply(UNPROCESSABLE_ENTITY, businessValidationError))
     }
   }
 }

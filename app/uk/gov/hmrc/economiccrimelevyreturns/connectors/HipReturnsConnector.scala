@@ -51,13 +51,14 @@ class HipReturnsConnector @Inject() (
 
     logger.info(s"Attempting to send ECL GET Return Request with correlationid: $correlationId to HIP")
     retryFor[GetEclReturnSubmissionResponse]("HIP Platform - Get ECL return")(retryCondition) {
-      httpClient
-        .get(
-          url"${appConfig.hipBaseUrl}/etmp/RESTAdapter/economic-crime-levy/return/$periodKey/$eclRegistrationReference"
-        )
-        .setHeader(hipHeaders(correlationId): _*)
-        .executeAndDeserialise[HipSuccessWrapper[GetEclReturnSubmissionResponse]]
-        .map(_.success)
+      executeHip[HipSuccessWrapper[GetEclReturnSubmissionResponse]](
+        httpClient
+          .get(
+            url"${appConfig.hipBaseUrl}/etmp/RESTAdapter/economic-crime-levy/return/$periodKey/$eclRegistrationReference"
+          )
+          .setHeader(hipHeaders(correlationId): _*),
+        s"HIP get ECL return with correlationid: $correlationId"
+      ).map(_.success)
     }
   }
 
@@ -69,12 +70,13 @@ class HipReturnsConnector @Inject() (
 
     logger.info(s"Attempting to send ECL POST Return Request with correlationid: $correlationId to HIP")
     retryFor[SubmitEclReturnResponse]("HIP Platform - Submit ECL return")(retryCondition) {
-      httpClient
-        .post(url"${appConfig.hipBaseUrl}/etmp/RESTAdapter/economic-crime-levy/return/$eclRegistrationReference")
-        .setHeader(hipHeaders(correlationId): _*)
-        .withBody(Json.toJson(eclReturnSubmission))
-        .executeAndDeserialise[HipSubmitReturnSuccessResponse]
-        .map(_.success.toIfResponse)
+      executeHip[HipSubmitReturnSuccessResponse](
+        httpClient
+          .post(url"${appConfig.hipBaseUrl}/etmp/RESTAdapter/economic-crime-levy/return/$eclRegistrationReference")
+          .setHeader(hipHeaders(correlationId): _*)
+          .withBody(Json.toJson(eclReturnSubmission)),
+        s"HIP submit ECL return with correlationid: $correlationId"
+      ).map(_.success.toIfResponse)
     }
   }
 }

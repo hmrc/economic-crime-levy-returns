@@ -43,127 +43,127 @@ class IntegrationFrameworkReturnConnectorSpec extends SpecBase {
   }
 
   "getEclReturnSubmission" should {
-      "return submit return response when call to integration framework succeeds" in forAll {
-        (
-          validResponse: ValidGetEclReturnSubmissionResponse
-        ) =>
-          beforeEach()
+    "return submit return response when call to integration framework succeeds" in forAll {
+      (
+        validResponse: ValidGetEclReturnSubmissionResponse
+      ) =>
+        beforeEach()
 
-          when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
-          when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
-          when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-          when(mockRequestBuilder.execute[HttpResponse](any(), any()))
-            .thenReturn(
-              Future.successful(
-                HttpResponse.apply(OK, Json.stringify(Json.toJson(validResponse.response)))
-              )
+        when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+          .thenReturn(
+            Future.successful(
+              HttpResponse.apply(OK, Json.stringify(Json.toJson(validResponse.response)))
             )
+          )
 
-          val result = await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))
+        val result = await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))
 
-          result shouldBe validResponse.response
-      }
+        result shouldBe validResponse.response
+    }
 
-      "return submit return response when call to integration framework succeeds with correlation id set" in forAll {
-        (
-          validResponse: ValidGetEclReturnSubmissionResponse
-        ) =>
-          beforeEach()
+    "return submit return response when call to integration framework succeeds with correlation id set" in forAll {
+      (
+        validResponse: ValidGetEclReturnSubmissionResponse
+      ) =>
+        beforeEach()
 
-          when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
-          when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
-          when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-          when(mockRequestBuilder.execute[HttpResponse](any(), any()))
-            .thenReturn(
-              Future.successful(
-                HttpResponse.apply(OK, Json.stringify(Json.toJson(validResponse.response)))
-              )
+        when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+          .thenReturn(
+            Future.successful(
+              HttpResponse.apply(OK, Json.stringify(Json.toJson(validResponse.response)))
             )
+          )
 
-          val result = await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))
+        val result = await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))
 
-          result shouldBe validResponse.response
+        result shouldBe validResponse.response
 
-      }
+    }
 
-      "return 400 UpstreamErrorResponse when call to integration framework returns an error" in {
-        beforeEach()
+    "return 400 UpstreamErrorResponse when call to integration framework returns an error" in {
+      beforeEach()
 
-        val errorCode = BAD_REQUEST
+      val errorCode = BAD_REQUEST
 
-        when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
-          .thenReturn(Future.successful(HttpResponse.apply(errorCode, "BAD_REQUEST")))
+      when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(errorCode, "BAD_REQUEST")))
 
-        Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
-          case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-            code shouldEqual errorCode
-          case _                                             => fail("expected UpstreamErrorResponse when error is received")
-        }
-      }
-
-      "return 422 UpstreamErrorResponse when call to integration framework returns an error" in {
-        beforeEach()
-
-        val errorCode = UNPROCESSABLE_ENTITY
-
-        when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
-          .thenReturn(Future.successful(HttpResponse.apply(errorCode, "UNPROCESSABLE_ENTITY")))
-
-        Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
-          case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-            code shouldEqual errorCode
-          case _                                             => fail("expected UpstreamErrorResponse when error is received")
-        }
-      }
-
-      "return 500 UpstreamErrorResponse when call to integration framework returns an error and executes retry" in {
-        beforeEach()
-
-        val errorCode = INTERNAL_SERVER_ERROR
-
-        when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
-          .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Internal server error")))
-
-        Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
-          case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-            code shouldEqual errorCode
-          case _                                             => fail("expected UpstreamErrorResponse when an error is received")
-        }
-
-        verify(mockRequestBuilder, times(retryAmount))
-          .execute(any(), any())
-      }
-
-      "return 503 UpstreamErrorResponse when call to integration framework returns an error and executes retry" in {
-        beforeEach()
-
-        val errorCode = SERVICE_UNAVAILABLE
-
-        when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-        when(mockRequestBuilder.execute[HttpResponse](any(), any()))
-          .thenReturn(Future.successful(HttpResponse.apply(errorCode, "SERVICE_UNAVAILABLE")))
-
-        Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
-          case Failure(UpstreamErrorResponse(_, code, _, _)) =>
-            code shouldEqual errorCode
-          case _                                             => fail("expected UpstreamErrorResponse when an error is received")
-        }
-
-        verify(mockRequestBuilder, times(retryAmount))
-          .execute(any(), any())
+      Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
+        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
+          code shouldEqual errorCode
+        case _                                             => fail("expected UpstreamErrorResponse when error is received")
       }
     }
+
+    "return 422 UpstreamErrorResponse when call to integration framework returns an error" in {
+      beforeEach()
+
+      val errorCode = UNPROCESSABLE_ENTITY
+
+      when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(errorCode, "UNPROCESSABLE_ENTITY")))
+
+      Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
+        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
+          code shouldEqual errorCode
+        case _                                             => fail("expected UpstreamErrorResponse when error is received")
+      }
+    }
+
+    "return 500 UpstreamErrorResponse when call to integration framework returns an error and executes retry" in {
+      beforeEach()
+
+      val errorCode = INTERNAL_SERVER_ERROR
+
+      when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Internal server error")))
+
+      Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
+        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
+          code shouldEqual errorCode
+        case _                                             => fail("expected UpstreamErrorResponse when an error is received")
+      }
+
+      verify(mockRequestBuilder, times(retryAmount))
+        .execute(any(), any())
+    }
+
+    "return 503 UpstreamErrorResponse when call to integration framework returns an error and executes retry" in {
+      beforeEach()
+
+      val errorCode = SERVICE_UNAVAILABLE
+
+      when(mockHttpClient.get(any())(any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.setHeader(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+      when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(errorCode, "SERVICE_UNAVAILABLE")))
+
+      Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
+        case Failure(UpstreamErrorResponse(_, code, _, _)) =>
+          code shouldEqual errorCode
+        case _                                             => fail("expected UpstreamErrorResponse when an error is received")
+      }
+
+      verify(mockRequestBuilder, times(retryAmount))
+        .execute(any(), any())
+    }
+  }
 
   "submitEclReturn" should {
     "return submit return response when call to integration framework succeeds" in forAll {
