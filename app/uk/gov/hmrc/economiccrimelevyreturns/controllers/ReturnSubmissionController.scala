@@ -38,7 +38,7 @@ class ReturnSubmissionController @Inject() (
   cc: ControllerComponents,
   authorise: AuthorisedAction,
   returnValidationService: ReturnValidationService,
-  integrationFrameworkService: IntegrationFrameworkService,
+  returnSubmissionService: ReturnSubmissionService,
   nrsService: NrsService,
   dmsService: DmsService,
   auditService: AuditService,
@@ -52,7 +52,7 @@ class ReturnSubmissionController @Inject() (
   def getSubmission(periodKey: String, id: String): Action[AnyContent] = authorise.async { implicit request =>
     implicit val hc: HeaderCarrier = CorrelationIdHelper.headerCarrierWithCorrelationId(request)
     (for {
-      eclReturn <- integrationFrameworkService.getEclReturnSubmission(periodKey, id).asResponseError
+      eclReturn <- returnSubmissionService.getEclReturnSubmission(periodKey, id).asResponseError
     } yield eclReturn).convertToResult(OK)
   }
 
@@ -94,7 +94,7 @@ class ReturnSubmissionController @Inject() (
     for {
       base64EncodedNrsSubmissionHtml <- checkOptionalValueExists[String](eclReturn.base64EncodedNrsSubmissionHtml)
       submitEclReturnResponse        <-
-        integrationFrameworkService.submitEclReturn(eclReference, eclReturnSubmission).asResponseError
+        returnSubmissionService.submitEclReturn(eclReference, eclReturnSubmission).asResponseError
       _                              <- nrsService.submitToNrs(base64EncodedNrsSubmissionHtml, eclReference, eventName).asResponseError
       _                               = auditService.sendReturnSubmittedEvent(eclReturn, eclReference, submitEclReturnResponse.chargeReference)
 

@@ -29,13 +29,13 @@ import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
 import scala.concurrent.Future
 import scala.util.{Failure, Try}
 
-class IntegrationFrameworkConnectorSpec extends SpecBase {
+class IntegrationFrameworkReturnConnectorSpec extends SpecBase {
 
   val retryAmount                        = 4
   val mockHttpClient: HttpClientV2       = mock[HttpClientV2]
   val mockRequestBuilder: RequestBuilder = mock[RequestBuilder]
 
-  val connector = new IntegrationFrameworkConnector(appConfig, mockHttpClient, config, actorSystem)
+  val ifConnector = new IntegrationFrameworkReturnConnector(appConfig, mockHttpClient, config, actorSystem)
 
   override def beforeEach(): Unit = {
     reset(mockHttpClient)
@@ -59,7 +59,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
             )
           )
 
-        val result = await(connector.getEclReturnSubmission(periodKey, testEclRegistrationReference))
+        val result = await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))
 
         result shouldBe validResponse.response
     }
@@ -80,7 +80,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
             )
           )
 
-        val result = await(connector.getEclReturnSubmission(periodKey, testEclRegistrationReference))
+        val result = await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))
 
         result shouldBe validResponse.response
 
@@ -97,7 +97,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
       when(mockRequestBuilder.execute[HttpResponse](any(), any()))
         .thenReturn(Future.successful(HttpResponse.apply(errorCode, "BAD_REQUEST")))
 
-      Try(await(connector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
+      Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
         case Failure(UpstreamErrorResponse(_, code, _, _)) =>
           code shouldEqual errorCode
         case _                                             => fail("expected UpstreamErrorResponse when error is received")
@@ -115,7 +115,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
       when(mockRequestBuilder.execute[HttpResponse](any(), any()))
         .thenReturn(Future.successful(HttpResponse.apply(errorCode, "UNPROCESSABLE_ENTITY")))
 
-      Try(await(connector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
+      Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
         case Failure(UpstreamErrorResponse(_, code, _, _)) =>
           code shouldEqual errorCode
         case _                                             => fail("expected UpstreamErrorResponse when error is received")
@@ -133,7 +133,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
       when(mockRequestBuilder.execute[HttpResponse](any(), any()))
         .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Internal server error")))
 
-      Try(await(connector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
+      Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
         case Failure(UpstreamErrorResponse(_, code, _, _)) =>
           code shouldEqual errorCode
         case _                                             => fail("expected UpstreamErrorResponse when an error is received")
@@ -154,7 +154,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
       when(mockRequestBuilder.execute[HttpResponse](any(), any()))
         .thenReturn(Future.successful(HttpResponse.apply(errorCode, "SERVICE_UNAVAILABLE")))
 
-      Try(await(connector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
+      Try(await(ifConnector.getEclReturnSubmission(periodKey, testEclRegistrationReference))) match {
         case Failure(UpstreamErrorResponse(_, code, _, _)) =>
           code shouldEqual errorCode
         case _                                             => fail("expected UpstreamErrorResponse when an error is received")
@@ -179,7 +179,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
         when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(Future.successful(HttpResponse.apply(OK, Json.stringify(Json.toJson(submitEclReturnResponse)))))
 
-        val result = await(connector.submitEclReturn(testEclRegistrationReference, eclReturnSubmission))
+        val result = await(ifConnector.submitEclReturn(testEclRegistrationReference, eclReturnSubmission))
 
         result shouldBe submitEclReturnResponse
     }
@@ -198,7 +198,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
         when(mockRequestBuilder.execute[HttpResponse](any(), any()))
           .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Failed authorization")))
 
-        Try(await(connector.submitEclReturn(testEclRegistrationReference, eclReturnSubmission))) match {
+        Try(await(ifConnector.submitEclReturn(testEclRegistrationReference, eclReturnSubmission))) match {
           case Failure(UpstreamErrorResponse(_, code, _, _)) =>
             code shouldEqual errorCode
           case _                                             => fail("expected UpstreamErrorResponse when an error is received from DMS")
@@ -220,7 +220,7 @@ class IntegrationFrameworkConnectorSpec extends SpecBase {
           .thenReturn(Future.successful(HttpResponse.apply(errorCode, "Internal server error")))
 
         Try(
-          await(connector.submitEclReturn(testEclRegistrationReference, eclReturnSubmission))
+          await(ifConnector.submitEclReturn(testEclRegistrationReference, eclReturnSubmission))
         ) match {
           case Failure(UpstreamErrorResponse(_, code, _, _)) =>
             code shouldEqual errorCode
