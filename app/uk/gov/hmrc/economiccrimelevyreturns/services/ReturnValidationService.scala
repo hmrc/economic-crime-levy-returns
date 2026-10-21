@@ -18,7 +18,7 @@ package uk.gov.hmrc.economiccrimelevyreturns.services
 
 import cats.data.EitherT
 import play.api.Logging
-import uk.gov.hmrc.economiccrimelevyreturns.models.Band.Small
+import uk.gov.hmrc.economiccrimelevyreturns.models.Band
 import uk.gov.hmrc.economiccrimelevyreturns.models.{AmendReturn, EclReturn}
 import uk.gov.hmrc.economiccrimelevyreturns.models.errors.DataValidationError
 import uk.gov.hmrc.economiccrimelevyreturns.models.integrationframework._
@@ -68,7 +68,9 @@ class ReturnValidationService @Inject() (clock: Clock, schemaValidator: JsonSche
       calculatedLiability                     <- validateOptExists(eclReturn.calculatedLiability, "Calculated liability")
       carriedOutAmlRegulatedActivityForFullFy <- validateConditionalOptExists(
                                                    eclReturn.carriedOutAmlRegulatedActivityForFullFy,
-                                                   eclReturn.calculatedLiability.isDefined && eclReturn.calculatedLiability.get.calculatedBand != Small,
+                                                   eclReturn.calculatedLiability.exists(
+                                                     _.calculatedBand != Band.Small
+                                                   ),
                                                    "Carried out AML regulated activity for full FY choice"
                                                  )
       amlRegulatedActivityLength              <- validateConditionalOptExists(
