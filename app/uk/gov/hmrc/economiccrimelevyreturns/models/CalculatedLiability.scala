@@ -21,22 +21,29 @@ import play.api.libs.json._
 sealed trait Band
 
 object Band {
+  // Historical bands - before 1 April 2026
   case object Small extends Band
   case object Medium extends Band
   case object Large extends Band
   case object VeryLarge extends Band
 
+  // New bands - from 1 April 2026
+  case object A extends Band
+  case object B extends Band
+  case object C extends Band
+  case object D extends Band
+
   implicit val format: Format[Band] = new Format[Band] {
-    override def reads(json: JsValue): JsResult[Band] = json.validate[String] match {
-      case JsSuccess(value, _) =>
-        value match {
-          case "Small"     => JsSuccess(Small)
-          case "Medium"    => JsSuccess(Medium)
-          case "Large"     => JsSuccess(Large)
-          case "VeryLarge" => JsSuccess(VeryLarge)
-          case s           => JsError(s"$s is not a valid Band")
-        }
-      case e: JsError          => e
+    override def reads(json: JsValue): JsResult[Band] = json.validate[String].flatMap {
+      case "Small"     => JsSuccess(Small)
+      case "Medium"    => JsSuccess(Medium)
+      case "Large"     => JsSuccess(Large)
+      case "VeryLarge" => JsSuccess(VeryLarge)
+      case "A"         => JsSuccess(A)
+      case "B"         => JsSuccess(B)
+      case "C"         => JsSuccess(C)
+      case "D"         => JsSuccess(D)
+      case value       => JsError(s"$value is not a valid Band")
     }
 
     override def writes(o: Band): JsValue = JsString(o.toString)
@@ -57,9 +64,15 @@ object BandRange {
 
 final case class Bands(
   small: BandRange,
-  medium: BandRange,
-  large: BandRange,
-  veryLarge: BandRange,
+  // Legacy bands
+  medium: Option[BandRange] = None,
+  large: Option[BandRange] = None,
+  veryLarge: Option[BandRange] = None,
+  // 2026 Onwards
+  a: Option[BandRange] = None,
+  b: Option[BandRange] = None,
+  c: Option[BandRange] = None,
+  d: Option[BandRange] = None,
   apportioned: Boolean
 )
 

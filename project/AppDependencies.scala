@@ -33,5 +33,4 @@ object AppDependencies {
   ).map(_ % "test, it")
 
   def apply(): Seq[ModuleID] = compile ++ test
-
 }
